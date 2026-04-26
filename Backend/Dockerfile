@@ -5,8 +5,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql mysqli
 
+RUN a2enmod rewrite
 # ඔබේ code එක copy කිරීම
 COPY . /var/www/html/
 
 # Port එක expose කිරීම
 EXPOSE 80
+
