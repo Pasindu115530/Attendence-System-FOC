@@ -5,15 +5,43 @@ export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // Basic logic to differentiate Admin and User
-    if (username.toLowerCase() === 'admin') {
-      navigation.replace('AdminDashboard');
-    } else {
-      navigation.replace('UserDashboard');
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert("Please enter both username and password");
+      return;
     }
-  };
 
+    try {
+      // Use the IP and port 3000 as you configured in your terminal
+      const response = await fetch('https://focattendence.infinityfreeapp.com/Backend/api/login.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password,
+        }),
+      });
+
+      const result = await response.json();
+
+    if (result.status === "success") {
+      // Redirect based on the role received from PHP
+      if (result.role === "admin") {
+        navigation.replace('AdminDashboard'); // Matches AdminDashboard.js
+      } else if (result.role === "lecturer") {
+        navigation.replace('AdminDashboard');  // Matches UserDashboard.js
+      } else if (result.role === "student") {
+        navigation.replace('UserDashboard');  // Matches UserDashboard.js
+      }   
+    } else {
+      alert(result.message);
+    }
+  } catch (error) {
+    console.error("Login Error:", error);
+  }
+};
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <View style={styles.card}>
