@@ -1,22 +1,18 @@
 <?php
-$host = getenv('DB_HOST');
-$port = getenv('DB_PORT');
-$dbname = getenv('DB_NAME');
-$user = getenv('DB_USER');
-$pass = getenv('DB_PASS');
+// Render Environment Variables වලින් දත්ත ලබා ගැනීම
+$host     = getenv('DB_HOST');
+$port     = getenv('DB_PORT') ?: "5432";
+$dbname   = getenv('DB_NAME');
+$user     = getenv('DB_USER');
 
-// DSN එකට අනිවාර්යයෙන් sslmode=require එකතු කරන්න
-$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_TIMEOUT => 10 // තත්පර 10ක් ඇතුළත connect නොවුවහොත් error එකක් පෙන්වයි
-    ]);
+    // PostgreSQL සඳහා PDO DSN එක
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+    $conn = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
-    echo "Status: Connected to Supabase via IPv4 Proxy!";
+    // Connection එක success නම් මෙතනින් ඉදිරියට වැඩ කළ හැක
 } catch (PDOException $e) {
-    // තවමත් error එකක් ආවොත් ඒක හරියටම මෙතනින් බලාගන්න පුළුවන්
-    echo "Connection Failed: " . $e->getMessage();
+    die("Connection failed: " . $e->getMessage());
 }
 ?>
