@@ -23,9 +23,9 @@ export default function LoginScreen({ navigation }) {
 
       if (result.status === "success") {
         // Role එක අනුව Dashboard එකට යැවීම
-        if (result.role === "admin" || result.role === "lecturer") {
+        if (result.role === "Admin" || result.role === "Lecturer") {
           navigation.replace('AdminDashboard');
-        } else if (result.role === "student") {
+        } else if (result.role === "Student") {
           navigation.replace('UserDashboard');
         }
       } else {
