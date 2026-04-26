@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /
+
+# Request eka real file ekakata nemei nam enne, index.php ekata yawanna
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
