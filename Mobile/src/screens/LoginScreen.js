@@ -12,7 +12,7 @@ export default function LoginScreen({ navigation }) {
     }
 
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com/Backend/api/login.php', {
+      const response = await fetch('https://attendence-system-foc.onrender.com/api/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
