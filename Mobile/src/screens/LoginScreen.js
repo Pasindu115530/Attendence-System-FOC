@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -7,41 +7,36 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (!username || !password) {
-      alert("Please enter both username and password");
+      Alert.alert("Error", "Please enter both username and password");
       return;
     }
 
     try {
-      // Use the IP and port 3000 as you configured in your terminal
       const response = await fetch('https://attendence-system-foc.onrender.com/Backend/api/login.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-});
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-// JSON parse karanna kalin text eka check karanna
-const textResponse = await response.text(); 
-console.log("Raw Response:", textResponse); 
+      const result = await response.json();
+      console.log("Response:", result);
 
-// Dan JSON parse karanna try karanna
-const result = JSON.parse(textResponse);
-
-    if (result.status === "success") {
-      // Redirect based on the role received from PHP
-      if (result.role === "admin") {
-        navigation.replace('AdminDashboard'); // Matches AdminDashboard.js
-      } else if (result.role === "lecturer") {
-        navigation.replace('AdminDashboard');  // Matches UserDashboard.js
-      } else if (result.role === "student") {
-        navigation.replace('UserDashboard');  // Matches UserDashboard.js
-      }   
-    } else {
-      alert(result.message);
+      if (result.status === "success") {
+        // Role එක අනුව Dashboard එකට යැවීම
+        if (result.role === "admin" || result.role === "lecturer") {
+          navigation.replace('AdminDashboard');
+        } else if (result.role === "student") {
+          navigation.replace('UserDashboard');
+        }
+      } else {
+        Alert.alert("Login Failed", result.message);
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+      Alert.alert("Error", "Could not connect to the server. Please check your internet connection.");
     }
-  } catch (error) {
-    console.error("Login Error:", error);
-  }
-};
+  };
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <View style={styles.card}>
@@ -50,10 +45,11 @@ const result = JSON.parse(textResponse);
 
         <TextInput 
           style={styles.input} 
-          placeholder="Registration No / Username" 
+          placeholder="Username" 
           placeholderTextColor="#95a5a6"
           value={username}
           onChangeText={setUsername}
+          autoCapitalize="none"
         />
         <TextInput 
           style={styles.input} 

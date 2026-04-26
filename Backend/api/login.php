@@ -1,83 +1,66 @@
 <?php
-// 1. Error reporting (Development වලදී විතරක් තියාගන්න, Live දාද්දී off කරන්න)
-ini_set('display_errors', 0); // Live server එකකදී error පෙන්වීම ආරක්ෂිත නැහැ
-error_reporting(E_ALL);
-
-// 2. Headers
-header("Content-Type: application/json; charset=UTF-8");
+// CORS Headers - React Native එකට සම්බන්ධ වීමට ඉඩ ලබා දීම
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS"); // OPTIONS header එකත් එකතු කරන්න
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// React Native එකෙන් එවන "Preflight" request එක handle කිරීමට
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+// Render Environment Variables වලින් දත්ත ලබා ගැනීම
+$host = getenv('DB_HOST'); 
+$port = getenv('DB_PORT') ?: '6543'; 
+$dbname = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
 
-require '../config/db.php';
-
-// 3. Request Method Check
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
-    echo json_encode(["status" => "error", "message" => "Invalid Request Method"]);
-    exit;
-}
-
-// 4. Input handling
-$raw_input = file_get_contents("php://input");
-$data = json_decode($raw_input, true);
-
-// InfinityFree එකේදී සමහරවිට JSON එක decode නොවී තිබුණොත් $_POST බලන්නත් පුළුවන්
-if (!$data) {
-    $input_user = $_POST['username'] ?? '';
-    $input_pass = $_POST['password'] ?? '';
-} else {
-    $input_user = $data['username'] ?? ''; 
-    $input_pass = $data['password'] ?? ''; 
-}
-
-if (empty($input_user) || empty($input_pass)) {
-    http_response_code(400); // Bad Request
-    echo json_encode(["status" => "error", "message" => "Credentials required"]);
-    exit;
-}
+// DSN String (SSL Mode අනිවාර්යයි)
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
 
 try {
-    // 5. Database Query
-    // nic එකත් select කරගන්න password check එකට
-    $stmt = $conn->prepare("SELECT user_id, full_name, nic, role FROM users WHERE user_id = ?");
-    $stmt->execute([$input_user]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Database Connection
+    $pdo = new PDO($dsn, $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
-    if ($user) {
-        // 6. Password Check (මෙහිදී password ලෙස පාවිච්චි කරන්නේ NIC එක)
-        if ($input_pass === $user['nic']) {
-            
-            $role = strtolower($user['role']);
-            
-            $response = [
-                "status" => "success",
-                "role" => $role,
-                "user_id" => $user['user_id'],
-                "full_name" => $user['full_name'],
-                "redirect" => ($role === 'admin') ? "AdminDashboard" : "UserDashboard"
-            ];
+    // JSON දත්ත කියවා ගැනීම
+    $json = file_get_contents('php://input');
+    $data = json_decode($json);
 
-            http_response_code(200);
-            echo json_encode($response);
-            exit;
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!empty($data->username) && !empty($data->password)) {
+            
+            $username = $data->username;
+            $password = $data->password; 
+
+            // User සෙවීම (Table එක 'users' ලෙස උපකල්පනය කර ඇත)
+            $query = "SELECT username, role FROM users WHERE username = :username AND password = :password LIMIT 1";
+            $stmt = $pdo->prepare($query);
+            $stmt->bindParam(':username', $username);
+            $stmt->bindParam(':password', $password);
+            $stmt->execute();
+
+            $user_row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user_row) {
+                echo json_encode([
+                    "status" => "success",
+                    "role" => $user_row['role'],
+                    "message" => "Login successful"
+                ]);
+            } else {
+                echo json_encode([
+                    "status" => "error",
+                    "message" => "Invalid username or password"
+                ]);
+            }
+        } else {
+            echo json_encode(["status" => "error", "message" => "Please provide both username and password"]);
         }
+    } else {
+        echo json_encode(["status" => "error", "message" => "Invalid Request Method"]);
     }
 
-    // වැරදි username හෝ password නම්
-    http_response_code(401); // Unauthorized
-    echo json_encode(["status" => "error", "message" => "Invalid User ID or Password"]);
-
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Internal Server Error"]);
-    // Error එක ලොග් එකට දාන්න, User ට පෙන්වන්න එපා (Security)
-    error_log($e->getMessage());
+} catch (PDOException $e) {
+    echo json_encode([
+        "status" => "error", 
+        "message" => "Database Connection Failed: " . $e->getMessage()
+    ]);
 }
 ?>
