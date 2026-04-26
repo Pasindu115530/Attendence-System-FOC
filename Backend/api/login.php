@@ -47,14 +47,8 @@ try {
     // 5. Database Query
     // nic එකත් select කරගන්න password check එකට
     $stmt = $conn->prepare("SELECT user_id, full_name, nic, role FROM users WHERE user_id = ?");
-    if (!$stmt) { 
-        throw new Exception("Query preparation failed: " . $conn->error); 
-    }
-
-    $stmt->bind_param("s", $input_user);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
+    $stmt->execute([$input_user]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
         // 6. Password Check (මෙහිදී password ලෙස පාවිච්චි කරන්නේ NIC එක)

@@ -13,7 +13,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       // Use the IP and port 3000 as you configured in your terminal
-      const response = await fetch('https://focattendence.infinityfreeapp.com/Backend/api/login.php', {
+      const response = await fetch('https://attendence-system-foc.onrender.com/Backend/api/login.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

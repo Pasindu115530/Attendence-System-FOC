@@ -1,20 +1,18 @@
 <?php
-$host = "localhost";
-$username = "root";
-$password = "";
-$dbname = "study_nest_db";
+// Render Environment Variables වලින් දත්ත ලබා ගැනීම
+$host     = getenv('DB_HOST');
+$port     = getenv('DB_PORT') ?: "5432";
+$dbname   = getenv('DB_NAME');
+$user     = getenv('DB_USER');
 
-$conn = new mysqli($host, $username, $password, $dbname);
 
-if ($conn->connect_error) {
-    die(json_encode([
-        "status" => "error",
-        "message" => "Database connection failed: " . $conn->connect_error
-    ]));
+try {
+    // PostgreSQL සඳහා PDO DSN එක
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+    $conn = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+
+    // Connection එක success නම් මෙතනින් ඉදිරියට වැඩ කළ හැක
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
-
-// Charset එක set කිරීම වැදගත්
-$conn->set_charset("utf8mb4");
-
-// මෙතනින් පස්සේ කිසිම ECHO එකක් තියෙන්න බැහැ!
 ?>
