@@ -14,17 +14,17 @@ export default function LoginScreen({ navigation }) {
     try {
       // Use the IP and port 3000 as you configured in your terminal
       const response = await fetch('https://attendence-system-foc.onrender.com/Backend/api/login.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-        }),
-      });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+});
 
-      const result = await response.json();
+// JSON parse karanna kalin text eka check karanna
+const textResponse = await response.text(); 
+console.log("Raw Response:", textResponse); 
+
+// Dan JSON parse karanna try karanna
+const result = JSON.parse(textResponse);
 
     if (result.status === "success") {
       // Redirect based on the role received from PHP
