@@ -162,7 +162,7 @@ try {
                     $centerLon = ((float)$geo['lon_a'] + (float)$geo['lon_c']) / 2;
                     $distance = getDistance((float)$data->latitude, (float)$data->longitude, $centerLat, $centerLon);
 
-                    if ($isInside || $distance <= 3) {
+                    if ($isInside || $distance <= 10) {
                         $status = 'Present';
                     }
                 }
