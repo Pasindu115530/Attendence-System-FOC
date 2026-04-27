@@ -19,7 +19,8 @@ export default function UserDashboard({ route }) {
     try {
       const response = await fetch('https://attendence-system-foc.onrender.com', {
         method: 'POST',
-        body: JSON.stringify({ action: 'get_dashboard' }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_dashboard', user_id: user_id }),
       });
       const res = await response.json();
       if (res.status === 'success') setLecture(res.lecture);
@@ -40,6 +41,7 @@ export default function UserDashboard({ route }) {
 
       const response = await fetch('https://attendence-system-foc.onrender.com', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'mark_attendance',
           user_id: user_id,
@@ -51,7 +53,12 @@ export default function UserDashboard({ route }) {
       });
 
       const res = await response.json();
-      if (res.status === 'success') Alert.alert("Success", "Attendance marked!");
+      if (res.status === 'success') {
+        Alert.alert("Success", "Attendance marked!");
+        fetchDashboard(); // Refresh to show "Already Marked"
+      } else {
+        Alert.alert("Failed", res.message || "Could not mark attendance");
+      }
     } catch (e) {
       Alert.alert("Error", "Failed to mark attendance");
     } finally {
@@ -73,17 +80,30 @@ export default function UserDashboard({ route }) {
             <Text>{lecture.room_name} | {lecture.start_time}</Text>
 
             {lecture.isLive && (
-              <TouchableOpacity 
-                style={styles.btn} 
-                onPress={handleMarkAttendance} 
-                disabled={marking}
-              >
-                <Text style={{color: '#fff'}}>{marking ? "Marking..." : "Mark Attendance"}</Text>
-              </TouchableOpacity>
+              lecture.hasMarked ? (
+                <View style={[styles.btn, { backgroundColor: '#27ae60' }]}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+                    <MaterialCommunityIcons name="check-circle" size={18} color="#fff" /> Attendance Marked
+                  </Text>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.btn} 
+                  onPress={handleMarkAttendance} 
+                  disabled={marking}
+                >
+                  <Text style={{color: '#fff', fontWeight: 'bold'}}>
+                    {marking ? "Marking..." : "Mark Attendance"}
+                  </Text>
+                </TouchableOpacity>
+              )
             )}
           </>
         ) : (
-          <Text>No lectures scheduled for now.</Text>
+          <View style={{ alignItems: 'center', padding: 10 }}>
+            <MaterialCommunityIcons name="calendar-blank" size={40} color="#bdc3c7" />
+            <Text style={{ color: '#7f8c8d', marginTop: 10 }}>No lectures scheduled for now.</Text>
+          </View>
         )}
       </View>
     </View>

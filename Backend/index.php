@@ -1,4 +1,6 @@
 <?php
+// ශ්‍රී ලංකාවේ වේලාව නිවැරදිව ලබා ගැනීමට
+date_default_timezone_set('Asia/Colombo');
 // CORS Headers
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -49,6 +51,7 @@ try {
         case 'get_dashboard':
             $current_day = date('l');
             $current_time = date('H:i:s');
+            $student_id = $data->user_id ?? '';
 
             // පළමුව දැනට පවතින (Ongoing) එක බලමු
             $query = "SELECT t.*, c.course_name, r.room_name 
@@ -63,6 +66,18 @@ try {
 
             if ($lecture) {
                 $lecture['isLive'] = true;
+                
+                // Check if already marked
+                if (!empty($student_id)) {
+                    $current_date = date('Y-m-d');
+                    $q_check = "SELECT id FROM attendance WHERE user_id = :uid AND timetable_id = :tid AND DATE(marked_at) = :today LIMIT 1";
+                    $s_check = $pdo->prepare($q_check);
+                    $s_check->execute([':uid' => $student_id, ':tid' => $lecture['id'], ':today' => $current_date]);
+                    $lecture['hasMarked'] = (bool)$s_check->fetch();
+                } else {
+                    $lecture['hasMarked'] = false;
+                }
+
                 echo json_encode(["status" => "success", "lecture" => $lecture]);
             } else {
                 // Ongoing නැතිනම් ඊළඟට එන (Upcoming) එක බලමු
@@ -88,6 +103,17 @@ try {
         // --- 3. MARK ATTENDANCE ---
         case 'mark_attendance':
             if (!empty($data->user_id) && !empty($data->timetable_id)) {
+                $current_date = date('Y-m-d');
+                // Check if already marked to prevent duplicates
+                $q_check = "SELECT id FROM attendance WHERE user_id = :uid AND timetable_id = :tid AND DATE(marked_at) = :today LIMIT 1";
+                $s_check = $pdo->prepare($q_check);
+                $s_check->execute([':uid' => $data->user_id, ':tid' => $data->timetable_id, ':today' => $current_date]);
+                
+                if ($s_check->fetch()) {
+                    echo json_encode(["status" => "error", "message" => "Already marked for today"]);
+                    break;
+                }
+
                 $query = "INSERT INTO attendance (user_id, course_id, timetable_id, lat_at_mark, lon_at_mark, status) 
                           VALUES (:uid, :cid, :tid, :lat, :lon, 'Present')";
                 

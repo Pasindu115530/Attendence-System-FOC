@@ -15,18 +15,19 @@ export default function LoginScreen({ navigation }) {
       const response = await fetch('https://attendence-system-foc.onrender.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ action: 'login', username, password }),
       });
 
       const result = await response.json();
       console.log("Response:", result);
 
       if (result.status === "success") {
+        const user = result.data;
         // Role එක අනුව Dashboard එකට යැවීම
-        if (result.role === "Admin" || result.role === "Lecturer") {
-          navigation.replace('AdminDashboard');
-        } else if (result.role === "Student") {
-          navigation.replace('UserDashboard');
+        if (user.role === "Admin" || user.role === "Lecturer") {
+          navigation.replace('AdminDashboard', { user_id: user.user_id });
+        } else if (user.role === "Student") {
+          navigation.replace('UserDashboard', { user_id: user.user_id });
         }
       } else {
         Alert.alert("Login Failed", result.message);
