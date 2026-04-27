@@ -153,28 +153,51 @@ try {
 
         // --- 5. UPDATE GEOFENCE ---
         case 'update_geofence':
-            if (!empty($data->room_id)) {
-                $query = "UPDATE classrooms SET 
-                          lat_a = :lat_a, lon_a = :lon_a,
-                          lat_b = :lat_b, lon_b = :lon_b,
-                          lat_c = :lat_c, lon_c = :lon_c,
-                          lat_d = :lat_d, lon_d = :lon_d
-                          WHERE id = :id";
+            if (!empty($data->room_name)) {
+                $room_name = $data->room_name;
                 
-                $stmt = $pdo->prepare($query);
-                $success = $stmt->execute([
-                    ':lat_a' => $data->lat_a, ':lon_a' => $data->lon_a,
-                    ':lat_b' => $data->lat_b, ':lon_b' => $data->lon_b,
-                    ':lat_c' => $data->lat_c, ':lon_c' => $data->lon_c,
-                    ':lat_d' => $data->lat_d, ':lon_d' => $data->lon_d,
-                    ':id' => $data->room_id
-                ]);
+                // Check if room exists
+                $stmt = $pdo->prepare("SELECT id FROM classrooms WHERE room_name = :name LIMIT 1");
+                $stmt->execute([':name' => $room_name]);
+                $room = $stmt->fetch();
+
+                if ($room) {
+                    // Update
+                    $query = "UPDATE classrooms SET 
+                              lat_a = :lat_a, lon_a = :lon_a,
+                              lat_b = :lat_b, lon_b = :lon_b,
+                              lat_c = :lat_c, lon_c = :lon_c,
+                              lat_d = :lat_d, lon_d = :lon_d
+                              WHERE id = :id";
+                    $stmt = $pdo->prepare($query);
+                    $success = $stmt->execute([
+                        ':lat_a' => $data->lat_a, ':lon_a' => $data->lon_a,
+                        ':lat_b' => $data->lat_b, ':lon_b' => $data->lon_b,
+                        ':lat_c' => $data->lat_c, ':lon_c' => $data->lon_c,
+                        ':lat_d' => $data->lat_d, ':lon_d' => $data->lon_d,
+                        ':id' => $room['id']
+                    ]);
+                } else {
+                    // Insert
+                    $query = "INSERT INTO classrooms (room_name, lat_a, lon_a, lat_b, lon_b, lat_c, lon_c, lat_d, lon_d) 
+                              VALUES (:name, :lat_a, :lon_a, :lat_b, :lon_b, :lat_c, :lon_c, :lat_d, :lon_d)";
+                    $stmt = $pdo->prepare($query);
+                    $success = $stmt->execute([
+                        ':name' => $room_name,
+                        ':lat_a' => $data->lat_a, ':lon_a' => $data->lon_a,
+                        ':lat_b' => $data->lat_b, ':lon_b' => $data->lon_b,
+                        ':lat_c' => $data->lat_c, ':lon_c' => $data->lon_c,
+                        ':lat_d' => $data->lat_d, ':lon_d' => $data->lon_d
+                    ]);
+                }
 
                 if ($success) {
                     echo json_encode(["status" => "success", "message" => "Geofence updated"]);
                 } else {
-                    echo json_encode(["status" => "error", "message" => "Failed to update"]);
+                    echo json_encode(["status" => "error", "message" => "Failed to save"]);
                 }
+            } else {
+                echo json_encode(["status" => "error", "message" => "Room name is required"]);
             }
             break;
 
