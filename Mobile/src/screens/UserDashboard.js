@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } fr
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function UserDashboard({ route }) {
+export default function UserDashboard({ route, navigation }) {
   // Login එකෙන් ලැබෙන user_id එක (උදාහරණයක් ලෙස props හෝ route මගින් ගනියි)
   const { user_id } = route.params || { user_id: 'TEST001' }; 
   
@@ -106,6 +106,10 @@ export default function UserDashboard({ route }) {
           </View>
         )}
       </View>
+      
+      <TouchableOpacity style={styles.logoutBtn} onPress={() => navigation.replace('Login')}>
+        <Text style={styles.logoutText}>Logout from System</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -116,5 +120,7 @@ const styles = StyleSheet.create({
   card: { padding: 20, borderRadius: 15, backgroundColor: '#fff', borderWidth: 2, elevation: 3 },
   status: { fontWeight: 'bold', color: '#7f8c8d' },
   course: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
-  btn: { backgroundColor: '#3498db', padding: 15, borderRadius: 10, marginTop: 20, alignItems: 'center' }
+  btn: { backgroundColor: '#3498db', padding: 15, borderRadius: 10, marginTop: 20, alignItems: 'center' },
+  logoutBtn: { marginTop: 'auto', padding: 15, alignItems: 'center', marginBottom: 20 },
+  logoutText: { color: '#e74c3c', fontWeight: 'bold', fontSize: 16 }
 });

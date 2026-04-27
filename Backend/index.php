@@ -133,6 +133,50 @@ try {
                 }
             }
             break;
+        
+        // --- 4. ADMIN DASHBOARD ---
+        case 'get_admin_dashboard':
+            $current_day = date('l');
+            $query = "SELECT t.*, c.course_name, r.room_name 
+                      FROM timetable t
+                      JOIN courses c ON t.course_id = c.id
+                      JOIN classrooms r ON t.classroom_id = r.id
+                      WHERE t.day_of_week = :day 
+                      ORDER BY t.start_time ASC";
+            
+            $stmt = $pdo->prepare($query);
+            $stmt->execute([':day' => $current_day]);
+            $lectures = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode(["status" => "success", "lectures" => $lectures]);
+            break;
+
+        // --- 5. UPDATE GEOFENCE ---
+        case 'update_geofence':
+            if (!empty($data->room_id)) {
+                $query = "UPDATE classrooms SET 
+                          lat_a = :lat_a, lon_a = :lon_a,
+                          lat_b = :lat_b, lon_b = :lon_b,
+                          lat_c = :lat_c, lon_c = :lon_c,
+                          lat_d = :lat_d, lon_d = :lon_d
+                          WHERE id = :id";
+                
+                $stmt = $pdo->prepare($query);
+                $success = $stmt->execute([
+                    ':lat_a' => $data->lat_a, ':lon_a' => $data->lon_a,
+                    ':lat_b' => $data->lat_b, ':lon_b' => $data->lon_b,
+                    ':lat_c' => $data->lat_c, ':lon_c' => $data->lon_c,
+                    ':lat_d' => $data->lat_d, ':lon_d' => $data->lon_d,
+                    ':id' => $data->room_id
+                ]);
+
+                if ($success) {
+                    echo json_encode(["status" => "success", "message" => "Geofence updated"]);
+                } else {
+                    echo json_encode(["status" => "error", "message" => "Failed to update"]);
+                }
+            }
+            break;
 
         default:
             echo json_encode(["status" => "error", "message" => "Unknown action"]);
