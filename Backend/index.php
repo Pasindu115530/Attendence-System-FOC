@@ -1,13 +1,14 @@
 <?php
 // ශ්‍රී ලංකාවේ වේලාව නිවැරදිව ලබා ගැනීමට
 date_default_timezone_set('Asia/Colombo');
+
 // CORS Headers
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Database Environment Variables
+// Database Environment Variables (Supabase/PostgreSQL)
 $host = getenv('DB_HOST'); 
 $port = getenv('DB_PORT') ?: '6543'; 
 $dbname = getenv('DB_NAME');
@@ -16,7 +17,9 @@ $pass = getenv('DB_PASS');
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
 
-// Function to check if a point is inside a quadrilateral (Geofencing)
+/**
+ * 1. Geofencing Logic: Point-in-Polygon (Ray Casting Algorithm)
+ */
 function isPointInPolygon($lat, $lon, $polygon) {
     $inside = false;
     $n = count($polygon);
@@ -28,6 +31,18 @@ function isPointInPolygon($lat, $lon, $polygon) {
         if ($intersect) $inside = !$inside;
     }
     return $inside;
+}
+
+/**
+ * 2. Haversine Formula: Points dekak athara dura meter walin ganna
+ */
+function getDistance($lat1, $lon1, $lat2, $lon2) {
+    $earth_radius = 6371000; // Meters
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+    $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+    return $earth_radius * $c;
 }
 
 try {
@@ -45,7 +60,6 @@ try {
 
     switch ($action) {
         
-        // --- 1. LOGIN FUNCTION ---
         case 'login':
             if (!empty($data->username) && !empty($data->password)) {
                 $query = "SELECT user_id, nic, role FROM users WHERE user_id = :u AND nic = :p LIMIT 1";
@@ -61,13 +75,11 @@ try {
             }
             break;
 
-        // --- 2. GET CURRENT OR NEXT LECTURE ---
         case 'get_dashboard':
             $current_day = date('l');
             $current_time = date('H:i:s');
             $student_id = $data->user_id ?? '';
 
-            // පළමුව දැනට පවතින (Ongoing) එක බලමු
             $query = "SELECT t.*, c.course_name, r.room_name 
                       FROM timetable t
                       JOIN courses c ON t.course_id = c.id
@@ -80,8 +92,6 @@ try {
 
             if ($lecture) {
                 $lecture['isLive'] = true;
-                
-                // Check if already marked
                 if (!empty($student_id)) {
                     $current_date = date('Y-m-d');
                     $q_check = "SELECT id FROM attendance WHERE user_id = :uid AND timetable_id = :tid AND DATE(marked_at) = :today LIMIT 1";
@@ -91,10 +101,8 @@ try {
                 } else {
                     $lecture['hasMarked'] = false;
                 }
-
                 echo json_encode(["status" => "success", "lecture" => $lecture]);
             } else {
-                // Ongoing නැතිනම් ඊළඟට එන (Upcoming) එක බලමු
                 $query_next = "SELECT t.*, c.course_name, r.room_name 
                                FROM timetable t
                                JOIN courses c ON t.course_id = c.id
@@ -114,11 +122,11 @@ try {
             }
             break;
 
-        // --- 3. MARK ATTENDANCE ---
         case 'mark_attendance':
             if (!empty($data->user_id) && !empty($data->timetable_id)) {
                 $current_date = date('Y-m-d');
-                // Check if already marked to prevent duplicates
+                
+                // 1. Duplicate check
                 $q_check = "SELECT id FROM attendance WHERE user_id = :uid AND timetable_id = :tid AND DATE(marked_at) = :today LIMIT 1";
                 $s_check = $pdo->prepare($q_check);
                 $s_check->execute([':uid' => $data->user_id, ':tid' => $data->timetable_id, ':today' => $current_date]);
@@ -128,8 +136,7 @@ try {
                     break;
                 }
 
-                // --- Geofencing Logic ---
-                // Fetch classroom geofence points
+                // 2. Geofence data fetch
                 $q_geo = "SELECT r.lat_a, r.lon_a, r.lat_b, r.lon_b, r.lat_c, r.lon_c, r.lat_d, r.lon_d
                           FROM timetable t
                           JOIN classrooms r ON t.classroom_id = r.id
@@ -138,7 +145,7 @@ try {
                 $s_geo->execute([':tid' => $data->timetable_id]);
                 $geo = $s_geo->fetch(PDO::FETCH_ASSOC);
 
-                $status = 'Absent'; // Default if outside
+                $status = 'Absent';
                 if ($geo && !empty($geo['lat_a'])) {
                     $polygon = [
                         ['lat' => (float)$geo['lat_a'], 'lon' => (float)$geo['lon_a']],
@@ -147,11 +154,20 @@ try {
                         ['lat' => (float)$geo['lat_d'], 'lon' => (float)$geo['lon_d']]
                     ];
                     
-                    if (isPointInPolygon((float)$data->latitude, (float)$data->longitude, $polygon)) {
+                    // Logic A: Inside Polygon
+                    $isInside = isPointInPolygon((float)$data->latitude, (float)$data->longitude, $polygon);
+                    
+                    // Logic B: Center point check with 15m buffer
+                    $centerLat = ((float)$geo['lat_a'] + (float)$geo['lat_c']) / 2;
+                    $centerLon = ((float)$geo['lon_a'] + (float)$geo['lon_c']) / 2;
+                    $distance = getDistance((float)$data->latitude, (float)$data->longitude, $centerLat, $centerLon);
+
+                    if ($isInside || $distance <= 15) {
                         $status = 'Present';
                     }
                 }
 
+                // 3. Database entry
                 $query = "INSERT INTO attendance (user_id, course_id, timetable_id, lat_at_mark, lon_at_mark, status) 
                           VALUES (:uid, :cid, :tid, :lat, :lon, :status)";
                 
@@ -169,15 +185,15 @@ try {
                     echo json_encode([
                         "status" => "success", 
                         "message" => "Attendance marked as $status",
-                        "attendance_status" => $status
+                        "attendance_status" => $status,
+                        "distance" => isset($distance) ? round($distance, 2) . "m" : "N/A"
                     ]);
                 } else {
                     echo json_encode(["status" => "error", "message" => "Failed to mark"]);
                 }
             }
             break;
-        
-        // --- 4. ADMIN DASHBOARD ---
+
         case 'get_admin_dashboard':
             $current_day = date('l');
             $query = "SELECT t.*, c.course_name, r.room_name 
@@ -190,27 +206,20 @@ try {
             $stmt = $pdo->prepare($query);
             $stmt->execute([':day' => $current_day]);
             $lectures = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
             echo json_encode(["status" => "success", "lectures" => $lectures]);
             break;
 
-        // --- 5. UPDATE GEOFENCE ---
         case 'update_geofence':
             if (!empty($data->room_name)) {
                 $room_name = $data->room_name;
-                
-                // Check if room exists
                 $stmt = $pdo->prepare("SELECT id FROM classrooms WHERE room_name = :name LIMIT 1");
                 $stmt->execute([':name' => $room_name]);
                 $room = $stmt->fetch();
 
                 if ($room) {
-                    // Update
                     $query = "UPDATE classrooms SET 
-                              lat_a = :lat_a, lon_a = :lon_a,
-                              lat_b = :lat_b, lon_b = :lon_b,
-                              lat_c = :lat_c, lon_c = :lon_c,
-                              lat_d = :lat_d, lon_d = :lon_d
+                              lat_a = :lat_a, lon_a = :lon_a, lat_b = :lat_b, lon_b = :lon_b,
+                              lat_c = :lat_c, lon_c = :lon_c, lat_d = :lat_d, lon_d = :lon_d
                               WHERE id = :id";
                     $stmt = $pdo->prepare($query);
                     $success = $stmt->execute([
@@ -221,7 +230,6 @@ try {
                         ':id' => $room['id']
                     ]);
                 } else {
-                    // Insert
                     $query = "INSERT INTO classrooms (room_name, lat_a, lon_a, lat_b, lon_b, lat_c, lon_c, lat_d, lon_d) 
                               VALUES (:name, :lat_a, :lon_a, :lat_b, :lon_b, :lat_c, :lon_c, :lat_d, :lon_d)";
                     $stmt = $pdo->prepare($query);
@@ -233,14 +241,7 @@ try {
                         ':lat_d' => $data->lat_d, ':lon_d' => $data->lon_d
                     ]);
                 }
-
-                if ($success) {
-                    echo json_encode(["status" => "success", "message" => "Geofence updated"]);
-                } else {
-                    echo json_encode(["status" => "error", "message" => "Failed to save"]);
-                }
-            } else {
-                echo json_encode(["status" => "error", "message" => "Room name is required"]);
+                echo json_encode(["status" => $success ? "success" : "error", "message" => $success ? "Geofence updated" : "Failed to save"]);
             }
             break;
 
