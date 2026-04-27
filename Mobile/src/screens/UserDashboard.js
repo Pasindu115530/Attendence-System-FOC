@@ -17,7 +17,7 @@ export default function UserDashboard({ route }) {
 
   const fetchDashboard = async () => {
     try {
-      const response = await fetch('ඔබේ_RENDER_URL/api.php', {
+      const response = await fetch('https://attendence-system-foc.onrender.com', {
         method: 'POST',
         body: JSON.stringify({ action: 'get_dashboard' }),
       });
@@ -38,7 +38,7 @@ export default function UserDashboard({ route }) {
 
       let loc = await Location.getCurrentPositionAsync({});
 
-      const response = await fetch('ඔබේ_RENDER_URL/api.php', {
+      const response = await fetch('https://attendence-system-foc.onrender.com', {
         method: 'POST',
         body: JSON.stringify({
           action: 'mark_attendance',
