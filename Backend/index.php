@@ -16,6 +16,20 @@ $pass = getenv('DB_PASS');
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
 
+// Function to check if a point is inside a quadrilateral (Geofencing)
+function isPointInPolygon($lat, $lon, $polygon) {
+    $inside = false;
+    $n = count($polygon);
+    for ($i = 0, $j = $n - 1; $i < $n; $j = $i++) {
+        $xi = $polygon[$i]['lat']; $yi = $polygon[$i]['lon'];
+        $xj = $polygon[$j]['lat']; $yj = $polygon[$j]['lon'];
+        $intersect = (($yi > $lon) != ($yj > $lon))
+            && ($lat < ($xj - $xi) * ($lon - $yi) / ($yj - $yi) + $xi);
+        if ($intersect) $inside = !$inside;
+    }
+    return $inside;
+}
+
 try {
     $pdo = new PDO($dsn, $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
@@ -114,8 +128,32 @@ try {
                     break;
                 }
 
+                // --- Geofencing Logic ---
+                // Fetch classroom geofence points
+                $q_geo = "SELECT r.lat_a, r.lon_a, r.lat_b, r.lon_b, r.lat_c, r.lon_c, r.lat_d, r.lon_d
+                          FROM timetable t
+                          JOIN classrooms r ON t.classroom_id = r.id
+                          WHERE t.id = :tid LIMIT 1";
+                $s_geo = $pdo->prepare($q_geo);
+                $s_geo->execute([':tid' => $data->timetable_id]);
+                $geo = $s_geo->fetch(PDO::FETCH_ASSOC);
+
+                $status = 'Absent'; // Default if outside
+                if ($geo && !empty($geo['lat_a'])) {
+                    $polygon = [
+                        ['lat' => (float)$geo['lat_a'], 'lon' => (float)$geo['lon_a']],
+                        ['lat' => (float)$geo['lat_b'], 'lon' => (float)$geo['lon_b']],
+                        ['lat' => (float)$geo['lat_c'], 'lon' => (float)$geo['lon_c']],
+                        ['lat' => (float)$geo['lat_d'], 'lon' => (float)$geo['lon_d']]
+                    ];
+                    
+                    if (isPointInPolygon((float)$data->latitude, (float)$data->longitude, $polygon)) {
+                        $status = 'Present';
+                    }
+                }
+
                 $query = "INSERT INTO attendance (user_id, course_id, timetable_id, lat_at_mark, lon_at_mark, status) 
-                          VALUES (:uid, :cid, :tid, :lat, :lon, 'Present')";
+                          VALUES (:uid, :cid, :tid, :lat, :lon, :status)";
                 
                 $stmt = $pdo->prepare($query);
                 $success = $stmt->execute([
@@ -123,11 +161,16 @@ try {
                     ':cid' => $data->course_id,
                     ':tid' => $data->timetable_id,
                     ':lat' => $data->latitude,
-                    ':lon' => $data->longitude
+                    ':lon' => $data->longitude,
+                    ':status' => $status
                 ]);
 
                 if ($success) {
-                    echo json_encode(["status" => "success", "message" => "Attendance marked"]);
+                    echo json_encode([
+                        "status" => "success", 
+                        "message" => "Attendance marked as $status",
+                        "attendance_status" => $status
+                    ]);
                 } else {
                     echo json_encode(["status" => "error", "message" => "Failed to mark"]);
                 }

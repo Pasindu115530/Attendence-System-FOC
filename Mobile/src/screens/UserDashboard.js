@@ -37,7 +37,7 @@ export default function UserDashboard({ route, navigation }) {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return Alert.alert("Permission denied");
 
-      let loc = await Location.getCurrentPositionAsync({});
+      let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
 
       const response = await fetch('https://attendence-system-foc.onrender.com', {
         method: 'POST',
@@ -54,7 +54,7 @@ export default function UserDashboard({ route, navigation }) {
 
       const res = await response.json();
       if (res.status === 'success') {
-        Alert.alert("Success", "Attendance marked!");
+        Alert.alert(res.attendance_status === 'Present' ? "Success" : "Out of Range", res.message);
         fetchDashboard(); // Refresh to show "Already Marked"
       } else {
         Alert.alert("Failed", res.message || "Could not mark attendance");
