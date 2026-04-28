@@ -209,6 +209,68 @@ try {
             echo json_encode(["status" => "success", "lectures" => $lectures]);
             break;
 
+        case 'get_departments':
+            // Fetch distinct departments from timetable or users
+            $stmt = $pdo->query("SELECT DISTINCT dept_id FROM timetable ORDER BY dept_id ASC");
+            $depts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "departments" => $depts]);
+            break;
+
+        case 'get_batches':
+            // Fetch distinct batches from users
+            $stmt = $pdo->query("SELECT DISTINCT batch_year FROM users WHERE role = 'Student' AND batch_year IS NOT NULL ORDER BY batch_year DESC");
+            $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "batches" => $batches]);
+            break;
+
+        case 'get_courses':
+            $dept_id = $data->dept_id ?? '';
+            if ($dept_id) {
+                // Fetch courses associated with this department in the timetable
+                $stmt = $pdo->prepare("SELECT DISTINCT c.id, c.course_name 
+                                     FROM courses c 
+                                     JOIN timetable t ON c.id = t.course_id 
+                                     WHERE t.dept_id = :did 
+                                     ORDER BY c.course_name ASC");
+                $stmt->execute([':did' => $dept_id]);
+            } else {
+                $stmt = $pdo->query("SELECT id, course_name FROM courses ORDER BY course_name ASC");
+            }
+            $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "courses" => $courses]);
+            break;
+
+        case 'get_filtered_report':
+            $dept_id = $data->dept_id;
+            $batch = $data->batch;
+            $course_id = $data->course_id;
+
+            // Fetch students in this dept and batch
+            // Calculate total sessions for this course in this dept
+            // Calculate attended sessions for each student
+            $query = "SELECT u.user_id, u.full_name, 
+                      (SELECT COUNT(*) FROM attendance att WHERE att.user_id = u.user_id AND att.course_id = :cid) as attended_count,
+                      (SELECT COUNT(*) FROM timetable tt WHERE tt.course_id = :cid AND tt.dept_id = :did) as total_sessions
+                      FROM users u
+                      WHERE u.role = 'Student' AND u.dept_id = :did AND u.batch_year = :batch
+                      ORDER BY u.user_id ASC";
+
+            $stmt = $pdo->prepare($query);
+            $stmt->execute([':cid' => $course_id, ':did' => $dept_id, ':batch' => $batch]);
+            $report = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Calculate percentage and current status (Present if attended at least once or based on latest?)
+            // Usually report shows overall attendance
+            foreach ($report as &$row) {
+                $total = (int)$row['total_sessions'] ?: 1;
+                $attended = (int)$row['attended_count'];
+                $row['percentage'] = round(($attended / $total) * 100, 1) . '%';
+                $row['status'] = ($attended > 0) ? 'Active' : 'No Data'; // Placeholder status logic
+            }
+
+            echo json_encode(["status" => "success", "report" => $report]);
+            break;
+
         case 'update_geofence':
             if (!empty($data->room_name)) {
                 $room_name = $data->room_name;
