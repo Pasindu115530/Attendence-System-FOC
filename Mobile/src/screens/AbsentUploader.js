@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndi
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 
-export default function StudentMedicalUpload({ studentId }) {
+export default function StudentMedicalUpload({ route, navigation }) {
+  const { studentId } = route.params || { studentId: 'TEST001' };
   const [absentRecords, setAbsentRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);

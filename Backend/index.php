@@ -51,6 +51,11 @@ try {
     $json = file_get_contents('php://input');
     $data = json_decode($json);
 
+    // Handle multipart/form-data (for file uploads)
+    if (!$data && !empty($_POST['action'])) {
+        $data = (object)$_POST;
+    }
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(["status" => "error", "message" => "Invalid Request Method"]);
         exit;
@@ -269,6 +274,58 @@ try {
             }
 
             echo json_encode(["status" => "success", "report" => $report]);
+            break;
+
+        case 'get_absent_records':
+            $student_id = $data->student_id ?? '';
+            if (empty($student_id)) {
+                echo json_encode(["status" => "error", "message" => "Student ID required"]);
+                break;
+            }
+            
+            // Fetch records marked as 'Absent'
+            $query = "SELECT a.id, a.marked_at as date, c.course_name 
+                      FROM attendance a
+                      JOIN courses c ON a.course_id = c.id
+                      WHERE a.user_id = :sid AND a.status = 'Absent' 
+                      ORDER BY a.marked_at DESC";
+            $stmt = $pdo->prepare($query);
+            $stmt->execute([':sid' => $student_id]);
+            $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "records" => $records]);
+            break;
+
+        case 'upload_medical':
+            $record_id = $data->record_id ?? '';
+            if (empty($record_id) || empty($_FILES['medical_file'])) {
+                echo json_encode(["status" => "error", "message" => "Record ID and file required"]);
+                break;
+            }
+
+            $file = $_FILES['medical_file'];
+            $upload_dir = 'uploads/medical/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+
+            $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $file_name = 'medical_' . $record_id . '_' . time() . '.' . $file_ext;
+            $target_path = $upload_dir . $file_name;
+
+            if (move_uploaded_file($file['tmp_name'], $target_path)) {
+                // Update attendance record with medical report path
+                // Note: We assume the column 'medical_report' exists or we can just update status?
+                // Usually, uploading medical changes status to 'Medical' or just attaches it.
+                $query = "UPDATE attendance SET medical_report = :path WHERE id = :id";
+                $stmt = $pdo->prepare($query);
+                $success = $stmt->execute([':path' => $target_path, ':id' => $record_id]);
+                
+                if ($success) {
+                    echo json_encode(["status" => "success", "message" => "Medical report uploaded"]);
+                } else {
+                    echo json_encode(["status" => "error", "message" => "Failed to update record"]);
+                }
+            } else {
+                echo json_encode(["status" => "error", "message" => "Failed to move uploaded file"]);
+            }
             break;
 
         case 'update_geofence':
