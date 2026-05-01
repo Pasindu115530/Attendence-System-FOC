@@ -364,6 +364,39 @@ try {
             }
             break;
 
+        case 'get_all_students':
+            $stmt = $pdo->query("SELECT user_id, full_name, nic, role, dept_id, batch_year FROM users WHERE role = 'Student' ORDER BY user_id ASC");
+            $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "students" => $students]);
+            break;
+
+        case 'get_all_classrooms':
+            $stmt = $pdo->query("SELECT * FROM classrooms ORDER BY room_name ASC");
+            $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "classrooms" => $rooms]);
+            break;
+
+        case 'get_all_courses':
+            $stmt = $pdo->query("SELECT * FROM courses ORDER BY course_name ASC");
+            $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(["status" => "success", "courses" => $courses]);
+            break;
+
+        case 'add_timetable':
+            $query = "INSERT INTO timetable (course_id, classroom_id, day_of_week, start_time, end_time, dept_id) 
+                      VALUES (:cid, :rid, :day, :start, :end, :dept)";
+            $stmt = $pdo->prepare($query);
+            $success = $stmt->execute([
+                ':cid' => $data->course_id,
+                ':rid' => $data->classroom_id,
+                ':day' => $data->day_of_week,
+                ':start' => $data->start_time,
+                ':end' => $data->end_time,
+                ':dept' => $data->dept_id
+            ]);
+            echo json_encode(["status" => $success ? "success" : "error", "message" => $success ? "Timetable added" : "Failed to add"]);
+            break;
+
         default:
             echo json_encode(["status" => "error", "message" => "Unknown action"]);
             break;
