@@ -1,0 +1,14 @@
+# Temporary images
+temp_captured.jpg
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# DeepFace configuration files inside project folder (if any)
+.deepface/
+
+# Environment variables or local settings
+.env
+
+known_students/*.pkl
