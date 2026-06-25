@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { post, upload } from '../api';
 
 export default function StudentMedicalUpload({ route, navigation }) {
   const { studentId } = route.params || { studentId: 'TEST001' };
@@ -13,27 +14,20 @@ export default function StudentMedicalUpload({ route, navigation }) {
     fetchAbsentRecords();
   }, []);
 
-  // Absent වූ දින සහ විෂයන් ලබා ගැනීම
+  // Fetch the student's absent records
   const fetchAbsentRecords = async () => {
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'get_absent_records', 
-          student_id: studentId 
-        }),
-      });
-      const data = await response.json();
-      if (data.status === 'success') setAbsentRecords(data.records);
+      // POST /get_absent_records  →  { status, data: { records: [...] } }
+      const data = await post('/get_absent_records', { student_id: studentId });
+      if (data.status === 'success') setAbsentRecords(data.data.records);
     } catch (e) {
-      Alert.alert("Error", "දත්ත ලබා ගැනීමට නොහැකි විය.");
+      Alert.alert("Error", "Could not fetch absent records.");
     } finally {
       setLoading(false);
     }
   };
 
-  // File එකක් තෝරාගෙන Upload කිරීම
+  // Pick a file and upload it as a medical report
   const handleUploadMedical = async (recordId) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -44,9 +38,8 @@ export default function StudentMedicalUpload({ route, navigation }) {
         setUploading(true);
         const file = result.assets[0];
 
-        // FormData භාවිතා කර backend එකට යැවීම
+        // POST /upload_medical (multipart/form-data)
         const formData = new FormData();
-        formData.append('action', 'upload_medical');
         formData.append('record_id', recordId);
         formData.append('medical_file', {
           uri: file.uri,
@@ -54,22 +47,16 @@ export default function StudentMedicalUpload({ route, navigation }) {
           type: file.mimeType,
         });
 
-        const response = await fetch('https://attendence-system-foc.onrender.com', {
-          method: 'POST',
-          body: formData,
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
-        const data = await response.json();
+        const data = await upload('/upload_medical', formData);
         if (data.status === 'success') {
-          Alert.alert("Success", "Medical report එක සාර්ථකව upload කළා.");
-          fetchAbsentRecords(); // List එක refresh කරන්න
+          Alert.alert("Success", "Medical report uploaded successfully.");
+          fetchAbsentRecords();
         } else {
           Alert.alert("Failed", data.message);
         }
       }
     } catch (error) {
-      Alert.alert("Error", "Upload කිරීම අසාර්ථකයි.");
+      Alert.alert("Error", "Upload failed.");
     } finally {
       setUploading(false);
     }

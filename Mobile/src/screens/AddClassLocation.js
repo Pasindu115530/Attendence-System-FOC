@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { post } from '../api';
 
 export default function AddClassLocation({ navigation }) {
   const [roomName, setRoomName] = useState('');
@@ -18,26 +19,24 @@ export default function AddClassLocation({ navigation }) {
 
   const handleSave = async () => {
     if (!roomName) return Alert.alert("Error", "Please enter a room name");
-    if (!points.a || !points.b || !points.c || !points.d) return Alert.alert("Error", "Please mark all 4 points");
-    
+    if (!points.a || !points.b || !points.c || !points.d)
+      return Alert.alert("Error", "Please mark all 4 corner points");
+
     setLoading(true);
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update_geofence',
-          room_name: roomName,
-          lat_a: points.a.latitude, lon_a: points.a.longitude,
-          lat_b: points.b.latitude, lon_b: points.b.longitude,
-          lat_c: points.c.latitude, lon_c: points.c.longitude,
-          lat_d: points.d.latitude, lon_d: points.d.longitude,
-        })
+      // POST /update_geofence  →  { status, data: { message } }
+      const res = await post('/update_geofence', {
+        room_name: roomName,
+        lat_a: points.a.latitude, lon_a: points.a.longitude,
+        lat_b: points.b.latitude, lon_b: points.b.longitude,
+        lat_c: points.c.latitude, lon_c: points.c.longitude,
+        lat_d: points.d.latitude, lon_d: points.d.longitude,
       });
-      const res = await response.json();
       if (res.status === 'success') {
         Alert.alert("Success", "Location Boundary Updated!");
         navigation.goBack();
+      } else {
+        Alert.alert("Error", res.message || "Failed to update database");
       }
     } catch (e) {
       Alert.alert("Error", "Failed to update database");

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { post } from '../api';
 
 const { width } = Dimensions.get('window');
 
@@ -41,28 +42,25 @@ export default function LoginScreen({ navigation }) {
     }
 
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', username, password }),
-      });
-
-      const result = await response.json();
-      console.log("Response:", result);
+      // POST /login  →  { status, data: { user_id, nic, role } }
+      const result = await post('/login', { username, password });
+      console.log("Login Response:", result);
 
       if (result.status === "success") {
-        const user = result.data;
+        const user = result.data;          // { user_id, nic, role }
         if (user.role === "Admin" || user.role === "Lecturer") {
           navigation.replace('AdminDashboard', { user_id: user.user_id });
         } else if (user.role === "Student") {
           navigation.replace('UserDashboard', { user_id: user.user_id });
+        } else {
+          Alert.alert("Login Failed", "Unknown user role: " + user.role);
         }
       } else {
-        Alert.alert("Login Failed", result.message);
+        Alert.alert("Login Failed", result.message || "Invalid credentials");
       }
     } catch (error) {
       console.error("Login Error:", error);
-      Alert.alert("Error", "Could not connect to the server. Please check your internet connection.");
+      Alert.alert("Error", "Could not connect to the server. Please check your connection.");
     }
   };
 
