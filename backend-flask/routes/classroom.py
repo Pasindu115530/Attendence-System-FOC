@@ -1,73 +1,137 @@
 """
-Face-verification endpoint powered by DeepFace.
+routes/classroom.py — Face recognition endpoints powered by AWS Rekognition.
 
-POST /verify-face
-  Form field: image  (multipart/form-data)
+Replaces the old DeepFace / TensorFlow implementation.
+No ML models are run locally — all processing is done by AWS Rekognition API.
 
-The known_students/ folder must contain one reference photo per student,
-named <student_id>.<ext>  (e.g.  S1234.jpg).
-DeepFace.find() returns the matched student_id extracted from the filename.
+Endpoints:
+  POST /register-face   — Admin registers a student's face (IndexFaces)
+  POST /verify-face     — Login/attendance check (SearchFacesByImage)
+  DELETE /delete-face/<user_id> — Remove a student's face vectors
 """
 
-import os
-import time
 from flask import Blueprint, request, current_app
+from services.rekognition import rekognition_service
 from utils.response import success, error, failed
 
 face_bp = Blueprint("face", __name__)
 
-_TEMP_PREFIX = "temp_captured_"
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _read_image_bytes() -> tuple[bytes | None, object | None]:
+    """
+    Extract image bytes from the multipart request.
+    Returns (bytes, None) on success or (None, error_response) on failure.
+    """
+    if "image" not in request.files:
+        return None, error("No image uploaded. Use field name: 'image'", 400)
+    file = request.files["image"]
+    if file.filename == "":
+        return None, error("Empty filename", 400)
+    image_bytes = file.read()
+    if len(image_bytes) == 0:
+        return None, error("Empty file uploaded", 400)
+    return image_bytes, None
+
+
+# ── Routes ────────────────────────────────────────────────────────────────────
+
+@face_bp.post("/register-face")
+def register_face():
+    """
+    Register a student's face photo into the AWS Rekognition Collection.
+
+    Request (multipart/form-data):
+      user_id  — string, e.g. "S001"
+      image    — JPEG/PNG file field
+
+    Response:
+      { status: "success", data: { user_id, face_id } }
+      { status: "error",   message: "..." }
+
+    Notes:
+      - If the student already has a registered face, it is replaced.
+      - Image must contain exactly one clear face.
+    """
+    user_id = request.form.get("user_id", "").strip()
+    if not user_id:
+        return error("user_id field is required", 400)
+
+    image_bytes, err = _read_image_bytes()
+    if err:
+        return err
+
+    result = rekognition_service.index_face(user_id, image_bytes)
+
+    if not result["ok"]:
+        return error(result["reason"])
+
+    return success({
+        "user_id": result["user_id"],
+        "face_id": result["face_id"],
+        "message": f"Face registered successfully for student {user_id}",
+    })
 
 
 @face_bp.post("/verify-face")
 def verify_face():
-    if "image" not in request.files:
-        return error("No image uploaded (field: image)", 400)
+    """
+    Search the Rekognition Collection for the best face match.
 
-    file = request.files["image"]
-    if file.filename == "":
-        return error("Empty filename", 400)
+    Used for:
+      - Face-based attendance marking
+      - Face-based login (without student ID entry)
 
-    # Save the incoming frame to a unique temp path (thread-safe)
-    temp_path = f"{_TEMP_PREFIX}{int(time.time() * 1000)}.jpg"
-    file.save(temp_path)
+    Request (multipart/form-data):
+      image — JPEG/PNG file field (live camera frame)
 
-    db_path = current_app.config["KNOWN_STUDENTS_PATH"]
-    model_name = current_app.config["FACE_MODEL"]
+    Response (match found):
+      { status: "success", data: { student_id, confidence, face_id } }
 
-    try:
-        from deepface import DeepFace  # lazy import — heavy dependency
+    Response (no match):
+      { status: "failed", message: "No matching face found" }
 
-        result = DeepFace.find(
-            img_path=temp_path,
-            db_path=db_path,
-            model_name=model_name,
-            enforce_detection=True,
-            silent=True,
-        )
+    Response (no face in image):
+      { status: "failed", message: "No face detected in the uploaded image" }
+    """
+    image_bytes, err = _read_image_bytes()
+    if err:
+        return err
 
-        _cleanup(temp_path)
+    result = rekognition_service.search_face(image_bytes)
 
-        if result and len(result) > 0 and not result[0].empty:
-            matched_path = result[0]["identity"].iloc[0]
-            filename = os.path.basename(matched_path)
-            student_id = os.path.splitext(filename)[0]
-            return success({
-                "message": "Face matched successfully",
-                "student_id": student_id,
-            })
+    if not result["ok"]:
+        return failed(result["reason"])
 
-        return failed("Face does not match any student")
-
-    except Exception as exc:
-        _cleanup(temp_path)
-        # DeepFace raises ValueError / AttributeError when no face is detected
-        return failed(f"No face detected or system error: {exc}")
+    return success({
+        "student_id": result["user_id"],
+        "confidence": result["confidence"],
+        "face_id":    result["face_id"],
+        "message":    "Face matched successfully",
+    })
 
 
-def _cleanup(path: str) -> None:
-    try:
-        if os.path.exists(path):
-            os.remove(path)
-    except OSError:
-        pass
+@face_bp.delete("/delete-face/<string:user_id>")
+def delete_face(user_id: str):
+    """
+    Remove all face vectors for a student from the Rekognition Collection.
+
+    Used when:
+      - A student's face photo needs to be updated
+      - A student account is removed
+
+    Request: DELETE /delete-face/S001
+
+    Response:
+      { status: "success", data: { user_id, removed_count } }
+    """
+    if not user_id:
+        return error("user_id is required", 400)
+
+    result = rekognition_service.delete_faces(user_id)
+
+    return success({
+        "user_id":       user_id,
+        "removed_count": result["removed_count"],
+        "message":       f"Removed {result['removed_count']} face vector(s) for {user_id}",
+    })

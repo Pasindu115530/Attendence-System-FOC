@@ -11,16 +11,21 @@ from routes.report import report_bp
 from routes.upload import upload_bp
 from routes.classroom import face_bp
 
+# ── Services ──────────────────────────────────────────────────────────────────
+from services.rekognition import rekognition_service
+
 
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Ensure upload dirs exist at startup
+    # Ensure upload dir exists at startup (medical reports only)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    os.makedirs(app.config["KNOWN_STUDENTS_PATH"], exist_ok=True)
 
-    # ── CORS (simple manual headers) ─────────────────────────────────────────
+    # Initialise AWS Rekognition service (lazy boto3 client)
+    rekognition_service.init_app(app)
+
+    # ── CORS ─────────────────────────────────────────────────────────────────
     @app.after_request
     def add_cors(response):
         response.headers["Access-Control-Allow-Origin"] = "*"
