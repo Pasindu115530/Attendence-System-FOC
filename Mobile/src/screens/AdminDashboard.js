@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { post } from '../api';
 
 export default function AdminDashboard({ navigation }) {
   const [lectures, setLectures] = useState([]);
@@ -24,21 +25,17 @@ export default function AdminDashboard({ navigation }) {
 
   const fetchAdminData = useCallback(async () => {
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_admin_dashboard' }),
-      });
-      const data = await response.json();
-      
+      // POST /get_admin_dashboard  →  { status, data: { lectures: [...] } }
+      const data = await post('/get_admin_dashboard', {});
+
       if (data.status === 'success') {
-        setLectures(data.lectures);
+        setLectures(data.data.lectures);
       } else {
         setLectures([]);
       }
     } catch (error) {
       console.error("Fetch Error: ", error);
-      Alert.alert("Error", "Server එක සම්බන්ධ කර ගැනීමට නොහැකි විය.");
+      Alert.alert("Error", "Could not connect to the server.");
     } finally {
       setLoading(false);
       setRefreshing(false);

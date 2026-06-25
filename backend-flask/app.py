@@ -24,7 +24,7 @@ def create_app(config_class=Config) -> Flask:
     @app.after_request
     def add_cors(response):
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = (
             "Content-Type, Authorization, X-Requested-With"
         )
@@ -36,7 +36,7 @@ def create_app(config_class=Config) -> Flask:
         if request.method == "OPTIONS":
             resp = make_response()
             resp.headers["Access-Control-Allow-Origin"] = "*"
-            resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+            resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
             resp.headers["Access-Control-Allow-Headers"] = (
                 "Content-Type, Authorization, X-Requested-With"
             )

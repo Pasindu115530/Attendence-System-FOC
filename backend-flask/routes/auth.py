@@ -28,5 +28,5 @@ def login():
             user_row = cur.fetchone()
 
     if user_row:
-        return success({"data": dict(user_row)})
+        return success(dict(user_row))
     return error("Invalid credentials")

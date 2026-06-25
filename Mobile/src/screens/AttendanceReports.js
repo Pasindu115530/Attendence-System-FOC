@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { post } from '../api';
 
 export default function AdvancedReports() {
   const [filters, setFilters] = useState({ dept_id: '', batch: '', course_id: '' });
@@ -37,23 +38,14 @@ export default function AdvancedReports() {
 
   const fetchOptions = async () => {
     try {
-      const [deptRes, batchRes] = await Promise.all([
-        fetch('https://attendence-system-foc.onrender.com', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'get_departments' }),
-        }),
-        fetch('https://attendence-system-foc.onrender.com', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'get_batches' }),
-        })
+      // POST /get_departments and /get_batches in parallel
+      const [deptData, batchData] = await Promise.all([
+        post('/get_departments', {}),
+        post('/get_batches', {}),
       ]);
-      const deptData = await deptRes.json();
-      const batchData = await batchRes.json();
 
-      if (deptData.status === 'success') setDepartments(deptData.departments);
-      if (batchData.status === 'success') setBatches(batchData.batches);
+      if (deptData.status === 'success') setDepartments(deptData.data.departments);
+      if (batchData.status === 'success') setBatches(batchData.data.batches);
     } catch (e) {
       console.error(e);
     } finally {
@@ -63,13 +55,9 @@ export default function AdvancedReports() {
 
   const fetchCourses = async (deptId) => {
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_courses', dept_id: deptId }),
-      });
-      const data = await response.json();
-      if (data.status === 'success') setCourses(data.courses);
+      // POST /get_courses  →  { status, data: { courses: [...] } }
+      const data = await post('/get_courses', { dept_id: deptId });
+      if (data.status === 'success') setCourses(data.data.courses);
     } catch (e) {
       console.error(e);
     }
@@ -81,24 +69,21 @@ export default function AdvancedReports() {
       return;
     }
     setLoading(true);
-    setResults([]); // Clear previous results
+    setResults([]);
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_filtered_report', ...filters }),
-      });
-      const data = await response.json();
+      // POST /get_filtered_report  →  { status, data: { report: [...] } }
+      const data = await post('/get_filtered_report', filters);
       if (data.status === 'success') {
-        setResults(data.report);
-        if (data.report.length === 0) Alert.alert("Notice", "No records found for the selected filters.");
+        setResults(data.data.report);
+        if (data.data.report.length === 0)
+          Alert.alert("Notice", "No records found for the selected filters.");
       } else {
         Alert.alert("Notice", data.message || "No records found");
       }
-    } catch (e) { 
-      Alert.alert("Error", "Failed to fetch report. Please check your connection."); 
-    } finally { 
-      setLoading(false); 
+    } catch (e) {
+      Alert.alert("Error", "Failed to fetch report. Please check your connection.");
+    } finally {
+      setLoading(false);
     }
   };
 

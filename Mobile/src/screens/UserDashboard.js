@@ -13,6 +13,7 @@ import {
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { post } from '../api';
 
 export default function UserDashboard({ route, navigation }) {
   const { user_id } = route.params || { user_id: 'TEST001' }; 
@@ -34,13 +35,9 @@ export default function UserDashboard({ route, navigation }) {
 
   const fetchDashboard = async () => {
     try {
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_dashboard', user_id: user_id }),
-      });
-      const res = await response.json();
-      if (res.status === 'success') setLecture(res.lecture);
+      // POST /get_dashboard  →  { status, data: { lecture: {...} } }
+      const res = await post('/get_dashboard', { user_id });
+      if (res.status === 'success') setLecture(res.data.lecture);
     } catch (e) {
       Alert.alert("Error", "Could not fetch data");
     } finally {
@@ -56,22 +53,20 @@ export default function UserDashboard({ route, navigation }) {
 
       let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
 
-      const response = await fetch('https://attendence-system-foc.onrender.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'mark_attendance',
-          user_id: user_id,
-          course_id: lecture.course_id,
-          timetable_id: lecture.id,
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude
-        }),
+      // POST /mark_attendance  →  { status, data: { message, attendance_status, distance } }
+      const res = await post('/mark_attendance', {
+        user_id,
+        course_id: lecture.course_id,
+        timetable_id: lecture.id,
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
       });
 
-      const res = await response.json();
       if (res.status === 'success') {
-        Alert.alert(res.attendance_status === 'Present' ? "Success" : "Out of Range", res.message);
+        Alert.alert(
+          res.data.attendance_status === 'Present' ? "Success" : "Out of Range",
+          res.data.message
+        );
         fetchDashboard();
       } else {
         Alert.alert("Failed", res.message || "Could not mark attendance");
