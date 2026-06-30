@@ -8,7 +8,14 @@
  *   Production        → https://your-deployed-backend.com
  */
 
-export const BASE_URL = 'http://10.0.2.2:5000';
+// ── Environment switcher ─────────────────────────────────────────────────────
+// Comment/uncomment the line matching your current environment:
+
+// export const BASE_URL = 'http://10.0.2.2:5000';       // Android Emulator
+// export const BASE_URL = 'http://localhost:5000';        // iOS Simulator
+// export const BASE_URL = 'http://192.168.1.10:5000';    // Physical Device (LAN)
+export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
+
 
 /**
  * post(endpoint, body)

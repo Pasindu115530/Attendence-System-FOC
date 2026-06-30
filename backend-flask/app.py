@@ -56,6 +56,25 @@ def create_app(config_class=Config) -> Flask:
     app.register_blueprint(upload_bp)
     app.register_blueprint(face_bp)
 
+    # ── Health Check ─────────────────────────────────────────────────────────
+    @app.get("/health")
+    def health():
+        """GET /health — browser-friendly status check."""
+        from flask import jsonify
+        from database.db import get_connection
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+            db_status = "connected"
+        except Exception as exc:
+            db_status = f"error: {exc}"
+        return jsonify({
+            "status": "ok",
+            "database": db_status,
+            "service": "Attendance System API",
+        })
+
     return app
 
 
