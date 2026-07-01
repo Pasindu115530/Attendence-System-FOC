@@ -10,11 +10,13 @@ import {
   Alert,
   Animated,
   Dimensions,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { post } from '../api';
+import * as ImagePicker from 'expo-image-picker';
+import { post, upload } from '../api';
 
 const { width } = Dimensions.get('window');
 
@@ -22,6 +24,7 @@ export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isFocused, setIsFocused] = useState({ username: false, password: false });
+  const [loadingFace, setLoadingFace] = useState(false);
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -61,6 +64,81 @@ export default function LoginScreen({ navigation }) {
     } catch (error) {
       console.error("Login Error:", error);
       Alert.alert("Error", "Could not connect to the server. Please check your connection.");
+    }
+  };
+
+  const handleFaceLogin = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert("Permission Denied", "Camera permission is required to use face login.");
+        return;
+      }
+
+      const cameraResult = await ImagePicker.launchCameraAsync({
+        allowsEditing: false,
+        aspect: [4, 3],
+        quality: 0.1,
+      });
+
+      if (cameraResult.canceled || !cameraResult.assets || cameraResult.assets.length === 0) {
+        return;
+      }
+
+      setLoadingFace(true);
+
+      const localUri = cameraResult.assets[0].uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: Platform.OS === 'ios' ? localUri.replace('file://', '') : localUri,
+        name: filename || 'capture.jpg',
+        type,
+      });
+
+      console.log("Uploading face image to verify-face...");
+      const faceRes = await upload('/verify-face', formData);
+      console.log("Face Verify Response:", faceRes);
+
+      if (faceRes.status === "success") {
+        const studentId = faceRes.data?.student_id;
+        if (!studentId) {
+          Alert.alert("Error", "Could not retrieve user ID from face verification.");
+          setLoadingFace(false);
+          return;
+        }
+
+        console.log(`Face matched successfully! Fetching details for ${studentId}...`);
+        const userRes = await post('/get_user_by_id', { user_id: studentId });
+        console.log("Get User Response:", userRes);
+
+        if (userRes.status === "success") {
+          const user = userRes.data;
+          if (user.role === "Admin" || user.role === "Lecturer") {
+             navigation.replace('AdminDashboard', { user_id: user.user_id });
+          } else {
+             navigation.replace('UserDashboard', { user_id: user.user_id });
+          }
+        } else {
+          console.log("Fallback: /get_user_by_id endpoint not available on production. Inferring role from user_id prefix...");
+          const lowerId = studentId.toLowerCase();
+          if (lowerId.startsWith('admin') || lowerId.startsWith('l')) {
+             navigation.replace('AdminDashboard', { user_id: studentId });
+          } else {
+             navigation.replace('UserDashboard', { user_id: studentId });
+          }
+        }
+      } else {
+        Alert.alert("Verification Failed", faceRes.message || "No matching face found.");
+      }
+    } catch (err) {
+      console.error("Face Login Error:", err);
+      Alert.alert("Error", "An error occurred during face recognition login.");
+    } finally {
+      setLoadingFace(false);
     }
   };
 
@@ -159,6 +237,32 @@ export default function LoginScreen({ navigation }) {
                   <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" style={{ marginLeft: 8 }} />
                 </LinearGradient>
               </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Face Login Button */}
+              <TouchableOpacity 
+                style={[styles.button, styles.faceButton]} 
+                onPress={handleFaceLogin}
+                activeOpacity={0.8}
+                disabled={loadingFace}
+              >
+                <View style={styles.faceButtonContent}>
+                  {loadingFace ? (
+                    <ActivityIndicator size="small" color="#667eea" />
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons name="face-recognition" size={22} color="#667eea" style={{ marginRight: 8 }} />
+                      <Text style={styles.faceButtonText}>Login with Face ID</Text>
+                    </>
+                  )}
+                </View>
+              </TouchableOpacity>
             </View>
 
             <Text style={styles.footerText}>Faculty of Computing</Text>
@@ -234,6 +338,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 16, letterSpacing: 0.5 },
+  
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e2e8f0',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  faceButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#667eea',
+    elevation: 0,
+    marginTop: 0,
+  },
+  faceButtonContent: {
+    height: 54,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  faceButtonText: {
+    color: '#667eea',
+    fontWeight: '700',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
   
   footerText: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: 24, fontSize: 13, fontWeight: '500' }
 });
