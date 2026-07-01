@@ -31,6 +31,7 @@ export default function LoginScreen({ navigation }) {
   const [scanningStatus, setScanningStatus] = useState('Position your face in the scan area');
   
   const cameraRef = useRef(null);
+  const failedAttemptsRef = useRef(0);
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -91,6 +92,7 @@ export default function LoginScreen({ navigation }) {
   const handleFaceLogin = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status === 'granted') {
+      failedAttemptsRef.current = 0;
       setIsFaceLoginMode(true);
       setIsProcessing(false);
       setScanningStatus('Position your face in the scan area');
@@ -135,11 +137,20 @@ export default function LoginScreen({ navigation }) {
       if (faceRes.status === "success") {
         const studentId = faceRes.data?.student_id;
         if (!studentId) {
-          setScanningStatus('Scanning for face...');
-          setIsProcessing(false);
+          failedAttemptsRef.current += 1;
+          if (failedAttemptsRef.current >= 3) {
+            setIsFaceLoginMode(false);
+            setIsProcessing(false);
+            Alert.alert("Login Failed", "User not found");
+            failedAttemptsRef.current = 0;
+          } else {
+            setScanningStatus('Scanning for face...');
+            setIsProcessing(false);
+          }
           return;
         }
 
+        failedAttemptsRef.current = 0;
         setScanningStatus('Matched! Logging in...');
         const userRes = await post('/get_user_by_id', { user_id: studentId });
         
@@ -162,13 +173,29 @@ export default function LoginScreen({ navigation }) {
           }
         }
       } else {
-        setScanningStatus('Scanning for face...');
-        setIsProcessing(false);
+        failedAttemptsRef.current += 1;
+        if (failedAttemptsRef.current >= 3) {
+          setIsFaceLoginMode(false);
+          setIsProcessing(false);
+          Alert.alert("Login Failed", "User not found");
+          failedAttemptsRef.current = 0;
+        } else {
+          setScanningStatus('Scanning for face...');
+          setIsProcessing(false);
+        }
       }
     } catch (err) {
       console.error("Auto face login error:", err);
-      setScanningStatus('Scanning for face...');
-      setIsProcessing(false);
+      failedAttemptsRef.current += 1;
+      if (failedAttemptsRef.current >= 3) {
+        setIsFaceLoginMode(false);
+        setIsProcessing(false);
+        Alert.alert("Login Failed", "User not found");
+        failedAttemptsRef.current = 0;
+      } else {
+        setScanningStatus('Scanning for face...');
+        setIsProcessing(false);
+      }
     }
   };
 
