@@ -112,6 +112,52 @@ def add_timetable():
     return success({"message": "Timetable entry added"})
 
 
+@admin_bp.post("/get_all_timetable")
+def get_all_timetable():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT t.id, t.course_id, t.classroom_id, t.day_of_week, t.start_time, t.end_time, t.dept_id,
+                       c.course_name, r.room_name
+                FROM timetable t
+                JOIN courses c ON t.course_id = c.id
+                JOIN classrooms r ON t.classroom_id = r.id
+                ORDER BY CASE t.day_of_week
+                    WHEN 'Monday' THEN 1
+                    WHEN 'Tuesday' THEN 2
+                    WHEN 'Wednesday' THEN 3
+                    WHEN 'Thursday' THEN 4
+                    WHEN 'Friday' THEN 5
+                    WHEN 'Saturday' THEN 6
+                    WHEN 'Sunday' THEN 7
+                    ELSE 8
+                END, t.start_time ASC
+                """
+            )
+            slots = [dict(r) for r in cur.fetchall()]
+    for s in slots:
+        if s.get("start_time"):
+            s["start_time"] = str(s["start_time"])
+        if s.get("end_time"):
+            s["end_time"] = str(s["end_time"])
+    return success({"timetable": slots})
+
+
+@admin_bp.post("/delete_timetable")
+def delete_timetable():
+    data = request.get_json(force=True, silent=True) or {}
+    slot_id = data.get("slot_id")
+    if not slot_id:
+        return error("slot_id is required")
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM timetable WHERE id = %s", (slot_id,))
+        conn.commit()
+    return success({"message": "Timetable slot deleted"})
+
+
+
 @admin_bp.post("/update_geofence")
 def update_geofence():
     data = request.get_json(force=True, silent=True) or {}

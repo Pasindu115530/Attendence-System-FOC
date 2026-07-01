@@ -15,6 +15,8 @@
 // export const BASE_URL = 'http://localhost:5000';        // iOS Simulator
 // export const BASE_URL = 'http://192.168.1.10:5000';    // Physical Device (LAN)
 export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
+// export const BASE_URL = 'http://10.0.2.2:5000';       // Android Emulator (Local Dev)
+// export const BASE_URL = 'http://localhost:5000';        // iOS Simulator (Local Dev)
 
 
 /**
@@ -27,12 +29,24 @@ export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
  * @returns {Promise<object>}
  */
 export async function post(endpoint, body = {}) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      return { status: 'error', message: `Server returned HTTP ${response.status}` };
+    }
+    const json = await response.json();
+    if (json.status === 'success' && !json.hasOwnProperty('data')) {
+      return { status: 'success', data: json };
+    }
+    return json;
+  } catch (error) {
+    console.error(`POST ${endpoint} error:`, error);
+    return { status: 'error', message: 'Network request failed' };
+  }
 }
 
 /**
@@ -45,10 +59,23 @@ export async function post(endpoint, body = {}) {
  * @returns {Promise<object>}
  */
 export async function upload(endpoint, formData) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: 'POST',
-    body: formData,
-    // Do NOT set Content-Type manually — fetch sets it with boundary for multipart
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      body: formData,
+      // Do NOT set Content-Type manually — fetch sets it with boundary for multipart
+    });
+    if (!response.ok) {
+      return { status: 'error', message: `Server returned HTTP ${response.status}` };
+    }
+    const json = await response.json();
+    if (json.status === 'success' && !json.hasOwnProperty('data')) {
+      return { status: 'success', data: json };
+    }
+    return json;
+  } catch (error) {
+    console.error(`UPLOAD ${endpoint} error:`, error);
+    return { status: 'error', message: 'File upload failed' };
+  }
 }
+
