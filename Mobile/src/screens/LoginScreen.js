@@ -421,13 +421,13 @@ export default function LoginScreen({ navigation }) {
                 }
               ]}
             >
-              {/* Logo Section matching Mockup "MO" */}
-              <View style={styles.logoContainer}>
-                <View style={styles.logoMContainer}>
-                  <View style={styles.logoBar} />
-                  <Text style={styles.logoTextM}>F</Text>
+              {/* FOC CheckIn Creative Text Layout */}
+              <View style={styles.creativeLogoRow}>
+                <Text style={styles.focText}>FOC</Text>
+                <Text style={styles.checkText}>Check</Text>
+                <View style={styles.inBadge}>
+                  <Text style={styles.inText}>In</Text>
                 </View>
-                <Text style={styles.logoTextO}>OC</Text>
               </View>
 
               {isFaceLoginMode ? (
@@ -514,7 +514,7 @@ export default function LoginScreen({ navigation }) {
 
                   {/* Switch to SignUp Toggle */}
                   <TouchableOpacity onPress={() => setIsSignUpMode(true)} activeOpacity={0.7}>
-                    <Text style={styles.switchModeText}>Don't have an account ? Create Account</Text>
+                    <Text style={styles.switchModeText}>Don't have an account ? Contact Administrator</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -583,7 +583,10 @@ export default function LoginScreen({ navigation }) {
               )}
 
               {/* Sub-Footer Faculty Text */}
-              <Text style={styles.footerText}>Faculty of Computing</Text>
+              <View style={styles.footerContainer}>
+                <Text style={styles.footerText}>Faculty of Computing</Text>
+                <Text style={styles.footerSubText}>University of Sri Jayewardenepura</Text>
+              </View>
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -885,13 +888,24 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   
+  footerContainer: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
   footerText: { 
     textAlign: 'center', 
     color: 'rgba(255, 255, 255, 0.55)', 
-    marginTop: 40, 
     fontSize: 13, 
     fontWeight: '600',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+  },
+  footerSubText: { 
+    textAlign: 'center', 
+    color: 'rgba(255, 255, 255, 0.55)', 
+    fontSize: 12, 
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -933,7 +947,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 30,
+    marginTop: 20,
+    marginBottom: 40,
   },
   focText: {
     fontSize: 32,
