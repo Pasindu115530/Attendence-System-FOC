@@ -33,10 +33,7 @@ export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  // Sign Up form state
-  const [signUpEmail, setSignUpEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [reTypePassword, setReTypePassword] = useState('');
+
 
   // Face Login states
   const [isFaceLoginMode, setIsFaceLoginMode] = useState(false);
@@ -170,22 +167,7 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleCreateAccount = () => {
-    if (!signUpEmail || !newPassword || !reTypePassword) {
-      showNotification("Please fill in all fields");
-      return;
-    }
 
-    if (newPassword !== reTypePassword) {
-      showNotification("Passwords do not match");
-      return;
-    }
-
-    showNotification(
-      "Account registration is managed by the administrator. Contact your Faculty Admin.",
-      "success"
-    );
-  };
 
   const handleFaceLogin = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -518,66 +500,45 @@ export default function LoginScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
               ) : (
-                /* Create Account Screen Mode */
+                /* Contact Administrator Screen Mode */
                 <View style={styles.formContainer}>
-                  <Text style={styles.welcomeText}>Create Account</Text>
+                  <Text style={styles.welcomeText}>Contact Administrator</Text>
+                  
+                  {/* Contact Info Card */}
+                  <View style={styles.contactCard}>
+                    <MaterialCommunityIcons name="shield-account-outline" size={48} color="#007A68" style={styles.contactIconCenter} />
+                    
+                    <Text style={styles.contactInfoDesc}>
+                      Account registration is managed strictly by the administration. If you are a Student or Lecturer, please contact your Faculty Admin office to request an account.
+                    </Text>
+                    
+                    <View style={styles.contactItem}>
+                      <MaterialCommunityIcons name="email-outline" size={20} color="#007A68" />
+                      <Text style={styles.contactItemText}>admin@foc.sjp.ac.lk</Text>
+                    </View>
+                    
+                    <View style={styles.contactItem}>
+                      <MaterialCommunityIcons name="office-building" size={20} color="#007A68" />
+                      <Text style={styles.contactItemText}>Dean's Office, Faculty of Computing</Text>
+                    </View>
 
-                  {/* Sign Up Email */}
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="your email"
-                    placeholderTextColor="#a0aec0"
-                    value={signUpEmail}
-                    onChangeText={setSignUpEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
+                    <View style={styles.contactItem}>
+                      <MaterialCommunityIcons name="phone-outline" size={20} color="#007A68" />
+                      <Text style={styles.contactItemText}>+94 11 280 2000</Text>
+                    </View>
+                  </View>
 
-                  {/* New Password */}
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="new password"
-                    placeholderTextColor="#a0aec0"
-                    secureTextEntry
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    autoCapitalize="none"
-                  />
-
-                  {/* Re-type Password */}
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="re-type password"
-                    placeholderTextColor="#a0aec0"
-                    secureTextEntry
-                    value={reTypePassword}
-                    onChangeText={setReTypePassword}
-                    autoCapitalize="none"
-                  />
-
-                  {/* Terms & Privacy Disclaimer */}
-                  <Text style={styles.disclaimerText}>
-                    By creating an account, you agree to our{' '}
-                    <Text style={styles.disclaimerLink}>Terms of Service</Text> and{' '}
-                    <Text style={styles.disclaimerLink}>Privacy Policy</Text>
-                  </Text>
-
-                  {/* CREATE Action Button */}
+                  {/* BACK TO LOGIN Action Button */}
                   <TouchableOpacity 
                     style={styles.actionButton} 
-                    onPress={handleCreateAccount}
+                    onPress={() => setIsSignUpMode(false)}
                     activeOpacity={0.9}
                   >
                     <View style={styles.buttonIconCircle}>
-                      <MaterialCommunityIcons name="chevron-right" size={26} color="#fff" />
+                      <MaterialCommunityIcons name="chevron-left" size={26} color="#fff" />
                     </View>
-                    <Text style={styles.actionButtonText}>CREATE</Text>
+                    <Text style={styles.actionButtonText}>BACK TO LOGIN</Text>
                     <View style={{ width: 42 }} />
-                  </TouchableOpacity>
-
-                  {/* Switch to Login Toggle */}
-                  <TouchableOpacity onPress={() => setIsSignUpMode(false)} activeOpacity={0.7}>
-                    <Text style={styles.switchModeText}>Already have an account ? Log in</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1048,5 +1009,43 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  contactCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  contactIconCenter: {
+    marginBottom: 16,
+  },
+  contactInfoDesc: {
+    fontSize: 14,
+    color: '#4a5568',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+    fontWeight: '500',
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#edf2f7',
+  },
+  contactItemText: {
+    fontSize: 14,
+    color: '#2d3748',
+    marginLeft: 12,
+    fontWeight: '600',
   }
 });
