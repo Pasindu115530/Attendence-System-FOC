@@ -8,7 +8,12 @@ import {
   ActivityIndicator,
   Animated,
   ScrollView,
-  StatusBar
+  StatusBar,
+  TextInput,
+  Dimensions,
+  Platform,
+  ImageBackground,
+  Image
 } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,32 +21,56 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { post } from '../api';
 
 export default function UserDashboard({ route, navigation }) {
-  const { user_id } = route.params || { user_id: 'TEST001' }; 
+  const { user_id, user } = route.params || { user_id: 'TEST001' }; 
+  
+  // Dashboard & Navigation state
+  const [activeTab, setActiveTab] = useState('home'); // 'home', 'settings', 'search', 'menu'
+  const [currentTime, setCurrentTime] = useState(new Date());
   
   const [lecture, setLecture] = useState(null);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
+  const [userData, setUserData] = useState(user || { user_id, full_name: '', dept_id: 'Computing' });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
+  // Real-time ticking clock loop
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     fetchDashboard();
+    fetchUserData();
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [activeTab]);
 
   const fetchDashboard = async () => {
     try {
-      // POST /get_dashboard  →  { status, data: { lecture: {...} } }
       const res = await post('/get_dashboard', { user_id });
       if (res.status === 'success') setLecture(res.data.lecture);
     } catch (e) {
-      Alert.alert("Error", "Could not fetch data");
+      console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const res = await post('/get_user_by_id', { user_id });
+      if (res.status === 'success') {
+        setUserData(res.data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -53,7 +82,6 @@ export default function UserDashboard({ route, navigation }) {
 
       let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
 
-      // POST /mark_attendance  →  { status, data: { message, attendance_status, distance } }
       const res = await post('/mark_attendance', {
         user_id,
         course_id: lecture.course_id,
@@ -78,10 +106,24 @@ export default function UserDashboard({ route, navigation }) {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert("Logout", "Do you want to exit ?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Yes, Logout", onPress: () => navigation.replace('Login'), style: 'destructive' }
+    ]);
+  };
+
+  const getGreeting = () => {
+    const hrs = currentTime.getHours();
+    if (hrs < 12) return 'Good Morning';
+    if (hrs < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#667eea" />
+        <ActivityIndicator size="large" color="#007A68" />
         <Text style={{marginTop: 12, color: '#64748b', fontWeight: '500'}}>Loading your schedule...</Text>
       </View>
     );
@@ -89,232 +131,901 @@ export default function UserDashboard({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={activeTab === 'home' ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
       
-      {/* Header */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.greeting}>Hello,</Text>
-            <Text style={styles.userId}>{user_id}</Text>
-          </View>
-          <View style={styles.avatarContainer}>
-            <MaterialCommunityIcons name="account" size={28} color="#667eea" />
-          </View>
+      {/* Top Header Bar for non-home tabs */}
+      {activeTab !== 'home' && (
+        <View style={styles.topHeaderBar}>
+          <TouchableOpacity 
+            style={styles.topAvatarCircle} 
+            onPress={() => setActiveTab('settings')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.avatarPlaceholder}>
+              <MaterialCommunityIcons name="account" size={24} color="#94a3b8" />
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.topCloseSquare} 
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="close" size={18} color="#1e293b" />
+          </TouchableOpacity>
         </View>
-      </LinearGradient>
+      )}
 
       <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          activeTab === 'home' && { paddingTop: 0 } // span edge-to-edge
+        ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], width: '100%' }}>
           
-          {/* Status Card */}
-          <View style={[styles.statusCard, { borderColor: lecture?.isLive ? '#10b981' : '#f59e0b' }]}>
-            <View style={styles.statusHeader}>
-              <View style={[styles.statusBadge, { backgroundColor: lecture?.isLive ? '#d1fae5' : '#fef3c7' }]}>
-                <View style={[styles.statusDot, { backgroundColor: lecture?.isLive ? '#10b981' : '#f59e0b' }]} />
-                <Text style={[styles.statusBadgeText, { color: lecture?.isLive ? '#065f46' : '#92400e' }]}>
-                  {lecture?.isLive ? "LIVE NOW" : "UPCOMING"}
-                </Text>
-              </View>
-            </View>
-
-            {lecture ? (
-              <>
-                <Text style={styles.courseName}>{lecture.course_name}</Text>
-                <View style={styles.infoRow}>
-                  <View style={styles.infoItem}>
-                    <MaterialCommunityIcons name="map-marker-outline" size={18} color="#64748b" />
-                    <Text style={styles.infoText}>{lecture.room_name}</Text>
-                  </View>
-                  <View style={styles.infoItem}>
-                    <MaterialCommunityIcons name="clock-outline" size={18} color="#64748b" />
-                    <Text style={styles.infoText}>{lecture.start_time}</Text>
-                  </View>
-                </View>
-
-                {lecture.isLive && (
-                  lecture.hasMarked ? (
-                    <View style={[styles.actionBtn, styles.successBtn]}>
-                      <MaterialCommunityIcons name="check-circle" size={22} color="#fff" />
-                      <Text style={styles.actionBtnText}>Attendance Marked</Text>
-                    </View>
-                  ) : (
+          {activeTab === 'home' && (
+            <View style={{ width: '100%' }}>
+              {/* Home Curved Header Block with Solid Green Field and Full-Opacity Right Image */}
+              <View style={styles.headerContainer}>
+                {/* Right side cover image at full opacity */}
+                <Image 
+                  source={require('../../assets/cover-img.png')} 
+                  style={styles.headerRightImage} 
+                />
+                
+                {/* Horizontal Gradient Overlay (Fades out to reveal image on the right) */}
+                <LinearGradient
+                  colors={['#004d40', 'rgba(0, 77, 64, 0.9)', 'rgba(0, 77, 64, 0.2)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.headerSplitOverlay}
+                >
+                  {/* Embedded Top Row for Avatar & Logout */}
+                  <View style={styles.headerTopBar}>
                     <TouchableOpacity 
-                      style={styles.actionBtn} 
-                      onPress={handleMarkAttendance} 
-                      disabled={marking}
+                      style={styles.headerAvatarCircle} 
+                      onPress={() => setActiveTab('settings')}
                       activeOpacity={0.8}
                     >
-                      <LinearGradient
-                        colors={['#667eea', '#764ba2']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.actionBtnGradient}
-                      >
-                        {marking ? (
-                          <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                          <>
-                            <MaterialCommunityIcons name="map-marker-radius" size={22} color="#fff" />
-                            <Text style={styles.actionBtnText}>Mark Attendance</Text>
-                          </>
-                        )}
-                      </LinearGradient>
+                      <View style={styles.headerAvatarInner}>
+                        <MaterialCommunityIcons name="account" size={22} color="#004D40" />
+                      </View>
                     </TouchableOpacity>
-                  )
-                )}
-              </>
-            ) : (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIconContainer}>
-                  <MaterialCommunityIcons name="calendar-blank" size={40} color="#cbd5e1" />
-                </View>
-                <Text style={styles.emptyTitle}>No lectures scheduled</Text>
-                <Text style={styles.emptySubtitle}>You're all caught up for now</Text>
+                    
+                    <TouchableOpacity 
+                      style={styles.headerCloseSquare} 
+                      onPress={handleLogout}
+                      activeOpacity={0.8}
+                    >
+                      <MaterialCommunityIcons name="close" size={16} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Greeting & Name */}
+                  <View style={styles.headerWelcomeSection}>
+                    <Text style={styles.headerGreetingText}>{getGreeting()}</Text>
+                    <Text style={styles.headerStudentNameText}>{userData.full_name || user_id}</Text>
+                  </View>
+
+                  {/* Digital Clock */}
+                  <View style={styles.headerClockSection}>
+                    <Text style={styles.headerClockText}>
+                      {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                    </Text>
+                    <Text style={styles.headerDateText}>
+                      {currentTime.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </Text>
+                  </View>
+                </LinearGradient>
               </View>
-            )}
-          </View>
 
-          {/* Quick Actions */}
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuCard}
-            onPress={() => navigation.navigate('AbsentUploader', { studentId: user_id })}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
-              <MaterialCommunityIcons name="medical-bag" size={26} color="#f59e0b" />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Upload Medical Report</Text>
-              <Text style={styles.menuDesc}>Submit documents for absences</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#cbd5e1" />
-          </TouchableOpacity>
+              {/* Today's Schedule Card / Banners */}
+              <View style={styles.homeContentPadding}>
+                <Text style={styles.tabSectionTitle}>Today's Schedule</Text>
 
-          <TouchableOpacity 
-            style={[styles.menuCard, { marginBottom: 20 }]}
-            onPress={() => navigation.replace('Login')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: '#fee2e2' }]}>
-              <MaterialCommunityIcons name="logout" size={26} color="#ef4444" />
+                {lecture ? (
+                  <View style={[styles.lectureCard, lecture.isLive && styles.lectureCardLive]}>
+                    <View style={styles.cardHeaderRow}>
+                      <View style={[styles.badge, lecture.isLive ? styles.badgeLive : styles.badgeUpcoming]}>
+                        <View style={[styles.badgeDot, { backgroundColor: lecture.isLive ? '#007A68' : '#d97706' }]} />
+                        <Text style={[styles.badgeText, { color: lecture.isLive ? '#004D40' : '#92400e' }]}>
+                          {lecture.isLive ? 'LIVE NOW' : 'UPCOMING'}
+                        </Text>
+                      </View>
+                      <Text style={styles.cardTime}>{lecture.start_time?.substring(0, 5)} - {lecture.end_time?.substring(0, 5)}</Text>
+                    </View>
+
+                    <Text style={styles.cardCourseName}>{lecture.course_name}</Text>
+                    
+                    <View style={styles.cardInfoRow}>
+                      <View style={styles.cardPill}>
+                        <MaterialCommunityIcons name="map-marker" size={14} color="#007A68" />
+                        <Text style={styles.cardPillText}>{lecture.room_name}</Text>
+                      </View>
+                    </View>
+
+                    {lecture.isLive && (
+                      lecture.hasMarked ? (
+                        <View style={styles.markedBtn}>
+                          <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
+                          <Text style={styles.markedBtnText}>Attendance Marked</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity 
+                          style={styles.markBtn} 
+                          onPress={handleMarkAttendance}
+                          disabled={marking}
+                          activeOpacity={0.8}
+                        >
+                          <LinearGradient
+                            colors={['#029A84', '#004D40']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.markBtnGradient}
+                          >
+                            {marking ? (
+                              <ActivityIndicator color="#fff" size="small" />
+                            ) : (
+                              <>
+                                <MaterialCommunityIcons name="map-marker-radius" size={20} color="#fff" />
+                                <Text style={styles.markBtnText}>Mark Attendance</Text>
+                              </>
+                            )}
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      )
+                    )}
+                  </View>
+                ) : (
+                  <View style={styles.emptyStateCard}>
+                    <View style={styles.emptyIconCircle}>
+                      <MaterialCommunityIcons name="calendar-blank" size={36} color="#a0aec0" />
+                    </View>
+                    <Text style={styles.emptyTitle}>No Lectures Scheduled</Text>
+                    <Text style={styles.emptySubtitle}>You're all caught up for today.</Text>
+                  </View>
+                )}
+              </View>
             </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: '#ef4444' }]}>Sign Out</Text>
-              <Text style={styles.menuDesc}>Logout from your account</Text>
+          )}
+
+          {activeTab === 'settings' && (
+            <View style={[styles.profileContainer, { paddingHorizontal: 24 }]}>
+              {/* Profile Image card matching mockup */}
+              <View style={styles.profileImageContainer}>
+                <View style={styles.largeProfileCircle}>
+                  <MaterialCommunityIcons name="account" size={72} color="#cbd5e1" />
+                </View>
+                <Text style={styles.profilePhotoLabel}>Profile Photo</Text>
+              </View>
+
+              {/* Display fields matching mockup */}
+              <View style={styles.profileForm}>
+                <View style={styles.profileField}>
+                  <Text style={styles.profileFieldLabel}>Name</Text>
+                  <Text style={styles.profileFieldValue}>{userData.full_name || user_id}</Text>
+                </View>
+
+                <View style={styles.profileField}>
+                  <Text style={styles.profileFieldLabel}>Username / ID</Text>
+                  <Text style={styles.profileFieldValue}>{user_id}</Text>
+                </View>
+
+                <View style={styles.profileField}>
+                  <Text style={styles.profileFieldLabel}>Department</Text>
+                  <Text style={styles.profileFieldValue}>{userData.dept_id || 'Computing'}</Text>
+                </View>
+
+                <View style={styles.profileField}>
+                  <Text style={styles.profileFieldLabel}>Batch</Text>
+                  <Text style={styles.profileFieldValue}>{userData.batch_year ? `${userData.batch_year} Batch` : 'N/A'}</Text>
+                </View>
+              </View>
+
+              {/* Buttons matching mockup */}
+              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+                <Text style={styles.logoutBtnText}>Log Out</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.deleteBtn} 
+                onPress={() => Alert.alert("Request Delete", "Please contact your administrator to delete your account.")}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.deleteBtnText}>Delete Account</Text>
+              </TouchableOpacity>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#cbd5e1" />
-          </TouchableOpacity>
+          )}
+
+          {activeTab === 'search' && (
+            <View style={{ width: '100%', paddingHorizontal: 24 }}>
+              <Text style={styles.tabSectionTitle}>Search & Reports</Text>
+              <View style={styles.searchInputWrapper}>
+                <MaterialCommunityIcons name="magnify" size={20} color="#94a3b8" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchBar}
+                  placeholder="Search classes or dates..."
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              {/* Stub for reports/attendance log */}
+              <View style={styles.emptyStateCard}>
+                <View style={styles.emptyIconCircle}>
+                  <MaterialCommunityIcons name="file-chart-outline" size={36} color="#a0aec0" />
+                </View>
+                <Text style={styles.emptyTitle}>No search results</Text>
+                <Text style={styles.emptySubtitle}>Start typing to search your attendance logs.</Text>
+              </View>
+            </View>
+          )}
+
+          {activeTab === 'menu' && (
+            <View style={{ width: '100%', paddingHorizontal: 24 }}>
+              <Text style={styles.tabSectionTitle}>Today's Actions</Text>
+
+              {/* Upload Medical Report quick action card */}
+              <TouchableOpacity 
+                style={styles.quickActionCard} 
+                onPress={() => navigation.navigate('AbsentUploader', { studentId: user_id })}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuIconCircle, { backgroundColor: '#fff8e1' }]}>
+                  <MaterialCommunityIcons name="medical-bag" size={26} color="#ffb300" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.menuCardTitle}>Upload Medical Report</Text>
+                  <Text style={styles.menuCardDesc}>Submit medical certificates for absences</Text>
+                </View>
+                <View style={styles.menuChevron}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#ffb300" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.quickActionCard} 
+                onPress={() => Alert.alert("Support", "FOC Attendance System v1.0. Contact office for support.")}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuIconCircle, { backgroundColor: '#e6f4f2' }]}>
+                  <MaterialCommunityIcons name="help-circle-outline" size={26} color="#007A68" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.menuCardTitle}>Help & Support</Text>
+                  <Text style={styles.menuCardDesc}>FOC system guidelines and contact details</Text>
+                </View>
+                <View style={styles.menuChevron}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#007A68" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
 
         </Animated.View>
       </ScrollView>
+
+      {/* Custom Bottom Curved Tab Bar matching attached mockup */}
+      <View style={styles.navBarContainer}>
+        <View style={styles.navBar}>
+          
+          {/* Tab 1: Home */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('home')}
+            activeOpacity={0.8}
+          >
+            {activeTab === 'home' ? (
+              <View style={styles.activeIndicatorContainer}>
+                <View style={styles.activeProtrusion} />
+                <View style={styles.activeCircle}>
+                  <MaterialCommunityIcons name="home" size={24} color="#007A68" />
+                </View>
+              </View>
+            ) : (
+              <MaterialCommunityIcons name="home-outline" size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+
+          {/* Tab 2: Settings */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('settings')}
+            activeOpacity={0.8}
+          >
+            {activeTab === 'settings' ? (
+              <View style={styles.activeIndicatorContainer}>
+                <View style={styles.activeProtrusion} />
+                <View style={styles.activeCircle}>
+                  <MaterialCommunityIcons name="cog" size={24} color="#007A68" />
+                </View>
+              </View>
+            ) : (
+              <MaterialCommunityIcons name="cog-outline" size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+
+          {/* Tab 3: Search */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('search')}
+            activeOpacity={0.8}
+          >
+            {activeTab === 'search' ? (
+              <View style={styles.activeIndicatorContainer}>
+                <View style={styles.activeProtrusion} />
+                <View style={styles.activeCircle}>
+                  <MaterialCommunityIcons name="magnify" size={24} color="#007A68" />
+                </View>
+              </View>
+            ) : (
+              <MaterialCommunityIcons name="magnify" size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+
+          {/* Tab 4: Menu */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('menu')}
+            activeOpacity={0.8}
+          >
+            {activeTab === 'menu' ? (
+              <View style={styles.activeIndicatorContainer}>
+                <View style={styles.activeProtrusion} />
+                <View style={styles.activeCircle}>
+                  <MaterialCommunityIcons name="apps" size={24} color="#007A68" />
+                </View>
+              </View>
+            ) : (
+              <MaterialCommunityIcons name="apps" size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  
-  header: { 
-    paddingTop: 60, 
-    paddingBottom: 40, 
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 32, 
-    borderBottomRightRadius: 32,
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff'
   },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  greeting: { fontSize: 14, color: 'rgba(255,255,255,0.8)', fontWeight: '500' },
-  userId: { fontSize: 24, fontWeight: '700', color: '#fff', marginTop: 2 },
-  avatarContainer: { 
-    width: 48, 
-    height: 48, 
-    borderRadius: 16, 
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#fff' 
   },
   
-  scrollView: { flex: 1, marginTop: -20 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
-  
-  statusCard: { 
-    backgroundColor: '#fff', 
-    padding: 24, 
-    borderRadius: 24, 
-    borderWidth: 2,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-  },
-  statusHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  statusBadgeText: { fontSize: 12, fontWeight: '700' },
-  
-  courseName: { fontSize: 22, fontWeight: '700', color: '#1e293b', marginBottom: 12 },
-  infoRow: { flexDirection: 'row', marginBottom: 20 },
-  infoItem: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
-  infoText: { color: '#64748b', fontSize: 14, marginLeft: 6, fontWeight: '500' },
-  
-  actionBtn: { borderRadius: 16, overflow: 'hidden', elevation: 3 },
-  actionBtnGradient: { 
-    paddingVertical: 16, 
-    alignItems: 'center',
+  // Top Header Row for non-home tabs
+  topHeaderBar: {
     flexDirection: 'row',
-    justifyContent: 'center'
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    paddingBottom: 12,
+    backgroundColor: '#fff',
+    zIndex: 10,
   },
-  successBtn: { backgroundColor: '#10b981', paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
-  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 16, marginLeft: 8 },
-  
-  emptyState: { alignItems: 'center', paddingVertical: 20 },
-  emptyIconContainer: { 
-    width: 72, 
-    height: 72, 
-    borderRadius: 24, 
+  topAvatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12
   },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#475569' },
-  emptySubtitle: { fontSize: 13, color: '#94a3b8', marginTop: 4 },
-  
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginTop: 28, marginBottom: 14, marginLeft: 4 },
-  
-  menuCard: { 
-    flexDirection: 'row', 
-    backgroundColor: '#fff', 
-    padding: 18, 
-    borderRadius: 20, 
-    alignItems: 'center', 
-    marginBottom: 12,
-    elevation: 2,
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#cbd5e1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topCloseSquare: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  scrollContent: { 
+    paddingGrow: 1,
+    paddingBottom: 120, // Extra padding to scroll past the absolute bottom nav bar
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  // Curved Header Block matching mockup with Solid Green Field and Full-Opacity Right Image
+  headerContainer: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#004D40', // Solid brand green field background
+    borderBottomLeftRadius: 60, // Curved bottom left
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  headerRightImage: {
+    position: 'absolute',
+    right: -10,
+    bottom: -10,
+    top: 30,
+    width: '55%',
+    height: '100%',
+    resizeMode: 'contain',
+    opacity: 1.0, // Full opacity as requested!
+  },
+  headerSplitOverlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '100%',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 45 : 30,
+    paddingBottom: 25,
+    justifyContent: 'space-between',
+  },
+  headerTopBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  headerAvatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  menuIcon: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  menuContent: { flex: 1, marginLeft: 14 },
-  menuTitle: { fontSize: 15, fontWeight: '700', color: '#1e293b' },
-  menuDesc: { fontSize: 12, color: '#94a3b8', marginTop: 2 }
+  headerAvatarInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 22,
+    backgroundColor: '#e6f4f2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCloseSquare: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerWelcomeSection: {
+    marginTop: 10,
+  },
+  headerGreetingText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#a7f3d0', // Emerald-tinted mint green
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  headerStudentNameText: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#ffffff',
+    marginTop: 4,
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  headerClockSection: {
+    alignItems: 'flex-start',
+  },
+  headerClockText: {
+    fontSize: 44,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  headerDateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#cbd5e1',
+    marginTop: 2,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  homeContentPadding: {
+    width: '100%',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+
+  tabSectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 16,
+    letterSpacing: -0.2,
+  },
+
+  // Lectures Card styles
+  lectureCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    padding: 24,
+    width: '100%',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+    marginBottom: 20,
+  },
+  lectureCardLive: {
+    borderColor: '#00BFA5',
+    backgroundColor: '#e6f4f2',
+    shadowColor: '#00BFA5',
+    shadowOpacity: 0.08,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  badgeLive: {
+    backgroundColor: 'rgba(0, 180, 150, 0.15)',
+  },
+  badgeUpcoming: {
+    backgroundColor: '#fef3c7',
+  },
+  badgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  cardTime: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  cardCourseName: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 16,
+    lineHeight: 28,
+  },
+  cardInfoRow: {
+    flexDirection: 'row',
+    marginBottom: 24,
+  },
+  cardPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  cardPillText: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  markBtn: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+  },
+  markBtnGradient: {
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  markedBtn: {
+    backgroundColor: '#10b981',
+    borderRadius: 16,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markedBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+
+  // Empty state card
+  emptyStateCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  emptyIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+
+  // Profile Settings screen styles matching mockup
+  profileContainer: {
+    alignItems: 'center',
+    width: '100%',
+    paddingTop: 10,
+  },
+  profileImageContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  largeProfileCircle: {
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1.5,
+    borderColor: '#cbd5e1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  profilePhotoLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  profileForm: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  profileField: {
+    width: '100%',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  profileFieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  profileFieldValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  logoutBtn: {
+    backgroundColor: '#e2e8f0',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  logoutBtnText: {
+    color: '#475569',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  deleteBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteBtnText: {
+    color: '#ef4444',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+
+  // Search tab styles
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchBar: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#0f172a',
+  },
+
+  // Quick Tools styles
+  quickActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 12,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  menuIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuCardTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  menuCardDesc: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  menuChevron: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Custom Bottom Curved Tab Bar matching mockup
+  navBarContainer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 20,
+    right: 20,
+    height: 70,
+    zIndex: 99,
+  },
+  navBar: {
+    flexDirection: 'row',
+    backgroundColor: '#004D40', // Rich dark teal matching the theme
+    borderRadius: 24,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+    position: 'relative',
+  },
+  navItem: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeIndicatorContainer: {
+    position: 'absolute',
+    top: -24, // Protrude upwards
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 68,
+    height: 68,
+  },
+  activeProtrusion: {
+    position: 'absolute',
+    width: 68,
+    height: 38,
+    backgroundColor: '#004D40', // Matches the tab bar color
+    borderTopLeftRadius: 34,
+    borderTopRightRadius: 34,
+    top: 10, // Sits under the circle to blend
+  },
+  activeCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 3,
+    borderColor: '#029A84', // Matches primary teal
+  }
 });

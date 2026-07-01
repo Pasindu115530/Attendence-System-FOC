@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  KeyboardAvoidingView, 
-  Platform, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
   Animated,
   Dimensions,
@@ -33,16 +33,19 @@ export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-
+  // Sign Up form state
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [reTypePassword, setReTypePassword] = useState('');
 
   // Face Login states
   const [isFaceLoginMode, setIsFaceLoginMode] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [scanningStatus, setScanningStatus] = useState('Position your face in the scan area');
-  
+
   const cameraRef = useRef(null);
   const failedAttemptsRef = useRef(0);
-  
+
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -55,7 +58,7 @@ export default function LoginScreen({ navigation }) {
     // Pulse animation loop for the loading screen logo
     let pulseLoop = null;
     let radarLoop = null;
-    
+
     if (isAppLoading) {
       pulseLoop = Animated.loop(
         Animated.sequence([
@@ -116,7 +119,7 @@ export default function LoginScreen({ navigation }) {
 
   const showNotification = (message, type = 'error') => {
     setNotification({ visible: true, message, type });
-    
+
     // Slide down
     Animated.spring(notificationAnim, {
       toValue: Platform.OS === 'ios' ? 60 : 30,
@@ -154,7 +157,7 @@ export default function LoginScreen({ navigation }) {
         if (user.role === "Admin" || user.role === "Lecturer") {
           navigation.replace('AdminDashboard', { user_id: user.user_id });
         } else if (user.role === "Student") {
-          navigation.replace('UserDashboard', { user_id: user.user_id });
+          navigation.replace('UserDashboard', { user_id: user.user_id, user });
         } else {
           showNotification("Unknown user role: " + user.role);
         }
@@ -167,7 +170,22 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  const handleCreateAccount = () => {
+    if (!signUpEmail || !newPassword || !reTypePassword) {
+      showNotification("Please fill in all fields");
+      return;
+    }
 
+    if (newPassword !== reTypePassword) {
+      showNotification("Passwords do not match");
+      return;
+    }
+
+    showNotification(
+      "Account registration is managed by the administrator. Contact your Faculty Admin.",
+      "success"
+    );
+  };
 
   const handleFaceLogin = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -197,7 +215,7 @@ export default function LoginScreen({ navigation }) {
       });
 
       setScanningStatus('Verifying face signature...');
-      
+
       const localUri = photo.uri;
       const filename = localUri.split('/').pop();
       const match = /\.(\w+)$/.exec(filename || '');
@@ -233,22 +251,22 @@ export default function LoginScreen({ navigation }) {
         failedAttemptsRef.current = 0;
         setScanningStatus('Matched! Logging in...');
         const userRes = await post('/get_user_by_id', { user_id: studentId });
-        
+
         setIsFaceLoginMode(false);
         if (userRes.status === "success") {
           const user = userRes.data;
           if (user.role === "Admin" || user.role === "Lecturer") {
-             navigation.replace('AdminDashboard', { user_id: user.user_id });
+            navigation.replace('AdminDashboard', { user_id: user.user_id });
           } else {
-             navigation.replace('UserDashboard', { user_id: user.user_id });
+            navigation.replace('UserDashboard', { user_id: user.user_id, user });
           }
         } else {
           console.log("Fallback: Inferring role from user_id prefix...");
           const lowerId = studentId.toLowerCase();
           if (lowerId.startsWith('admin') || lowerId.startsWith('l')) {
-             navigation.replace('AdminDashboard', { user_id: studentId });
+            navigation.replace('AdminDashboard', { user_id: studentId });
           } else {
-             navigation.replace('UserDashboard', { user_id: studentId });
+            navigation.replace('UserDashboard', { user_id: studentId });
           }
         }
       } else {
@@ -297,14 +315,14 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.loadingContainer}>
             {/* Radar scanner glow ring */}
             <View style={styles.radarWrapper}>
-              <Animated.View 
+              <Animated.View
                 style={[
-                  styles.radarCircle, 
-                  { 
-                    transform: [{ scale: radarScale }], 
-                    opacity: radarOpacity 
+                  styles.radarCircle,
+                  {
+                    transform: [{ scale: radarScale }],
+                    opacity: radarOpacity
                   }
-                ]} 
+                ]}
               />
               {/* Circular Central Face ID Logo container */}
               <Animated.View style={[styles.logoCircle, { transform: [{ scale: pulseAnim }] }]}>
@@ -344,18 +362,18 @@ export default function LoginScreen({ navigation }) {
       >
         {/* Custom Toast Notification Banner */}
         {notification.visible && (
-          <Animated.View 
+          <Animated.View
             style={[
-              styles.notificationBox, 
+              styles.notificationBox,
               { transform: [{ translateY: notificationAnim }] }
             ]}
           >
             <View style={[styles.notificationContent, notification.type === 'error' ? styles.notificationError : styles.notificationSuccess]}>
-              <MaterialCommunityIcons 
-                name={notification.type === 'error' ? "alert-circle-outline" : "check-circle-outline"} 
-                size={22} 
-                color="#fff" 
-                style={styles.notificationIcon} 
+              <MaterialCommunityIcons
+                name={notification.type === 'error' ? "alert-circle-outline" : "check-circle-outline"}
+                size={22}
+                color="#fff"
+                style={styles.notificationIcon}
               />
               <View style={styles.notificationTextContainer}>
                 <Text style={styles.notificationTitle}>
@@ -363,7 +381,7 @@ export default function LoginScreen({ navigation }) {
                 </Text>
                 <Text style={styles.notificationMessage}>{notification.message}</Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   Animated.timing(notificationAnim, {
                     toValue: -150,
@@ -385,21 +403,21 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.bottomWave1} pointerEvents="none" />
         <View style={styles.bottomWave2} pointerEvents="none" />
 
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
-          <ScrollView 
-            contentContainerStyle={styles.scrollContent} 
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.content,
-                { 
-                  opacity: fadeAnim, 
-                  transform: [{ translateY: slideAnim }, { scale: scaleAnim }] 
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
                 }
               ]}
             >
@@ -447,7 +465,7 @@ export default function LoginScreen({ navigation }) {
                   <Text style={styles.welcomeText}>Welcome Back!</Text>
 
                   {/* Username/Email Input */}
-                  <TextInput 
+                  <TextInput
                     style={styles.input}
                     placeholder="email"
                     placeholderTextColor="#a0aec0"
@@ -458,7 +476,7 @@ export default function LoginScreen({ navigation }) {
                   />
 
                   {/* Password Input */}
-                  <TextInput 
+                  <TextInput
                     style={styles.input}
                     placeholder="password"
                     placeholderTextColor="#a0aec0"
@@ -469,8 +487,8 @@ export default function LoginScreen({ navigation }) {
                   />
 
                   {/* LOG IN Action Button */}
-                  <TouchableOpacity 
-                    style={styles.actionButton} 
+                  <TouchableOpacity
+                    style={styles.actionButton}
                     onPress={handleLogin}
                     activeOpacity={0.9}
                   >
@@ -482,8 +500,8 @@ export default function LoginScreen({ navigation }) {
                   </TouchableOpacity>
 
                   {/* FACE ID LOGIN Action Button */}
-                  <TouchableOpacity 
-                    style={styles.actionButton} 
+                  <TouchableOpacity
+                    style={styles.actionButton}
                     onPress={handleFaceLogin}
                     activeOpacity={0.9}
                   >
@@ -500,45 +518,66 @@ export default function LoginScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
               ) : (
-                /* Contact Administrator Screen Mode */
+                /* Create Account Screen Mode */
                 <View style={styles.formContainer}>
-                  <Text style={styles.welcomeText}>Contact Administrator</Text>
-                  
-                  {/* Contact Info Card */}
-                  <View style={styles.contactCard}>
-                    <MaterialCommunityIcons name="shield-account-outline" size={48} color="#007A68" style={styles.contactIconCenter} />
-                    
-                    <Text style={styles.contactInfoDesc}>
-                      Account registration is managed strictly by the administration. If you are a Student or Lecturer, please contact your Faculty Admin office to request an account.
-                    </Text>
-                    
-                    <View style={styles.contactItem}>
-                      <MaterialCommunityIcons name="email-outline" size={20} color="#007A68" />
-                      <Text style={styles.contactItemText}>admin@foc.sjp.ac.lk</Text>
-                    </View>
-                    
-                    <View style={styles.contactItem}>
-                      <MaterialCommunityIcons name="office-building" size={20} color="#007A68" />
-                      <Text style={styles.contactItemText}>Dean's Office, Faculty of Computing</Text>
-                    </View>
+                  <Text style={styles.welcomeText}>Create Account</Text>
 
-                    <View style={styles.contactItem}>
-                      <MaterialCommunityIcons name="phone-outline" size={20} color="#007A68" />
-                      <Text style={styles.contactItemText}>+94 11 280 2000</Text>
-                    </View>
-                  </View>
+                  {/* Sign Up Email */}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="your email"
+                    placeholderTextColor="#a0aec0"
+                    value={signUpEmail}
+                    onChangeText={setSignUpEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
 
-                  {/* BACK TO LOGIN Action Button */}
-                  <TouchableOpacity 
-                    style={styles.actionButton} 
-                    onPress={() => setIsSignUpMode(false)}
+                  {/* New Password */}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="new password"
+                    placeholderTextColor="#a0aec0"
+                    secureTextEntry
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    autoCapitalize="none"
+                  />
+
+                  {/* Re-type Password */}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="re-type password"
+                    placeholderTextColor="#a0aec0"
+                    secureTextEntry
+                    value={reTypePassword}
+                    onChangeText={setReTypePassword}
+                    autoCapitalize="none"
+                  />
+
+                  {/* Terms & Privacy Disclaimer */}
+                  <Text style={styles.disclaimerText}>
+                    By creating an account, you agree to our{' '}
+                    <Text style={styles.disclaimerLink}>Terms of Service</Text> and{' '}
+                    <Text style={styles.disclaimerLink}>Privacy Policy</Text>
+                  </Text>
+
+                  {/* CREATE Action Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={handleCreateAccount}
                     activeOpacity={0.9}
                   >
                     <View style={styles.buttonIconCircle}>
-                      <MaterialCommunityIcons name="chevron-left" size={26} color="#fff" />
+                      <MaterialCommunityIcons name="chevron-right" size={26} color="#fff" />
                     </View>
-                    <Text style={styles.actionButtonText}>BACK TO LOGIN</Text>
+                    <Text style={styles.actionButtonText}>CREATE</Text>
                     <View style={{ width: 42 }} />
+                  </TouchableOpacity>
+
+                  {/* Switch to Login Toggle */}
+                  <TouchableOpacity onPress={() => setIsSignUpMode(false)} activeOpacity={0.7}>
+                    <Text style={styles.switchModeText}>Already have an account ? Log in</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -557,28 +596,28 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
+  container: {
+    flex: 1
   },
-  gradient: { 
-    flex: 1 
+  gradient: {
+    flex: 1
   },
-  keyboardView: { 
-    flex: 1 
+  keyboardView: {
+    flex: 1
   },
-  scrollContent: { 
-    flexGrow: 1, 
-    justifyContent: 'center', 
-    paddingHorizontal: 30, 
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 30,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 30 
+    paddingBottom: 30
   },
-  content: { 
+  content: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%'
   },
-  
+
   // Custom styled waves matching the mockup curves
   topWave1: {
     position: 'absolute',
@@ -655,17 +694,17 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  welcomeText: { 
-    fontSize: 22, 
-    color: '#fff', 
-    textAlign: 'center', 
+  welcomeText: {
+    fontSize: 22,
+    color: '#fff',
+    textAlign: 'center',
     fontWeight: '500',
     marginBottom: 24,
   },
-  subtitleText: { 
-    fontSize: 18, 
-    color: '#fff', 
-    textAlign: 'center', 
+  subtitleText: {
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
     fontWeight: '400',
     marginBottom: 20,
   },
@@ -848,22 +887,22 @@ const styles = StyleSheet.create({
     color: '#e11d48',
     letterSpacing: 1.5,
   },
-  
+
   footerContainer: {
     marginTop: 40,
     alignItems: 'center',
   },
-  footerText: { 
-    textAlign: 'center', 
-    color: 'rgba(255, 255, 255, 0.55)', 
-    fontSize: 13, 
+  footerText: {
+    textAlign: 'center',
+    color: 'rgba(255, 255, 255, 0.55)',
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  footerSubText: { 
-    textAlign: 'center', 
-    color: 'rgba(255, 255, 255, 0.55)', 
-    fontSize: 12, 
+  footerSubText: {
+    textAlign: 'center',
+    color: 'rgba(255, 255, 255, 0.55)',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.5,
     marginTop: 2,
@@ -1009,43 +1048,5 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  contactCard: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  contactIconCenter: {
-    marginBottom: 16,
-  },
-  contactInfoDesc: {
-    fontSize: 14,
-    color: '#4a5568',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 20,
-    fontWeight: '500',
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#edf2f7',
-  },
-  contactItemText: {
-    fontSize: 14,
-    color: '#2d3748',
-    marginLeft: 12,
-    fontWeight: '600',
   }
 });
