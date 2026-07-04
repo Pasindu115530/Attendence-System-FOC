@@ -407,6 +407,20 @@ export default function UserDashboard({ route, navigation }) {
         </Animated.View>
       </ScrollView>
 
+      {/* AI Chatbot FAB */}
+      <TouchableOpacity 
+        style={styles.fabButton}
+        onPress={() => navigation.navigate('ChatScreen')}
+        activeOpacity={0.9}
+      >
+        <LinearGradient
+          colors={['#00BFA5', '#007A68']}
+          style={styles.fabGradient}
+        >
+          <MaterialCommunityIcons name="robot-outline" size={28} color="#fff" />
+        </LinearGradient>
+      </TouchableOpacity>
+
       {/* Custom Bottom Curved Tab Bar matching attached mockup */}
       <View style={styles.navBarContainer}>
         <View style={styles.navBar}>
@@ -1027,5 +1041,28 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 3,
     borderColor: '#029A84', // Matches primary teal
+  },
+  
+  // AI Chatbot FAB
+  fabButton: {
+    position: 'absolute',
+    bottom: 110,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    zIndex: 100,
+    shadowColor: '#00BFA5',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 });

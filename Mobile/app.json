@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AttendanceApp",
-    "slug": "AttendanceApp",
+    "slug": "pasinduudana",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,10 +20,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.pasinduudana12steam.pasinduudana"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f5a25ccb-58e5-4883-88f9-29f1bc7665e1"
+      }
+    },
+    "owner": "pasinduudana12s-team"
   }
 }

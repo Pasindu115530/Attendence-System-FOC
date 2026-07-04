@@ -1,0 +1,43 @@
+name: Deploy Frontend Admin to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend-admin/**' # Only trigger when frontend files change
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Navigate to the correct project directory
+            cd /home/appuser/attendance-system
+            
+            # Pull the latest changes from GitHub
+            git pull origin main
+            
+            # Navigate to frontend and install dependencies
+            cd frontend-admin
+            npm install
+            
+            # Build the Next.js application
+            npm run build
+            
+            # Restart the Next.js application using pm2
+            # Note: This assumes you have started it with 'pm2 start npm --name "frontend-admin" -- run start'
+            pm2 restart frontend-admin
+            
+            echo "Frontend deployment successful!"

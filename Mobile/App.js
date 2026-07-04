@@ -8,6 +8,7 @@ import AdminDashboard from './src/screens/AdminDashboard';
 import AddClassLocation from './src/screens/AddClassLocation';
 import AttendanceReports from './src/screens/AttendanceReports';
 import AbsentUploader from './src/screens/AbsentUploader';
+import ChatScreen from './src/screens/ChatScreen';
 
 
 const Stack = createStackNavigator();
@@ -22,6 +23,7 @@ export default function App() {
         <Stack.Screen name="AddClassLocation" component={AddClassLocation} />
         <Stack.Screen name="AttendanceReports" component={AttendanceReports} />
         <Stack.Screen name="AbsentUploader" component={AbsentUploader} />
+        <Stack.Screen name="ChatScreen" component={ChatScreen} />
  
       </Stack.Navigator>
     </NavigationContainer>
