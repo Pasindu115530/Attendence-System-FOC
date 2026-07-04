@@ -22,21 +22,18 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Navigate to the project directory
-            cd ~/Attendence-System-FOC/backend-flask
+            # Navigate to the correct project directory
+            cd /home/appuser/attendance-system
             
             # Pull the latest changes from GitHub
             git pull origin main
             
-            # Activate virtual environment (Uncomment and adjust if you use venv)
-            # source venv/bin/activate
-            
-            # Install dependencies
+            # Navigate to backend and install dependencies
+            cd backend-flask
+            source venv/bin/activate
             pip install -r requirements.txt
             
             # Restart the Flask application
-            # Adjust this command depending on how you run your Flask app (e.g., systemd, gunicorn, pm2)
-            # Example using systemd:
-            # sudo systemctl restart flask-backend
+            sudo systemctl restart flaskapp
             
             echo "Deployment successful!"
