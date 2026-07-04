@@ -17,7 +17,9 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { post } from '../api';
+import { post, upload } from '../api';
+import { CameraView } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function AdminDashboard({ navigation }) {
   const [lectures, setLectures] = useState([]);
@@ -35,6 +37,102 @@ export default function AdminDashboard({ navigation }) {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+
+  // Face Camera States
+  const [isFaceOverlayOpen, setIsFaceOverlayOpen] = useState(false);
+  const [overlayMode, setOverlayMode] = useState(''); // 'register' or 'reset'
+  const [isProcessing, setIsProcessing] = useState(false);
+  const cameraRef = useRef(null);
+
+  const handleOpenFaceRegister = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status === 'granted') {
+      setOverlayMode('register');
+      setIsFaceOverlayOpen(true);
+    } else {
+      Alert.alert("Permission Denied", "Camera permission is required.");
+    }
+  };
+
+  const handleOpenFaceReset = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status === 'granted') {
+      setOverlayMode('reset');
+      setIsFaceOverlayOpen(true);
+    } else {
+      Alert.alert("Permission Denied", "Camera permission is required.");
+    }
+  };
+
+  const captureFace = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      if (!cameraRef.current) {
+        setIsProcessing(false);
+        return;
+      }
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.1 });
+      const localUri = photo.uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: Platform.OS === 'ios' ? localUri.replace('file://', '') : localUri,
+        name: filename || 'capture.jpg',
+        type,
+      });
+
+      if (overlayMode === 'register') {
+        const res = await upload('/register-face', formData);
+        if (res.status === 'success') {
+          Alert.alert("Success", "Admin Face registered successfully!");
+          setIsFaceOverlayOpen(false);
+        } else {
+          Alert.alert("Failed", res.message || "Failed to register face.");
+        }
+      } else if (overlayMode === 'reset') {
+        const faceRes = await upload('/verify-face', formData);
+        if (faceRes.status === "success" && faceRes.data?.role === 'Admin') {
+          setIsFaceOverlayOpen(false);
+          Alert.alert(
+            "Reset Semester Data",
+            "Identity verified! Are you absolutely sure you want to permanently delete ALL batch subject assignments, timetables, and student attendance records?",
+            [
+              { text: "Cancel", style: "cancel" },
+              { 
+                text: "Yes, Reset Everything", 
+                style: "destructive",
+                onPress: async () => {
+                  try {
+                    const res = await post('/reset_semester', {});
+                    if (res.status === 'success') {
+                      Alert.alert("Success", "Semester data has been wiped.");
+                      fetchAdminData();
+                    } else {
+                      Alert.alert("Error", res.message || "Failed to reset");
+                    }
+                  } catch (err) {
+                    Alert.alert("Error", "Could not connect to the server.");
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert("Verification Failed", "Could not verify your identity as an Admin.");
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "An error occurred with the camera.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const generateStudentId = () => {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -312,6 +410,40 @@ export default function AdminDashboard({ navigation }) {
             </View>
           </TouchableOpacity>
 
+          <TouchableOpacity 
+            style={styles.actionCard} 
+            onPress={handleOpenFaceReset}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: '#fef2f2' }]}>
+              <MaterialCommunityIcons name="delete-alert-outline" size={26} color="#ef4444" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={styles.actionTitle}>Reset Semester</Text>
+              <Text style={styles.actionDesc}>Requires facial verification</Text>
+            </View>
+            <View style={[styles.chevronBg, { backgroundColor: '#fef2f2' }]}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#ef4444" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, { marginBottom: 12 }]} 
+            onPress={handleOpenFaceRegister}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: '#e2e8f0' }]}>
+              <MaterialCommunityIcons name="face-recognition" size={26} color="#475569" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={styles.actionTitle}>Register Admin Face</Text>
+              <Text style={styles.actionDesc}>Register your face for admin actions</Text>
+            </View>
+            <View style={[styles.chevronBg, { backgroundColor: '#e2e8f0' }]}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#475569" />
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
             <MaterialCommunityIcons name="logout" size={20} color="#ef4444" />
             <Text style={styles.logoutText}>Logout from System</Text>
@@ -432,6 +564,50 @@ export default function AdminDashboard({ navigation }) {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* Face Overlay Modal */}
+      {isFaceOverlayOpen && (
+        <View style={styles.faceOverlayContainer}>
+          <View style={styles.faceOverlayHeader}>
+            <TouchableOpacity onPress={() => setIsFaceOverlayOpen(false)} style={styles.closeOverlayBtn}>
+              <MaterialCommunityIcons name="close" size={24} color="#64748b" />
+            </TouchableOpacity>
+            <Text style={styles.faceOverlayTitle}>
+              {overlayMode === 'register' ? 'Register Face' : 'Verify Identity'}
+            </Text>
+          </View>
+
+          <View style={styles.faceCameraContainer}>
+            <CameraView 
+              ref={cameraRef}
+              style={{ flex: 1 }}
+              facing="front"
+            />
+            
+            <View style={styles.faceInstructionBox}>
+              <MaterialCommunityIcons name="face-recognition" size={32} color="#007A68" />
+              <Text style={styles.faceInstructionText}>
+                {overlayMode === 'register' ? 'Position your face clearly within the frame' : 'Verifying Admin Identity'}
+              </Text>
+            </View>
+
+            <View style={styles.captureBtnContainer}>
+              <TouchableOpacity 
+                style={[styles.captureBtn, isProcessing && styles.captureBtnDisabled]} 
+                onPress={captureFace}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <MaterialCommunityIcons name="camera-iris" size={32} color="#fff" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
     </View>
   );
 }
@@ -715,5 +891,74 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 16,
     letterSpacing: 0.5,
+  },
+  // Face Overlay Styles
+  faceOverlayContainer: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#fff',
+    zIndex: 9999,
+  },
+  faceOverlayHeader: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  closeOverlayBtn: {
+    width: 40, height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  faceOverlayTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  faceCameraContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    position: 'relative',
+  },
+  faceInstructionBox: {
+    position: 'absolute',
+    top: 40, left: 20, right: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    padding: 20,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5,
+  },
+  faceInstructionText: {
+    flex: 1,
+    marginLeft: 16,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  captureBtnContainer: {
+    position: 'absolute',
+    bottom: 50, left: 0, right: 0,
+    alignItems: 'center',
+  },
+  captureBtn: {
+    width: 72, height: 72,
+    borderRadius: 36,
+    backgroundColor: '#007A68',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  captureBtnDisabled: {
+    backgroundColor: '#94a3b8',
   }
 });

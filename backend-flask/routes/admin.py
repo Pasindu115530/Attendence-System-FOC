@@ -285,3 +285,18 @@ def assign_batch_subjects():
         conn.commit()
 
     return success({"message": "Subjects assigned successfully"})
+
+
+@admin_bp.post("/reset_semester")
+def reset_semester():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            # Delete attendance first due to foreign key constraints on timetable
+            cur.execute("DELETE FROM attendance")
+            # Delete all scheduled classes
+            cur.execute("DELETE FROM timetable")
+            # Delete all batch subject assignments
+            cur.execute("DELETE FROM batch_subjects")
+        conn.commit()
+
+    return success({"message": "Semester data has been completely reset."})
