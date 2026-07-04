@@ -23,6 +23,13 @@ from flask import current_app
 
 logger = logging.getLogger(__name__)
 
+def sanitize_id(user_id: str) -> str:
+    """Rekognition ExternalImageId does not allow slashes. We replace them with colons."""
+    return user_id.replace("/", ":") if user_id else ""
+
+def desanitize_id(external_id: str) -> str:
+    """Convert sanitized colons back to slashes."""
+    return external_id.replace(":", "/") if external_id else ""
 
 class RekognitionService:
     """Thin wrapper around boto3 Rekognition client."""
@@ -111,7 +118,7 @@ class RekognitionService:
             response = self._get_client().index_faces(
                 CollectionId=self._collection,
                 Image={"Bytes": image_bytes},
-                ExternalImageId=user_id,          # ← stored alongside the face vector
+                ExternalImageId=sanitize_id(user_id),          # ← stored alongside the face vector
                 DetectionAttributes=["DEFAULT"],
                 MaxFaces=1,                       # only index the dominant face
                 QualityFilter="MEDIUM",           # reject blurry / occluded faces
@@ -150,7 +157,7 @@ class RekognitionService:
             best = matches[0]
             face       = best["Face"]
             confidence = round(best["Similarity"], 2)
-            user_id    = face.get("ExternalImageId", "")
+            user_id    = desanitize_id(face.get("ExternalImageId", ""))
 
             logger.info("Face matched: user_id=%s  confidence=%.1f%%", user_id, confidence)
             return {
@@ -187,9 +194,10 @@ class RekognitionService:
             paginator = client.get_paginator("list_faces")
             face_ids_to_delete = []
 
+            sanitized_user_id = sanitize_id(user_id)
             for page in paginator.paginate(CollectionId=self._collection):
                 for face in page.get("Faces", []):
-                    if face.get("ExternalImageId") == user_id:
+                    if face.get("ExternalImageId") == sanitized_user_id:
                         face_ids_to_delete.append(face["FaceId"])
 
             if face_ids_to_delete:

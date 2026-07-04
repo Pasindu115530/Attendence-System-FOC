@@ -18,7 +18,9 @@ import {
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { post } from '../api';
+import { post, upload } from '../api';
+import { CameraView } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function UserDashboard({ route, navigation }) {
   const { user_id, user } = route.params || { user_id: 'TEST001' }; 
@@ -31,6 +33,11 @@ export default function UserDashboard({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const [userData, setUserData] = useState(user || { user_id, full_name: '', dept_id: 'Computing' });
+
+  // Face Registration State
+  const [isFaceRegisterMode, setIsFaceRegisterMode] = useState(false);
+  const [registeringFace, setRegisteringFace] = useState(false);
+  const cameraRef = useRef(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -111,6 +118,57 @@ export default function UserDashboard({ route, navigation }) {
       { text: "Cancel", style: "cancel" },
       { text: "Yes, Logout", onPress: () => navigation.replace('Login'), style: 'destructive' }
     ]);
+  };
+
+  const handleOpenFaceRegister = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status === 'granted') {
+      setIsFaceRegisterMode(true);
+    } else {
+      Alert.alert("Permission Denied", "Camera permission is required to register your face.");
+    }
+  };
+
+  const captureAndRegisterFace = async () => {
+    if (registeringFace) return;
+    setRegisteringFace(true);
+    try {
+      if (!cameraRef.current) {
+        setRegisteringFace(false);
+        return;
+      }
+
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+      });
+
+      const localUri = photo.uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: Platform.OS === 'ios' ? localUri.replace('file://', '') : localUri,
+        name: filename || 'capture.jpg',
+        type,
+      });
+      formData.append('index_number', user_id);
+
+      const res = await upload('/register-face', formData);
+
+      if (res.status === 'success') {
+        Alert.alert("Success", "Face registered successfully!");
+        setIsFaceRegisterMode(false);
+      } else {
+        Alert.alert("Registration Failed", res.message || "Failed to register face. Make sure only one clear face is visible.");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "An error occurred while registering your face.");
+    } finally {
+      setRegisteringFace(false);
+    }
   };
 
   const getGreeting = () => {
@@ -326,6 +384,17 @@ export default function UserDashboard({ route, navigation }) {
               </View>
 
               {/* Buttons matching mockup */}
+              <TouchableOpacity 
+                style={[styles.logoutBtn, { backgroundColor: '#007A68', marginBottom: 16 }]} 
+                onPress={handleOpenFaceRegister} 
+                activeOpacity={0.8}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MaterialCommunityIcons name="face-recognition" size={20} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={[styles.logoutBtnText, { color: '#fff' }]}>Register Face ID</Text>
+                </View>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
                 <Text style={styles.logoutBtnText}>Log Out</Text>
               </TouchableOpacity>
@@ -406,6 +475,44 @@ export default function UserDashboard({ route, navigation }) {
 
         </Animated.View>
       </ScrollView>
+
+      {/* Face Registration Overlay */}
+      {isFaceRegisterMode && (
+        <View style={styles.faceOverlayContainer}>
+          <View style={styles.faceOverlayHeader}>
+            <TouchableOpacity onPress={() => setIsFaceRegisterMode(false)} style={styles.closeOverlayBtn}>
+              <MaterialCommunityIcons name="close" size={24} color="#334155" />
+            </TouchableOpacity>
+            <Text style={styles.faceOverlayTitle}>Register Face</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <View style={styles.faceCameraContainer}>
+            <View style={styles.cameraWrapper}>
+              <CameraView
+                ref={cameraRef}
+                style={styles.cameraView}
+                facing="front"
+              />
+            </View>
+            <Text style={styles.faceInstructionText}>
+              Position your face clearly within the frame
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.captureBtn} 
+              onPress={captureAndRegisterFace}
+              disabled={registeringFace}
+            >
+              {registeringFace ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <MaterialCommunityIcons name="camera" size={28} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* AI Chatbot FAB */}
       <TouchableOpacity 
@@ -1064,5 +1171,71 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Face Registration Overlay Styles
+  faceOverlayContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    zIndex: 999,
+  },
+  faceOverlayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  closeOverlayBtn: {
+    padding: 5,
+  },
+  faceOverlayTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  faceCameraContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingHorizontal: 20,
+  },
+  cameraWrapper: {
+    width: Dimensions.get('window').width * 0.8,
+    height: Dimensions.get('window').width * 0.8,
+    borderRadius: (Dimensions.get('window').width * 0.8) / 2,
+    overflow: 'hidden',
+    borderWidth: 4,
+    borderColor: '#00BFA5',
+    marginBottom: 30,
+  },
+  cameraView: {
+    flex: 1,
+  },
+  faceInstructionText: {
+    fontSize: 15,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 50,
+  },
+  captureBtn: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#007A68',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#007A68',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   }
 });
