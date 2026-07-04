@@ -223,7 +223,7 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
         genai.configure(api_key=api_key)
         
         model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+            model_name='gemini-2.5-flash',
             system_instruction=(
                 "You are the Smart Attendance Assistant for the Faculty of Computing. "
                 "Help administrators and lecturers manage attendance and hall bookings securely. "
