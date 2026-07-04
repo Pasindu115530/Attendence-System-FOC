@@ -12,7 +12,6 @@ export default function TimetablePage() {
   // Form State
   const [courseId, setCourseId] = useState('');
   const [classroomId, setClassroomId] = useState('');
-  const [deptId, setDeptId] = useState('FOC');
   const [dayOfWeek, setDayOfWeek] = useState('Monday');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -46,7 +45,7 @@ export default function TimetablePage() {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
-    if (!courseId || !classroomId || !dayOfWeek || !startTime || !endTime || !deptId) {
+    if (!courseId || !classroomId || !dayOfWeek || !startTime || !endTime) {
       setError('Please fill in all fields.');
       return;
     }
@@ -57,8 +56,7 @@ export default function TimetablePage() {
       classroom_id: parseInt(classroomId),
       day_of_week: dayOfWeek,
       start_time: startTime,
-      end_time: endTime,
-      dept_id: deptId
+      end_time: endTime
     });
     setSubmitting(false);
 
@@ -119,15 +117,9 @@ export default function TimetablePage() {
             </div>
 
             <div className="card-grid card-grid-2" style={{ gap: '1rem', padding: 0 }}>
-              <div className="form-group">
+              <div className="form-group" style={{ visibility: 'hidden' }}>
                 <label>Department</label>
-                <input
-                  type="text"
-                  placeholder="e.g. FOC"
-                  value={deptId}
-                  onChange={e => setDeptId(e.target.value)}
-                  required
-                />
+                <input type="text" />
               </div>
 
               <div className="form-group">
@@ -204,7 +196,7 @@ export default function TimetablePage() {
                         <div style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>📍 {slot.room_name}</div>
                       </td>
                       <td>
-                        <span className="badge badge-live">{slot.dept_id}</span>
+                        <span className="badge badge-live">{slot.department_id}</span>
                       </td>
                       <td>
                         <button

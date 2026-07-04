@@ -132,7 +132,7 @@ export default function ReportsPage() {
               <label>Department</label>
               <select value={selectedDept} onChange={e => setSelectedDept(e.target.value)} required>
                 <option value="">Select Department</option>
-                {departments.map(d => <option key={d.dept_id} value={d.dept_id}>{d.dept_id}</option>)}
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
 

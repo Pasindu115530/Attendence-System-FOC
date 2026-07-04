@@ -9,7 +9,7 @@ admin_bp = Blueprint("admin", __name__)
 def get_departments():
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT dept_id FROM timetable ORDER BY dept_id ASC")
+            cur.execute("SELECT id, name FROM departments ORDER BY id ASC")
             depts = [dict(r) for r in cur.fetchall()]
     return success({"departments": depts})
 
@@ -32,23 +32,22 @@ def get_batches():
 @admin_bp.post("/get_courses")
 def get_courses():
     data = request.get_json(force=True, silent=True) or {}
-    dept_id = data.get("dept_id", "")
+    department_id = data.get("department_id") or data.get("dept_id")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
-            if dept_id:
+            if department_id:
                 cur.execute(
                     """
-                    SELECT DISTINCT c.id, c.course_name
-                    FROM courses c
-                    JOIN timetable t ON c.id = t.course_id
-                    WHERE t.dept_id = %s
-                    ORDER BY c.course_name ASC
+                    SELECT id AS course_id, subject_name AS course_name, subject_code
+                    FROM subjects
+                    WHERE department_id = %s
+                    ORDER BY subject_name ASC
                     """,
-                    (dept_id,),
+                    (department_id,),
                 )
             else:
-                cur.execute("SELECT id, course_name FROM courses ORDER BY course_name ASC")
+                cur.execute("SELECT id AS course_id, subject_name AS course_name, subject_code FROM subjects ORDER BY subject_name ASC")
             courses = [dict(r) for r in cur.fetchall()]
     return success({"courses": courses})
 
@@ -59,8 +58,8 @@ def get_all_students():
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT user_id, full_name, nic, role, dept_id, batch_year
-                FROM users WHERE role = 'Student' ORDER BY user_id ASC
+                SELECT index_number AS user_id, registration_number, full_name, nic, role, department_id, batch_year
+                FROM users WHERE role = 'Student' ORDER BY index_number ASC
                 """
             )
             students = [dict(r) for r in cur.fetchall()]
@@ -80,7 +79,7 @@ def get_all_classrooms():
 def get_all_courses():
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM courses ORDER BY course_name ASC")
+            cur.execute("SELECT id AS course_id, subject_name AS course_name, subject_code, department_id, batch_year FROM subjects ORDER BY subject_name ASC")
             courses = [dict(r) for r in cur.fetchall()]
     return success({"courses": courses})
 
@@ -88,24 +87,29 @@ def get_all_courses():
 @admin_bp.post("/add_timetable")
 def add_timetable():
     data = request.get_json(force=True, silent=True) or {}
-    required = ("course_id", "classroom_id", "day_of_week", "start_time", "end_time", "dept_id")
-    if any(not data.get(k) for k in required):
-        return error("Missing required fields: " + ", ".join(required))
+    
+    course_id = data.get("subject_id") or data.get("course_id")
+    classroom_id = data.get("classroom_id")
+    day_of_week = data.get("day_of_week")
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+
+    if not all([course_id, classroom_id, day_of_week, start_time, end_time]):
+        return error("Missing required fields")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO timetable (course_id, classroom_id, day_of_week, start_time, end_time, dept_id)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO timetable (subject_id, classroom_id, day_of_week, start_time, end_time)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
                 (
-                    data["course_id"],
-                    data["classroom_id"],
-                    data["day_of_week"],
-                    data["start_time"],
-                    data["end_time"],
-                    data["dept_id"],
+                    course_id,
+                    classroom_id,
+                    day_of_week,
+                    start_time,
+                    end_time,
                 ),
             )
         conn.commit()
@@ -118,10 +122,10 @@ def get_all_timetable():
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT t.id, t.course_id, t.classroom_id, t.day_of_week, t.start_time, t.end_time, t.dept_id,
-                       c.course_name, r.room_name
+                SELECT t.id, t.subject_id AS course_id, t.classroom_id, t.day_of_week, t.start_time, t.end_time,
+                       s.subject_name AS course_name, s.department_id, r.room_name
                 FROM timetable t
-                JOIN courses c ON t.course_id = c.id
+                JOIN subjects s ON t.subject_id = s.id
                 JOIN classrooms r ON t.classroom_id = r.id
                 ORDER BY CASE t.day_of_week
                     WHEN 'Monday' THEN 1

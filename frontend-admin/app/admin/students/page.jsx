@@ -27,11 +27,11 @@ export default function StudentsPage() {
     const q = search.toLowerCase();
     setFiltered(students.filter(s =>
       (!q || s.full_name?.toLowerCase().includes(q) || s.user_id?.toLowerCase().includes(q) || s.nic?.toLowerCase().includes(q)) &&
-      (!deptFilter || s.dept_id === deptFilter)
+      (!deptFilter || s.department_id === deptFilter)
     ));
   }, [search, deptFilter, students]);
 
-  const depts = [...new Set(students.map(s => s.dept_id).filter(Boolean))];
+  const depts = [...new Set(students.map(s => s.department_id).filter(Boolean))];
 
   return (
     <AdminLayout>
@@ -84,7 +84,7 @@ export default function StudentsPage() {
                   <td className="td-id">{s.user_id}</td>
                   <td style={{ fontWeight: 500 }}>{s.full_name}</td>
                   <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.nic}</td>
-                  <td><span className="badge badge-live">{s.dept_id}</span></td>
+                  <td><span className="badge badge-live">{s.department_id}</span></td>
                   <td>{s.batch_year}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>

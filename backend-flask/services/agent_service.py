@@ -17,7 +17,7 @@ def get_student(student_index: str) -> dict:
     """Get profile details of a student by index number."""
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE user_id = %s AND role = 'Student' LIMIT 1", (student_index,))
+            cur.execute("SELECT * FROM users WHERE index_number = %s AND role = 'Student' LIMIT 1", (student_index,))
             row = cur.fetchone()
     return dict(row) if row else {"error": "Student not found"}
 
@@ -25,7 +25,7 @@ def get_student_attendance(student_index: str) -> list:
     """Get full attendance logs of a student."""
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM attendance WHERE user_id = %s ORDER BY marked_at DESC", (student_index,))
+            cur.execute("SELECT * FROM attendance WHERE index_number = %s ORDER BY marked_at DESC", (student_index,))
             rows = cur.fetchall()
     return [dict(r) for r in rows]
 
@@ -38,25 +38,25 @@ def get_today_attendance() -> dict:
     return {"today_total_scans": res["count"] if res else 0}
 
 def get_absent_students(course_code: str = None) -> list:
-    """Get list of absent students, optionally filtered by course code."""
+    """Get list of absent students, optionally filtered by subject id."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             if course_code:
                 try:
                     cid = int(course_code)
                     cur.execute("""
-                        SELECT a.user_id, u.full_name
+                        SELECT a.index_number, u.full_name
                         FROM attendance a
-                        JOIN users u ON a.user_id = u.user_id
-                        WHERE a.status = 'Absent' AND a.course_id = %s
+                        JOIN users u ON a.index_number = u.index_number
+                        WHERE a.status = 'Absent' AND a.subject_id = %s
                     """, (cid,))
                 except ValueError:
                     return []
             else:
                 cur.execute("""
-                    SELECT a.user_id, u.full_name
+                    SELECT a.index_number, u.full_name
                     FROM attendance a
-                    JOIN users u ON a.user_id = u.user_id
+                    JOIN users u ON a.index_number = u.index_number
                     WHERE a.status = 'Absent'
                 """)
             rows = cur.fetchall()
@@ -93,10 +93,10 @@ def book_hall(hall_id: str, booking_date: str, start_time: str, end_time: str, b
                 classroom_id = row["id"] if row else 1
                 
             cur.execute("""
-                INSERT INTO timetable (course_id, classroom_id, day_of_week, start_time, end_time, dept_id)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO timetable (subject_id, classroom_id, day_of_week, start_time, end_time)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
-            """, (1, classroom_id, day_of_week, start_time, end_time, booked_by if booked_by else "FOC"))
+            """, (1, classroom_id, day_of_week, start_time, end_time))
             new_id = cur.fetchone()
         conn.commit()
     return {"success": True, "booking": {"id": new_id["id"] if new_id else None}}
@@ -118,11 +118,15 @@ def generate_excel(report_type: str, course_code: str = None) -> dict:
     return {"success": True, "download_url": f"https://your-supabase-url.com/storage/v1/object/public/reports/{report_type}_report.xlsx"}
 
 def count_students(course_code: str = None, hall_id: str = None) -> dict:
-    """Count total registered students, optionally by course or hall."""
+    """Count total registered students, optionally by department id."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             if course_code:
-                cur.execute("SELECT COUNT(*) as count FROM users WHERE role = 'Student' AND dept_id = %s", (course_code,))
+                try:
+                    dept_id = int(course_code)
+                    cur.execute("SELECT COUNT(*) as count FROM users WHERE role = 'Student' AND department_id = %s", (dept_id,))
+                except ValueError:
+                    return {"student_count": 0}
             else:
                 cur.execute("SELECT COUNT(*) as count FROM users WHERE role = 'Student'")
             res = cur.fetchone()
@@ -133,7 +137,7 @@ def get_scan_history(student_index: str = None, limit: int = 10) -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
             if student_index:
-                cur.execute("SELECT * FROM attendance WHERE user_id = %s ORDER BY marked_at DESC LIMIT %s", (student_index, limit))
+                cur.execute("SELECT * FROM attendance WHERE index_number = %s ORDER BY marked_at DESC LIMIT %s", (student_index, limit))
             else:
                 cur.execute("SELECT * FROM attendance ORDER BY marked_at DESC LIMIT %s", (limit,))
             rows = cur.fetchall()
@@ -147,7 +151,7 @@ def search_course(search_query: str) -> list:
     """Search for a course/subject by name or keyword."""
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM courses WHERE course_name ILIKE %s", (f"%{search_query}%",))
+            cur.execute("SELECT * FROM subjects WHERE subject_name ILIKE %s", (f"%{search_query}%",))
             rows = cur.fetchall()
     return [dict(r) for r in rows]
 
@@ -186,7 +190,7 @@ def get_course_attendance(course_code: str) -> list:
         with conn.cursor() as cur:
             try:
                 cid = int(course_code)
-                cur.execute("SELECT * FROM attendance WHERE course_id = %s", (cid,))
+                cur.execute("SELECT * FROM attendance WHERE subject_id = %s", (cid,))
             except ValueError:
                 cur.execute("SELECT * FROM attendance")
             rows = cur.fetchall()

@@ -202,7 +202,7 @@ export default function FaceRegisterPage() {
                 <option value="">Select a student...</option>
                 {students.map(s => (
                   <option key={s.user_id} value={s.user_id}>
-                    {s.full_name} ({s.user_id}) - {s.dept_id}
+                    {s.full_name} ({s.user_id}) - {s.department_id}
                   </option>
                 ))}
               </select>
@@ -221,7 +221,7 @@ export default function FaceRegisterPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Department</span>
-                <span className="badge badge-live">{selectedStudent.dept_id}</span>
+                <span className="badge badge-live">{selectedStudent.department_id}</span>
               </div>
             </div>
           )}

@@ -12,15 +12,15 @@ def login():
     password = data.get("password", "").strip()
 
     if not username or not password:
-        return error("Username and password are required")
+        return error("Index number (username) and NIC (password) are required")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT user_id, nic, role
+                SELECT index_number AS user_id, nic, role
                 FROM users
-                WHERE user_id = %s AND nic = %s
+                WHERE index_number = %s AND nic = %s
                 LIMIT 1
                 """,
                 (username, password),
@@ -42,8 +42,11 @@ def get_user_by_id():
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT user_id, role, nic, full_name, dept_id, batch_year
-                FROM users WHERE user_id = %s LIMIT 1
+                SELECT u.index_number AS user_id, u.role, u.nic, u.full_name, 
+                       d.name AS dept_id, u.batch_year
+                FROM users u
+                LEFT JOIN departments d ON u.department_id = d.id
+                WHERE u.index_number = %s LIMIT 1
                 """,
                 (user_id,),
             )

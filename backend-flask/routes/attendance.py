@@ -9,9 +9,19 @@ attendance_bp = Blueprint("attendance", __name__)
 def mark_attendance():
     data = request.get_json(force=True, silent=True) or {}
 
-    required = ("user_id", "timetable_id", "course_id", "latitude", "longitude")
-    if any(not data.get(k) for k in required):
-        return error("Missing required fields: " + ", ".join(required))
+    # Support both old and new keys to prevent abrupt client crashes
+    index_number = data.get("index_number") or data.get("user_id")
+    subject_id = data.get("subject_id") or data.get("course_id")
+    timetable_id = data.get("timetable_id")
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    if not all([index_number, timetable_id, subject_id, latitude, longitude]):
+        return error("Missing required fields (index_number, subject_id, timetable_id, lat, lon)")
+
+    # Normalize data for the service
+    data["index_number"] = index_number
+    data["subject_id"] = subject_id
 
     result = process_mark_attendance(data)
 

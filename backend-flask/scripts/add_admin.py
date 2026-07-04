@@ -22,20 +22,20 @@ try:
     cur = conn.cursor()
     
     # Check if admin1 already exists
-    cur.execute("SELECT user_id, role, nic FROM users WHERE user_id = %s", ('admin1',))
+    cur.execute("SELECT index_number, role, nic FROM users WHERE index_number = %s", ('admin1',))
     row = cur.fetchone()
     
     if row:
         print(f"Admin user 'admin1' already exists. Updating...")
         cur.execute(
-            "UPDATE users SET nic = %s, role = %s, full_name = %s WHERE user_id = %s",
-            ('admin12345', 'Admin', 'Admin One', 'admin1')
+            "UPDATE users SET nic = %s, role = %s, full_name = %s WHERE index_number = %s",
+            ('admin12345', 'Lecturer', 'Admin One', 'admin1')
         )
     else:
         print("Creating new admin user 'admin1'...")
         cur.execute(
-            "INSERT INTO users (user_id, full_name, nic, role) VALUES (%s, %s, %s, %s)",
-            ('admin1', 'Admin One', 'admin12345', 'Admin')
+            "INSERT INTO users (index_number, registration_number, full_name, nic, role) VALUES (%s, %s, %s, %s, %s)",
+            ('admin1', 'REG-ADMIN1', 'Admin One', 'admin12345', 'Lecturer')
         )
     
     conn.commit()

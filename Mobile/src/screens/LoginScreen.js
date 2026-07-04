@@ -233,7 +233,7 @@ export default function LoginScreen({ navigation }) {
       console.log("Auto-face Verify Response:", faceRes);
 
       if (faceRes.status === "success") {
-        const studentId = faceRes.data?.student_id;
+        const studentId = faceRes.data?.index_number || faceRes.data?.student_id;
         if (!studentId) {
           failedAttemptsRef.current += 1;
           if (failedAttemptsRef.current >= 3) {

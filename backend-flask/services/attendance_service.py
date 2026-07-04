@@ -3,19 +3,19 @@ from services.geofence import determine_status
 from utils.helpers import today_str
 
 
-def already_marked(user_id: str, timetable_id: int) -> bool:
+def already_marked(index_number: str, timetable_id: int) -> bool:
     """Return True if attendance has already been recorded today."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT id FROM attendance
-                WHERE user_id = %s
+                WHERE index_number = %s
                   AND timetable_id = %s
                   AND DATE(marked_at) = %s
                 LIMIT 1
                 """,
-                (user_id, timetable_id, today_str()),
+                (index_number, timetable_id, today_str()),
             )
             return cur.fetchone() is not None
 
@@ -39,8 +39,8 @@ def fetch_geofence(timetable_id: int) -> dict | None:
 
 
 def record_attendance(
-    user_id: str,
-    course_id: int,
+    index_number: str,
+    subject_id: int,
     timetable_id: int,
     latitude: float,
     longitude: float,
@@ -52,10 +52,10 @@ def record_attendance(
             cur.execute(
                 """
                 INSERT INTO attendance
-                    (user_id, course_id, timetable_id, lat_at_mark, lon_at_mark, status)
+                    (index_number, subject_id, timetable_id, lat_at_mark, lon_at_mark, status)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (user_id, course_id, timetable_id, latitude, longitude, status),
+                (index_number, subject_id, timetable_id, latitude, longitude, status),
             )
         conn.commit()
     return True
@@ -69,13 +69,13 @@ def process_mark_attendance(payload: dict) -> dict:
       3. DB insert
     Returns a result dict with keys: ok, message, attendance_status, distance
     """
-    user_id = payload["user_id"]
+    index_number = payload["index_number"]
     timetable_id = int(payload["timetable_id"])
-    course_id = int(payload["course_id"])
+    subject_id = int(payload["subject_id"])
     lat = float(payload["latitude"])
     lon = float(payload["longitude"])
 
-    if already_marked(user_id, timetable_id):
+    if already_marked(index_number, timetable_id):
         return {"ok": False, "message": "Already marked for today"}
 
     geo = fetch_geofence(timetable_id)
@@ -85,7 +85,7 @@ def process_mark_attendance(payload: dict) -> dict:
     if geo and geo.get("lat_a") is not None:
         status, distance = determine_status(lat, lon, geo)
 
-    record_attendance(user_id, course_id, timetable_id, lat, lon, status)
+    record_attendance(index_number, subject_id, timetable_id, lat, lon, status)
 
     return {
         "ok": True,

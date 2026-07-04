@@ -6,9 +6,9 @@ from utils.response import success
 dashboard_bp = Blueprint("dashboard", __name__)
 
 _LECTURE_QUERY = """
-    SELECT t.*, c.course_name, r.room_name
+    SELECT t.*, s.subject_name, s.subject_code, r.room_name
     FROM timetable t
-    JOIN courses c ON t.course_id = c.id
+    JOIN subjects s ON t.subject_id = s.id
     JOIN classrooms r ON t.classroom_id = r.id
 """
 
@@ -16,7 +16,7 @@ _LECTURE_QUERY = """
 @dashboard_bp.post("/get_dashboard")
 def get_dashboard():
     data = request.get_json(force=True, silent=True) or {}
-    student_id = data.get("user_id", "")
+    student_id = data.get("index_number", "")
     day = current_day_name()
     time_now = current_time_str()
     today = today_str()
@@ -34,11 +34,14 @@ def get_dashboard():
             if lecture:
                 lecture = dict(lecture)
                 lecture["isLive"] = True
+                # Alias subject_name to course_name so UI doesn't completely break before we patch it
+                lecture["course_name"] = lecture["subject_name"] 
+                lecture["course_id"] = lecture["subject_id"]
                 if student_id:
                     cur.execute(
                         """
                         SELECT id FROM attendance
-                        WHERE user_id = %s AND timetable_id = %s AND DATE(marked_at) = %s
+                        WHERE index_number = %s AND timetable_id = %s AND DATE(marked_at) = %s
                         LIMIT 1
                         """,
                         (student_id, lecture["id"], today),
@@ -59,6 +62,8 @@ def get_dashboard():
     if next_lecture:
         next_lecture = dict(next_lecture)
         next_lecture["isLive"] = False
+        next_lecture["course_name"] = next_lecture["subject_name"]
+        next_lecture["course_id"] = next_lecture["subject_id"]
         return success({"lecture": next_lecture})
 
     return success({"lecture": None, "message": "No more lectures today"})
