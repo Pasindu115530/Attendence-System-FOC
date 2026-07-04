@@ -8,7 +8,8 @@ import {
   StatusBar, 
   ActivityIndicator,
   Alert,
-  Animated
+  Animated,
+  TextInput
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,10 +18,10 @@ import { Picker } from '@react-native-picker/picker';
 
 export default function AssignSubjects({ navigation }) {
   const [departments, setDepartments] = useState([]);
-  const [batches, setBatches] = useState([]);
   
   const [selectedDeptId, setSelectedDeptId] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState('');
+  const [batchYear, setBatchYear] = useState(new Date().getFullYear().toString());
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,27 +41,13 @@ export default function AssignSubjects({ navigation }) {
 
   const fetchFilters = async () => {
     try {
-      const [deptRes, batchRes] = await Promise.all([
-        post('/get_departments', {}),
-        post('/get_batches', {})
-      ]);
+      const deptRes = await post('/get_departments', {});
 
       if (deptRes.status === 'success') {
         setDepartments(deptRes.data.departments || []);
         if (deptRes.data.departments?.length > 0) {
           setSelectedDeptId(deptRes.data.departments[0].id.toString());
         }
-      }
-      
-      if (batchRes.status === 'success') {
-        const batchYears = batchRes.data.batches.map(b => b.batch_year);
-        // Ensure some defaults if missing
-        if (batchYears.length === 0) {
-          const currentYear = new Date().getFullYear();
-          batchYears.push(currentYear, currentYear - 1, currentYear - 2);
-        }
-        setBatches(batchYears);
-        setSelectedBatch(batchYears[0].toString());
       }
     } catch (error) {
       console.error(error);
@@ -71,12 +58,12 @@ export default function AssignSubjects({ navigation }) {
   };
 
   const fetchSubjects = async () => {
-    if (!selectedDeptId || !selectedBatch) return;
+    if (!selectedDeptId || !batchYear) return;
     setLoading(true);
     try {
       const res = await post('/get_batch_subjects', {
         department_id: selectedDeptId,
-        batch_year: parseInt(selectedBatch)
+        batch_year: parseInt(batchYear) || new Date().getFullYear()
       });
       if (res.status === 'success') {
         setSubjects(res.data.subjects || []);
@@ -92,8 +79,10 @@ export default function AssignSubjects({ navigation }) {
   };
 
   useEffect(() => {
+    // Only fetch automatically when department changes.
+    // Batch year is a text input, so we can wait until user finishes typing or leaves it.
     fetchSubjects();
-  }, [selectedDeptId, selectedBatch]);
+  }, [selectedDeptId]);
 
   const toggleSubject = (subjectId) => {
     setSubjects(prev => prev.map(s => 
@@ -107,7 +96,7 @@ export default function AssignSubjects({ navigation }) {
     try {
       const res = await post('/assign_batch_subjects', {
         department_id: selectedDeptId,
-        batch_year: parseInt(selectedBatch),
+        batch_year: parseInt(batchYear),
         subject_ids: assignedIds
       });
 
@@ -164,17 +153,28 @@ export default function AssignSubjects({ navigation }) {
           </View>
 
           <Text style={[styles.filterLabel, { marginTop: 12 }]}>Batch Year</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={selectedBatch}
-              onValueChange={(val) => setSelectedBatch(val)}
-              style={styles.picker}
-            >
-              {batches.map(b => (
-                <Picker.Item key={b} label={b.toString()} value={b.toString()} />
-              ))}
-            </Picker>
+          <View style={[styles.pickerWrapper, { paddingHorizontal: 16 }]}>
+            <TextInput
+              style={{ height: 50, color: '#0f172a' }}
+              value={batchYear}
+              onChangeText={setBatchYear}
+              onEndEditing={fetchSubjects}
+              keyboardType="numeric"
+              placeholder="e.g. 2024"
+            />
           </View>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <MaterialCommunityIcons name="magnify" size={24} color="#64748b" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search subject by name or code..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
 
         {/* Subjects List */}
@@ -189,7 +189,12 @@ export default function AssignSubjects({ navigation }) {
               <Text style={styles.sectionTitle}>Available Subjects</Text>
               <Text style={styles.sectionDesc}>Check the subjects you want to assign to this batch for the current semester.</Text>
               
-              {subjects.map(subject => (
+              {subjects
+                .filter(s => 
+                  s.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  s.subject_code.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map(subject => (
                 <TouchableOpacity 
                   key={subject.id} 
                   style={[styles.subjectItem, subject.assigned && styles.subjectItemActive]}
@@ -278,6 +283,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   picker: { height: 50, color: '#0f172a' },
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+  },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, fontSize: 15, color: '#0f172a' },
 
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
   listContainer: { marginBottom: 20 },
