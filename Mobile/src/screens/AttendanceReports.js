@@ -159,15 +159,15 @@ export default function AdvancedReports() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
                     {departments.map((item) => (
                       <TouchableOpacity 
-                        key={item.dept_id}
-                        style={[styles.chip, filters.dept_id === item.dept_id && styles.chipSelected]}
+                        key={item.id}
+                        style={[styles.chip, filters.dept_id === item.id && styles.chipSelected]}
                         onPress={() => {
-                          setFilters({...filters, dept_id: item.dept_id, course_id: ''});
-                          fetchCourses(item.dept_id);
+                          setFilters({...filters, dept_id: item.id, course_id: ''});
+                          fetchCourses(item.id);
                         }}
                       >
-                        <Text style={[styles.chipText, filters.dept_id === item.dept_id && styles.chipTextSelected]}>
-                          Dept {item.dept_id}
+                        <Text style={[styles.chipText, filters.dept_id === item.id && styles.chipTextSelected]}>
+                          {item.name || `Dept ${item.id}`}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -201,11 +201,11 @@ export default function AdvancedReports() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
               {courses.length > 0 ? courses.map((item) => (
                 <TouchableOpacity 
-                  key={item.id}
-                  style={[styles.chip, filters.course_id === item.id && styles.chipSelected]}
-                  onPress={() => setFilters({...filters, course_id: item.id})}
+                  key={item.course_id}
+                  style={[styles.chip, filters.course_id === item.course_id && styles.chipSelected]}
+                  onPress={() => setFilters({...filters, course_id: item.course_id})}
                 >
-                  <Text style={[styles.chipText, filters.course_id === item.id && styles.chipTextSelected]}>
+                  <Text style={[styles.chipText, filters.course_id === item.course_id && styles.chipTextSelected]}>
                     {item.course_name}
                   </Text>
                 </TouchableOpacity>

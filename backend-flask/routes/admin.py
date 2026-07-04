@@ -1,6 +1,8 @@
 from flask import Blueprint, request
 from database.db import get_connection
 from utils.response import success, error
+import pandas as pd
+import io
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -50,6 +52,95 @@ def get_courses():
                 cur.execute("SELECT id AS course_id, subject_name AS course_name, subject_code FROM subjects ORDER BY subject_name ASC")
             courses = [dict(r) for r in cur.fetchall()]
     return success({"courses": courses})
+
+
+@admin_bp.post("/add_student")
+def add_student():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = data.get("user_id") or data.get("index_number")
+    full_name = data.get("full_name")
+    nic = data.get("nic")
+    dept_id = data.get("dept_id") or data.get("department_id")
+    batch_year = data.get("batch_year")
+
+    if not all([user_id, full_name, nic]):
+        return error("user_id, full_name, and nic are required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO users (index_number, full_name, nic, role, department_id, batch_year)
+                    VALUES (%s, %s, %s, 'Student', %s, %s)
+                    """,
+                    (user_id, full_name, nic, dept_id, batch_year),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                return error(str(e))
+    return success({"message": "Student added successfully"})
+
+
+@admin_bp.post("/upload_students")
+def upload_students():
+    if "file" not in request.files:
+        return error("No file provided")
+    file = request.files["file"]
+    if file.filename == "":
+        return error("No file selected")
+    
+    try:
+        df = pd.read_excel(file)
+        
+        # We need index_number, full_name, nic, department_id, batch_year
+        # Handle cases where column names might be slightly different
+        df.columns = [str(c).lower().strip() for c in df.columns]
+        
+        required_cols = ['index_number', 'full_name', 'nic']
+        for c in required_cols:
+            if c not in df.columns:
+                # Try fallback names
+                if c == 'index_number' and 'user_id' in df.columns:
+                    df = df.rename(columns={'user_id': 'index_number'})
+                else:
+                    return error(f"Missing required column: {c}")
+                    
+        dept_col = 'department_id' if 'department_id' in df.columns else ('dept_id' if 'dept_id' in df.columns else None)
+        batch_col = 'batch_year' if 'batch_year' in df.columns else None
+        
+        added_count = 0
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                for _, row in df.iterrows():
+                    user_id = str(row['index_number']).strip()
+                    full_name = str(row['full_name']).strip()
+                    nic = str(row['nic']).strip()
+                    dept_id = str(row[dept_col]).strip() if dept_col and pd.notna(row[dept_col]) else None
+                    if dept_id and dept_id.lower() == 'nan': dept_id = None
+                    batch_year = int(row[batch_col]) if batch_col and pd.notna(row[batch_col]) else None
+                    
+                    if user_id and full_name and nic:
+                        try:
+                            cur.execute(
+                                """
+                                INSERT INTO users (index_number, full_name, nic, role, department_id, batch_year)
+                                VALUES (%s, %s, %s, 'Student', %s, %s)
+                                ON CONFLICT (index_number) DO NOTHING
+                                """,
+                                (user_id, full_name, nic, dept_id, batch_year),
+                            )
+                            added_count += cur.rowcount
+                        except Exception as e:
+                            print(f"Error inserting {user_id}: {e}")
+                            conn.rollback()
+                            continue
+            conn.commit()
+            
+        return success({"message": f"{added_count} students uploaded successfully"})
+    except Exception as e:
+        return error(str(e))
 
 
 @admin_bp.post("/get_all_students")

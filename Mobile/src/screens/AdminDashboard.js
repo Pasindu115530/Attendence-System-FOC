@@ -17,9 +17,11 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { post, upload } from '../api';
+import { post, upload, uploadFile } from '../api';
 import { CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { Picker } from '@react-native-picker/picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function AdminDashboard({ navigation }) {
   const [lectures, setLectures] = useState([]);
@@ -34,6 +36,8 @@ export default function AdminDashboard({ navigation }) {
   const [formDeptId, setFormDeptId] = useState('');
   const [formBatchYear, setFormBatchYear] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [uploadingExcel, setUploadingExcel] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -134,6 +138,53 @@ export default function AdminDashboard({ navigation }) {
     }
   };
 
+  const fetchDepartments = async () => {
+    try {
+      const res = await post('/get_departments', {});
+      if (res.status === 'success') {
+        setDepartments(res.data.departments || []);
+        if (res.data.departments?.length > 0 && !formDeptId) {
+          setFormDeptId(res.data.departments[0].id.toString());
+        }
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleUploadExcel = async () => {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        type: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'],
+        copyToCacheDirectory: true
+      });
+      if (res.canceled) return;
+      const file = res.assets[0];
+      
+      setUploadingExcel(true);
+      const formData = new FormData();
+      formData.append('file', {
+        uri: Platform.OS === 'ios' ? file.uri.replace('file://', '') : file.uri,
+        name: file.name,
+        type: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      
+      const uploadRes = await upload('/upload_students', formData);
+      if (uploadRes.status === 'success') {
+        Alert.alert("Success", uploadRes.message);
+        setIsModalOpen(false);
+        fetchAdminData();
+      } else {
+        Alert.alert("Error", uploadRes.message || "Failed to upload file");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "An error occurred during file upload");
+    } finally {
+      setUploadingExcel(false);
+    }
+  };
+
   const generateStudentId = () => {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     setFormStudentId(`S${randomNum}`);
@@ -204,6 +255,7 @@ export default function AdminDashboard({ navigation }) {
 
   useEffect(() => {
     fetchAdminData();
+    fetchDepartments();
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
@@ -524,13 +576,18 @@ export default function AdminDashboard({ navigation }) {
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Department</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. Computing"
-                    placeholderTextColor="#94a3b8"
-                    value={formDeptId}
-                    onChangeText={setFormDeptId}
-                  />
+                  <View style={[styles.input, { paddingVertical: 0 }]}>
+                    <Picker
+                      selectedValue={formDeptId}
+                      onValueChange={(itemValue) => setFormDeptId(itemValue)}
+                      style={{ width: '100%', height: 50, color: '#1e293b' }}
+                    >
+                      <Picker.Item label="Select Department..." value="" />
+                      {departments.map(dept => (
+                        <Picker.Item key={dept.id} label={dept.name} value={dept.id.toString()} />
+                      ))}
+                    </Picker>
+                  </View>
                 </View>
 
                 <View style={styles.formGroup}>
@@ -545,19 +602,33 @@ export default function AdminDashboard({ navigation }) {
                   />
                 </View>
 
-                {submitting ? (
+                {submitting || uploadingExcel ? (
                   <ActivityIndicator size="large" color="#007A68" style={{ marginVertical: 20 }} />
                 ) : (
-                  <TouchableOpacity style={styles.submitBtn} onPress={handleAddStudent}>
-                    <LinearGradient
-                      colors={['#029A84', '#004D40']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.submitBtnGradient}
+                  <>
+                    <TouchableOpacity style={styles.submitBtn} onPress={handleAddStudent}>
+                      <LinearGradient
+                        colors={['#029A84', '#004D40']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.submitBtnGradient}
+                      >
+                        <Text style={styles.submitBtnText}>Create Student</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.submitBtn, { marginTop: 12, elevation: 1 }]} 
+                      onPress={handleUploadExcel}
                     >
-                      <Text style={styles.submitBtnText}>Create Student</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
+                      <View style={[styles.submitBtnGradient, { backgroundColor: '#f1f5f9' }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <MaterialCommunityIcons name="microsoft-excel" size={20} color="#0284c7" style={{ marginRight: 8 }} />
+                          <Text style={[styles.submitBtnText, { color: '#0284c7' }]}>Bulk Upload via Excel</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </>
                 )}
               </ScrollView>
             </View>
