@@ -157,9 +157,9 @@ export default function AdvancedReports() {
                   <ActivityIndicator size="small" color="#4ca1af" style={{ alignSelf: 'flex-start', padding: 10 }} />
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
-                    {departments.map((item) => (
+                    {departments.map((item, index) => (
                       <TouchableOpacity 
-                        key={item.id}
+                        key={item.id ? item.id.toString() : `dept_${index}`}
                         style={[styles.chip, filters.dept_id === item.id && styles.chipSelected]}
                         onPress={() => {
                           setFilters({...filters, dept_id: item.id, course_id: ''});
@@ -181,9 +181,9 @@ export default function AdvancedReports() {
                   <ActivityIndicator size="small" color="#4ca1af" style={{ alignSelf: 'flex-start', padding: 10 }} />
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
-                    {batches.map((item) => (
+                    {batches.map((item, index) => (
                       <TouchableOpacity 
-                        key={item.batch_year}
+                        key={item.batch_year ? item.batch_year.toString() : `batch_${index}`}
                         style={[styles.chip, filters.batch === item.batch_year && styles.chipSelected]}
                         onPress={() => setFilters({...filters, batch: item.batch_year})}
                       >
@@ -199,9 +199,9 @@ export default function AdvancedReports() {
 
             <Text style={[styles.label, { marginTop: 16 }]}>Select Course</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
-              {courses.length > 0 ? courses.map((item) => (
+              {courses.length > 0 ? courses.map((item, index) => (
                 <TouchableOpacity 
-                  key={item.course_id}
+                  key={item.course_id ? item.course_id.toString() : `course_${index}`}
                   style={[styles.chip, filters.course_id === item.course_id && styles.chipSelected]}
                   onPress={() => setFilters({...filters, course_id: item.course_id})}
                 >
@@ -254,7 +254,7 @@ export default function AdvancedReports() {
               </View>
 
               {results.map((item, index) => (
-                <React.Fragment key={item.user_id}>
+                <React.Fragment key={item.user_id ? item.user_id.toString() : `result_${index}`}>
                   {renderRow({ item, index })}
                 </React.Fragment>
               ))}
