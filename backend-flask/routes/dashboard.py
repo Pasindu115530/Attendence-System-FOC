@@ -23,10 +23,24 @@ def get_dashboard():
 
     with get_connection() as conn:
         with conn.cursor() as cur:
+            # If student_id is provided, get their batch_year to filter subjects
+            batch_year = None
+            if student_id:
+                cur.execute("SELECT batch_year FROM users WHERE index_number = %s", (student_id,))
+                user_row = cur.fetchone()
+                if user_row and user_row["batch_year"]:
+                    batch_year = user_row["batch_year"]
+
+            # Base query
+            query = _LECTURE_QUERY
+
+            # If we have a batch_year, we only want subjects assigned to this batch
+            if batch_year:
+                query += f" JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = {int(batch_year)} "
+
             # Live lecture?
             cur.execute(
-                _LECTURE_QUERY
-                + "WHERE t.day_of_week = %s AND %s BETWEEN t.start_time AND t.end_time LIMIT 1",
+                query + "WHERE t.day_of_week = %s AND %s BETWEEN t.start_time AND t.end_time LIMIT 1",
                 (day, time_now),
             )
             lecture = cur.fetchone()
@@ -53,8 +67,7 @@ def get_dashboard():
 
             # Next upcoming lecture today
             cur.execute(
-                _LECTURE_QUERY
-                + "WHERE t.day_of_week = %s AND t.start_time > %s ORDER BY t.start_time ASC LIMIT 1",
+                query + "WHERE t.day_of_week = %s AND t.start_time > %s ORDER BY t.start_time ASC LIMIT 1",
                 (day, time_now),
             )
             next_lecture = cur.fetchone()

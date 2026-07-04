@@ -69,23 +69,22 @@ CREATE TABLE users (
 -- 3. SUBJECTS
 
 -- =========================
-
 CREATE TABLE subjects (
-
     id              SERIAL PRIMARY KEY,
-
     subject_code    VARCHAR(20) NOT NULL UNIQUE,
-
     subject_name    VARCHAR(255) NOT NULL,
-
-    department_id   INTEGER REFERENCES departments(id),
-
-    batch_year      INTEGER NOT NULL,
-
-    lecturer_id     VARCHAR(50) REFERENCES users(index_number)
-
+    department_id   INTEGER REFERENCES departments(id)
 );
 
+-- =========================
+-- 3.1 BATCH SUBJECTS
+-- =========================
+CREATE TABLE batch_subjects (
+    id SERIAL PRIMARY KEY,
+    batch_year INTEGER NOT NULL,
+    subject_id INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+    UNIQUE(batch_year, subject_id)
+);
 
 
 -- =========================

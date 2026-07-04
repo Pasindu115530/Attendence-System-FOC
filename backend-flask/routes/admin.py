@@ -204,3 +204,84 @@ def update_geofence():
                 )
         conn.commit()
     return success({"message": "Geofence updated"})
+
+@admin_bp.post("/get_batch_subjects")
+def get_batch_subjects():
+    data = request.get_json(force=True, silent=True) or {}
+    batch_year = data.get("batch_year")
+    department_id = data.get("department_id")
+
+    if not batch_year or not department_id:
+        return error("batch_year and department_id are required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT s.id, s.subject_code, s.subject_name
+                FROM subjects s
+                WHERE s.department_id = %s
+                ORDER BY s.subject_name ASC
+                """,
+                (department_id,)
+            )
+            all_subjects = [dict(r) for r in cur.fetchall()]
+
+            cur.execute(
+                """
+                SELECT subject_id 
+                FROM batch_subjects 
+                WHERE batch_year = %s
+                """,
+                (batch_year,)
+            )
+            assigned = {r["subject_id"] for r in cur.fetchall()}
+
+    for s in all_subjects:
+        s["assigned"] = s["id"] in assigned
+
+    return success({"subjects": all_subjects})
+
+
+@admin_bp.post("/assign_batch_subjects")
+def assign_batch_subjects():
+    data = request.get_json(force=True, silent=True) or {}
+    batch_year = data.get("batch_year")
+    department_id = data.get("department_id")
+    subject_ids = data.get("subject_ids", [])
+
+    if not batch_year or not department_id:
+        return error("batch_year and department_id are required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            # First, delete all currently assigned subjects for this batch and department
+            # Since batch_subjects doesn't have department_id, we join with subjects
+            cur.execute(
+                """
+                DELETE FROM batch_subjects
+                WHERE batch_year = %s 
+                AND subject_id IN (
+                    SELECT id FROM subjects WHERE department_id = %s
+                )
+                """,
+                (batch_year, department_id)
+            )
+
+            # Insert new subjects
+            if subject_ids:
+                args = [(batch_year, sid) for sid in subject_ids]
+                args_str = ",".join(["(%s, %s)"] * len(subject_ids))
+                flat_args = [item for pair in args for item in pair]
+                
+                cur.execute(
+                    f"""
+                    INSERT INTO batch_subjects (batch_year, subject_id)
+                    VALUES {args_str}
+                    ON CONFLICT DO NOTHING
+                    """,
+                    flat_args
+                )
+        conn.commit()
+
+    return success({"message": "Subjects assigned successfully"})
