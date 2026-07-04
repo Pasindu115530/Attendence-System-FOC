@@ -166,6 +166,7 @@ def delete_timetable():
 def update_geofence():
     data = request.get_json(force=True, silent=True) or {}
     room_name = data.get("room_name", "").strip()
+    seat_count = data.get("seat_count", 0)
     if not room_name:
         return error("room_name is required")
 
@@ -186,20 +187,20 @@ def update_geofence():
                 cur.execute(
                     """
                     UPDATE classrooms
-                    SET lat_a=%s, lon_a=%s, lat_b=%s, lon_b=%s,
+                    SET seat_count=%s, lat_a=%s, lon_a=%s, lat_b=%s, lon_b=%s,
                         lat_c=%s, lon_c=%s, lat_d=%s, lon_d=%s
                     WHERE id=%s
                     """,
-                    (*coords.values(), room["id"]),
+                    (seat_count, *coords.values(), room["id"]),
                 )
             else:
                 cur.execute(
                     """
                     INSERT INTO classrooms
-                        (room_name, lat_a, lon_a, lat_b, lon_b, lat_c, lon_c, lat_d, lon_d)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (room_name, seat_count, lat_a, lon_a, lat_b, lon_b, lat_c, lon_c, lat_d, lon_d)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (room_name, *coords.values()),
+                    (room_name, seat_count, *coords.values()),
                 )
         conn.commit()
     return success({"message": "Geofence updated"})

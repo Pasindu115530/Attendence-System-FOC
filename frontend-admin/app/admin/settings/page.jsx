@@ -10,6 +10,7 @@ export default function SettingsPage() {
   // Geofence form state
   const [selectedRoomName, setSelectedRoomName] = useState('');
   const [newRoomName, setNewRoomName] = useState('');
+  const [seatCount, setSeatCount] = useState(0);
   const [isNewRoom, setIsNewRoom] = useState(false);
 
   const [latA, setLatA] = useState('');
@@ -53,6 +54,7 @@ export default function SettingsPage() {
       setLonC(room.lon_c ?? '');
       setLatD(room.lat_d ?? '');
       setLonD(room.lon_d ?? '');
+      setSeatCount(room.seat_count ?? 0);
     }
   };
 
@@ -68,6 +70,7 @@ export default function SettingsPage() {
     setLonC('');
     setLatD('');
     setLonD('');
+    setSeatCount(0);
   };
 
   const handleSubmit = async (e) => {
@@ -94,6 +97,7 @@ export default function SettingsPage() {
     setSubmitting(true);
     const res = await apiPost('update_geofence', {
       room_name: targetRoomName,
+      seat_count: parseInt(seatCount) || 0,
       lat_a: parseFloat(latA),
       lon_a: parseFloat(lonA),
       lat_b: parseFloat(latB),
@@ -151,6 +155,7 @@ export default function SettingsPage() {
                 <thead>
                   <tr>
                     <th>Classroom Name</th>
+                    <th>Seats</th>
                     <th>Geofence Status</th>
                     <th>Action</th>
                   </tr>
@@ -161,6 +166,7 @@ export default function SettingsPage() {
                     return (
                       <tr key={room.id} style={{ background: selectedRoomName === room.room_name ? 'var(--surface-hover)' : 'transparent' }}>
                         <td style={{ fontWeight: 600 }}>{room.room_name}</td>
+                        <td>{room.seat_count}</td>
                         <td>
                           <span className={`badge ${hasGeofence ? 'badge-live' : 'badge-warning'}`}>
                             {hasGeofence ? 'Active Geofence' : 'No Geofence'}
@@ -200,19 +206,33 @@ export default function SettingsPage() {
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               
-              <div className="form-group">
-                <label>Classroom Name</label>
-                {isNewRoom ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-group">
+                  <label>Classroom Name</label>
+                  {isNewRoom ? (
+                    <input
+                      type="text"
+                      placeholder="e.g. Lab 01"
+                      value={newRoomName}
+                      onChange={e => setNewRoomName(e.target.value)}
+                      required
+                    />
+                  ) : (
+                    <input type="text" value={selectedRoomName} disabled style={{ background: 'var(--surface-2)' }} />
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Seat Count</label>
                   <input
-                    type="text"
-                    placeholder="e.g. Lab 01"
-                    value={newRoomName}
-                    onChange={e => setNewRoomName(e.target.value)}
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 50"
+                    value={seatCount}
+                    onChange={e => setSeatCount(e.target.value)}
                     required
                   />
-                ) : (
-                  <input type="text" value={selectedRoomName} disabled style={{ background: 'var(--surface-2)' }} />
-                )}
+                </div>
               </div>
 
               {/* Coordinates Grid */}

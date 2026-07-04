@@ -17,6 +17,7 @@ import { post } from '../api';
 
 export default function AddClassLocation({ navigation }) {
   const [roomName, setRoomName] = useState('');
+  const [seatCount, setSeatCount] = useState('');
   const [points, setPoints] = useState({ a: null, b: null, c: null, d: null });
   const [loading, setLoading] = useState(false);
   const [capturing, setCapturing] = useState(null);
@@ -58,6 +59,7 @@ export default function AddClassLocation({ navigation }) {
     try {
       const res = await post('/update_geofence', {
         room_name: roomName.trim(),
+        seat_count: parseInt(seatCount) || 0,
         lat_a: points.a.latitude, lon_a: points.a.longitude,
         lat_b: points.b.latitude, lon_b: points.b.longitude,
         lat_c: points.c.latitude, lon_c: points.c.longitude,
@@ -114,6 +116,19 @@ export default function AddClassLocation({ navigation }) {
               placeholderTextColor="#94a3b8"
               value={roomName}
               onChangeText={setRoomName}
+            />
+          </View>
+          
+          <Text style={[styles.label, { marginTop: 16 }]}>Seat Capacity</Text>
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons name="chair-school" size={20} color="#667eea" style={styles.inputIcon} />
+            <TextInput 
+              style={styles.input} 
+              placeholder="e.g. 50" 
+              placeholderTextColor="#94a3b8"
+              keyboardType="numeric"
+              value={seatCount}
+              onChangeText={setSeatCount}
             />
           </View>
         </View>
