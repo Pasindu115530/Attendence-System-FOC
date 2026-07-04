@@ -10,6 +10,8 @@ from routes.admin import admin_bp
 from routes.report import report_bp
 from routes.upload import upload_bp
 from routes.classroom import face_bp
+from routes.agent import agent_bp
+from flask_cors import CORS
 
 # ── Services ──────────────────────────────────────────────────────────────────
 from services.rekognition import rekognition_service
@@ -18,7 +20,7 @@ from services.rekognition import rekognition_service
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
-
+    CORS(app, resources={r"/*": {"origins": "*"}})
     # Ensure upload dir exists at startup (medical reports only)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -55,6 +57,7 @@ def create_app(config_class=Config) -> Flask:
     app.register_blueprint(report_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(face_bp)
+    app.register_blueprint(agent_bp, url_prefix='/api/agent')
 
     # ── Health Check ─────────────────────────────────────────────────────────
     @app.get("/health")
