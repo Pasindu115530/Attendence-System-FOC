@@ -512,8 +512,8 @@ export default function LoginScreen({ navigation }) {
                     <View style={{ width: 42 }} />
                   </TouchableOpacity>
 
-                  {/* Switch to SignUp Toggle */}
-                  <TouchableOpacity onPress={() => setIsSignUpMode(true)} activeOpacity={0.7}>
+                  {/* Switch to Contact Admin Screen */}
+                  <TouchableOpacity onPress={() => navigation.navigate('ContactAdmin')} activeOpacity={0.7}>
                     <Text style={styles.switchModeText}>Don't have an account ? Contact Administrator</Text>
                   </TouchableOpacity>
                 </View>

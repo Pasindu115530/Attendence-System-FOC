@@ -9,6 +9,7 @@ import AddClassLocation from './src/screens/AddClassLocation';
 import AttendanceReports from './src/screens/AttendanceReports';
 import AbsentUploader from './src/screens/AbsentUploader';
 import ChatScreen from './src/screens/ChatScreen';
+import ContactAdminScreen from './src/screens/ContactAdminScreen';
 
 
 const Stack = createStackNavigator();
@@ -24,6 +25,7 @@ export default function App() {
         <Stack.Screen name="AttendanceReports" component={AttendanceReports} />
         <Stack.Screen name="AbsentUploader" component={AbsentUploader} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        <Stack.Screen name="ContactAdmin" component={ContactAdminScreen} />
  
       </Stack.Navigator>
     </NavigationContainer>
