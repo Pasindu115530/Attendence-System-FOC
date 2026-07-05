@@ -12,7 +12,7 @@ def login():
     password = data.get("password", "").strip()
 
     if not username or not password:
-        return error("Index number (username) and NIC (password) are required")
+        return error("Index number (username) and password are required")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -20,7 +20,7 @@ def login():
                 """
                 SELECT index_number AS user_id, nic, role
                 FROM users
-                WHERE index_number = %s AND nic = %s
+                WHERE index_number = %s AND password = %s
                 LIMIT 1
                 """,
                 (username, password),
@@ -69,25 +69,25 @@ def change_password():
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT nic FROM users WHERE index_number = %s LIMIT 1",
+                "SELECT password FROM users WHERE index_number = %s LIMIT 1",
                 (user_id,)
             )
             row = cur.fetchone()
             if not row:
                 return error("User not found")
             
-            if row["nic"] != old_password:
+            if row["password"] != old_password:
                 return error("Incorrect old password")
 
             try:
                 cur.execute(
-                    "UPDATE users SET nic = %s WHERE index_number = %s",
+                    "UPDATE users SET password = %s WHERE index_number = %s",
                     (new_password, user_id)
                 )
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                return error("Failed to update password. Password must be unique.")
+                return error("Failed to update password.")
     return success({"message": "Password changed successfully"})
 
 

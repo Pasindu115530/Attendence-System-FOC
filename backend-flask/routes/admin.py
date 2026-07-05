@@ -72,10 +72,10 @@ def add_student():
             try:
                 cur.execute(
                     """
-                    INSERT INTO users (index_number, registration_number, full_name, nic, role, department_id, batch_year)
-                    VALUES (%s, %s, %s, %s, 'Student', %s, %s)
+                    INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year)
+                    VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s)
                     """,
-                    (user_id, registration_number, full_name, nic, dept_id, batch_year),
+                    (user_id, registration_number, full_name, nic, nic, dept_id, batch_year),
                 )
                 conn.commit()
             except Exception as e:
@@ -135,11 +135,11 @@ def upload_students():
                         try:
                             cur.execute(
                                 """
-                                INSERT INTO users (index_number, registration_number, full_name, nic, role, department_id, batch_year)
-                                VALUES (%s, %s, %s, %s, 'Student', %s, %s)
+                                INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year)
+                                VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s)
                                 ON CONFLICT (index_number) DO NOTHING
                                 """,
-                                (user_id, registration_number, full_name, nic, dept_id, batch_year),
+                                (user_id, registration_number, full_name, nic, nic, dept_id, batch_year),
                             )
                             added_count += cur.rowcount
                         except Exception as e:
