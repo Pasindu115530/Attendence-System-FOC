@@ -224,10 +224,12 @@ def get_all_timetable():
             cur.execute(
                 """
                 SELECT t.id, t.subject_id AS course_id, t.classroom_id, t.day_of_week, t.start_time, t.end_time,
-                       s.subject_name AS course_name, s.department_id, r.room_name
+                       s.subject_name AS course_name, s.subject_code, bs.batch_year, d.name AS department_name, r.room_name
                 FROM timetable t
                 JOIN subjects s ON t.subject_id = s.id
                 JOIN classrooms r ON t.classroom_id = r.id
+                LEFT JOIN batch_subjects bs ON s.id = bs.subject_id
+                LEFT JOIN departments d ON bs.department_id = d.id
                 ORDER BY CASE t.day_of_week
                     WHEN 'Monday' THEN 1
                     WHEN 'Tuesday' THEN 2

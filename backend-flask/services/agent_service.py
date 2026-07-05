@@ -402,7 +402,9 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 "(add students, assign subjects, schedule lectures). "
                 "Always confirm the user's intent before performing write/delete operations. "
                 "Ask for any missing required fields before proceeding. "
-                "Present results as clean, concise markdown tables or lists."
+                "Present results as clean, concise markdown tables or lists. "
+                "IMPORTANT: You CAN retrieve the lecture timetable filtered by day of the week, batch year, and department by using the get_timetable_schedule tool. "
+                "You CAN also view subjects assigned to a batch using get_assigned_subjects_for_batch."
             ),
             tools=[
                 get_student,

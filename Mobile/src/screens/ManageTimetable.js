@@ -373,7 +373,10 @@ export default function ManageTimetable({ navigation }) {
             timetables.map((tt) => (
               <View key={tt.id} style={styles.ttCard}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.ttCourse}>{tt.subject_name}</Text>
+                  <Text style={styles.ttCourse}>{tt.subject_code} - {tt.course_name}</Text>
+                  <Text style={styles.ttInfo}>
+                    <MaterialCommunityIcons name="account-group" size={14} color="#64748b" /> {tt.batch_year ? `Batch ${tt.batch_year}` : 'All Batches'} {tt.department_name ? `(${tt.department_name})` : ''}
+                  </Text>
                   <Text style={styles.ttInfo}>
                     <MaterialCommunityIcons name="calendar" size={14} color="#64748b" /> {tt.day_of_week} | {tt.start_time?.substring(0,5)} - {tt.end_time?.substring(0,5)}
                   </Text>
