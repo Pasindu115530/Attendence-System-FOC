@@ -43,7 +43,7 @@ export default function AdminAIChat({ navigation }) {
       // Prepare history excluding the current message for context
       const history = messages.map(m => ({ role: m.role, content: m.content }));
       
-      const res = await post('/chat', {
+      const res = await post('/api/agent/chat', {
         message: text.trim(),
         history: history
       });
