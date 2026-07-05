@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from database.db import get_connection
 from utils.response import success, error
 import pandas as pd
@@ -346,46 +346,52 @@ def get_batch_subjects():
 
 @admin_bp.post("/assign_batch_subjects")
 def assign_batch_subjects():
-    data = request.get_json(force=True, silent=True) or {}
-    batch_year = data.get("batch_year")
-    department_id = data.get("department_id")
-    subject_ids = data.get("subject_ids", [])
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        print("assign_batch_subjects received data:", data)
+        batch_year = data.get("batch_year")
+        department_id = data.get("department_id")
+        subject_ids = data.get("subject_ids", [])
 
-    if not batch_year or not department_id:
-        return error("batch_year and department_id are required")
+        if not batch_year or not department_id:
+            return error("batch_year and department_id are required")
 
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            # First, delete all currently assigned subjects for this batch and department
-            # Since batch_subjects doesn't have department_id, we join with subjects
-            cur.execute(
-                """
-                DELETE FROM batch_subjects
-                WHERE batch_year = %s 
-                AND subject_id IN (
-                    SELECT id FROM subjects WHERE department_id = %s
-                )
-                """,
-                (batch_year, department_id)
-            )
-
-            # Insert new subjects
-            if subject_ids:
-                args = [(batch_year, sid) for sid in subject_ids]
-                args_str = ",".join(["(%s, %s)"] * len(subject_ids))
-                flat_args = [item for pair in args for item in pair]
-                
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # First, delete all currently assigned subjects for this batch and department
+                # Since batch_subjects doesn't have department_id, we join with subjects
                 cur.execute(
-                    f"""
-                    INSERT INTO batch_subjects (batch_year, subject_id)
-                    VALUES {args_str}
-                    ON CONFLICT (batch_year, subject_id) DO NOTHING
+                    """
+                    DELETE FROM batch_subjects
+                    WHERE batch_year = %s 
+                    AND subject_id IN (
+                        SELECT id FROM subjects WHERE department_id = %s
+                    )
                     """,
-                    flat_args
+                    (batch_year, department_id)
                 )
-        conn.commit()
 
-    return success({"message": "Subjects assigned successfully"})
+                # Insert new subjects
+                if subject_ids:
+                    args = [(batch_year, sid) for sid in subject_ids]
+                    args_str = ",".join(["(%s, %s)"] * len(subject_ids))
+                    flat_args = [item for pair in args for item in pair]
+                    
+                    cur.execute(
+                        f"""
+                        INSERT INTO batch_subjects (batch_year, subject_id)
+                        VALUES {args_str}
+                        ON CONFLICT (batch_year, subject_id) DO NOTHING
+                        """,
+                        flat_args
+                    )
+            conn.commit()
+
+        return success({"message": "Subjects assigned successfully"})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e), "error": str(e)}), 500
 
 
 @admin_bp.post("/reset_semester")
