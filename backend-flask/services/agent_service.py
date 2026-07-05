@@ -345,6 +345,68 @@ def remove_subject_assignment(assignment_id: int) -> dict:
                 conn.rollback()
                 return {"error": str(e)}
 
+def auto_schedule_timetable_tool() -> dict:
+    """Automatically schedules all assigned subjects avoiding clashes. This will clear the existing timetable."""
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM timetable")
+                cur.execute("SELECT id FROM classrooms")
+                classroom_ids = [r['id'] for r in cur.fetchall()]
+                if not classroom_ids:
+                    return {"error": "No classrooms available to schedule."}
+
+                cur.execute("SELECT subject_id, batch_year FROM batch_subjects")
+                assignments = cur.fetchall()
+
+                days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                slots = [("08:00:00", "10:00:00"), ("10:00:00", "12:00:00"), ("13:00:00", "15:00:00"), ("15:00:00", "17:00:00")]
+
+                available_classrooms = {}
+                for day in days:
+                    for i, slot in enumerate(slots):
+                        available_classrooms[(day, i)] = list(classroom_ids)
+                
+                batch_busy = {}
+                inserts = []
+                
+                for assign in assignments:
+                    subject_id = assign['subject_id']
+                    batch_year = assign['batch_year']
+                    
+                    scheduled = False
+                    for day in days:
+                        if scheduled: break
+                        for i, slot in enumerate(slots):
+                            if not batch_busy.get((batch_year, day, i), False):
+                                rooms = available_classrooms[(day, i)]
+                                if rooms:
+                                    room_id = rooms.pop(0) 
+                                    batch_busy[(batch_year, day, i)] = True
+                                    start_t, end_t = slot
+                                    inserts.append((subject_id, room_id, day, start_t, end_t))
+                                    scheduled = True
+                                    break
+                    
+                    if not scheduled:
+                        conn.rollback()
+                        return {"error": f"Not enough slots or classrooms to schedule subject ID {subject_id} for batch {batch_year}."}
+
+                if inserts:
+                    from psycopg2.extras import execute_values
+                    execute_values(
+                        cur,
+                        "INSERT INTO timetable (subject_id, classroom_id, day_of_week, start_time, end_time) VALUES %s",
+                        inserts
+                    )
+                
+            conn.commit()
+        return {"success": True, "message": f"Successfully auto-scheduled {len(inserts)} lectures."}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
 def schedule_timetable(subject_id: int, classroom_id: int, day_of_week: str, start_time: str, end_time: str) -> dict:
     """Add a new timetable/lecture slot for a subject in a classroom."""
     with get_connection() as conn:
@@ -404,7 +466,8 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 "Ask for any missing required fields before proceeding. "
                 "Present results as clean, concise markdown tables or lists. "
                 "IMPORTANT: You CAN retrieve the lecture timetable filtered by day of the week, batch year, and department by using the get_timetable_schedule tool. "
-                "You CAN also view subjects assigned to a batch using get_assigned_subjects_for_batch."
+                "You CAN also view subjects assigned to a batch using get_assigned_subjects_for_batch. "
+                "You CAN automatically auto-schedule the timetable by using auto_schedule_timetable_tool. WARNING: this overwrites the current schedule."
             ),
             tools=[
                 get_student,
@@ -429,6 +492,7 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 get_all_subjects_for_dept,
                 get_assigned_subjects_for_batch,
                 remove_subject_assignment,
+                auto_schedule_timetable_tool,
                 schedule_timetable,
                 get_all_departments,
                 get_all_batches
