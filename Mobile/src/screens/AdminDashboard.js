@@ -13,7 +13,9 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions,
+  Image
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +24,8 @@ import { CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
+
+const { width, height } = Dimensions.get('window');
 
 export default function AdminDashboard({ navigation }) {
   const [lectures, setLectures] = useState([]);
@@ -39,6 +43,9 @@ export default function AdminDashboard({ navigation }) {
   const [submitting, setSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
+
+  // Custom Logout Confirmation Modal State
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -239,9 +246,7 @@ export default function AdminDashboard({ navigation }) {
 
   const fetchAdminData = useCallback(async () => {
     try {
-      // POST /get_admin_dashboard  →  { status, data: { lectures: [...] } }
       const data = await post('/get_admin_dashboard', {});
-
       if (data.status === 'success') {
         setLectures(data.data.lectures);
       } else {
@@ -271,19 +276,16 @@ export default function AdminDashboard({ navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Yes, Logout", onPress: () => navigation.replace('Login', { autoFaceLogin: false }), style: 'destructive' }
-    ]);
+    setIsLogoutModalOpen(true);
   };
 
   if (loading) {
     return (
       <View style={styles.center}>
         <View style={styles.loadingIcon}>
-          <MaterialCommunityIcons name="school-outline" size={48} color="#007A68" />
+          <MaterialCommunityIcons name="school-outline" size={48} color="#35A7C4" />
         </View>
-        <Text style={{marginTop: 16, color: '#64748b', fontWeight: '600', fontSize: 15}}>Loading Schedule...</Text>
+        <Text style={{ marginTop: 16, color: '#7C8BA1', fontFamily: 'Outfit-SemiBold', fontSize: 15 }}>Loading Schedule...</Text>
       </View>
     );
   }
@@ -296,53 +298,54 @@ export default function AdminDashboard({ navigation }) {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
-      {/* Header */}
-      <LinearGradient
-        colors={['#029A84', '#007A68', '#004D40']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerWave1} pointerEvents="none" />
-        <View style={styles.headerWave2} pointerEvents="none" />
-
-        <View style={styles.headerTop}>
-          <View>
-            <View style={styles.headerTitleRow}>
-              <Text style={styles.headerTitle}>Admin Panel</Text>
-              <View style={styles.headerBadge}>
-                <Text style={styles.headerBadgeText}>FOC</Text>
+      {/* Header Container */}
+      <View style={styles.headerContainer}>
+        {/* Neumorphic Header Gradient */}
+        <LinearGradient
+          colors={['#F3F7FD', '#E5EDF9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.headerSplitOverlay}
+        >
+          {/* Top Bar (Badge and Notification) */}
+          <View style={styles.headerTopBar}>
+            <View>
+              <View style={styles.headerTitleRow}>
+                <Text style={styles.headerTitle}>Admin Panel</Text>
+                <View style={styles.headerBadge}>
+                  <Text style={styles.headerBadgeText}>FOC</Text>
+                </View>
               </View>
+              <Text style={styles.headerSubtitle}>Faculty of Computing</Text>
             </View>
-            <Text style={styles.headerSubtitle}>Faculty of Computing</Text>
+            <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="bell-outline" size={22} color="#35A7C4" />
+              {liveLectures.length > 0 && <View style={styles.notifBadge} />}
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
-            <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
-            {liveLectures.length > 0 && <View style={styles.notifBadge} />}
-          </TouchableOpacity>
-        </View>
 
-        {/* Stats Bar */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{lectures.length}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+          {/* Stats Bar */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{lectures.length}</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: '#35A7C4' }]}>{liveLectures.length}</Text>
+              <Text style={styles.statLabel}>Live Now</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{Math.max(0, lectures.length - liveLectures.length)}</Text>
+              <Text style={styles.statLabel}>Upcoming</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: '#5eead4' }]}>{liveLectures.length}</Text>
-            <Text style={styles.statLabel}>Live Now</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{Math.max(0, lectures.length - liveLectures.length)}</Text>
-            <Text style={styles.statLabel}>Upcoming</Text>
-          </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
@@ -351,12 +354,12 @@ export default function AdminDashboard({ navigation }) {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh} 
-            tintColor="#029A84"
-            colors={['#029A84']}
+            tintColor="#35A7C4"
+            colors={['#35A7C4']}
           />
         }
       >
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], width: '100%' }}>
           
           <Text style={styles.sectionTitle}>Today's Schedule</Text>
           
@@ -366,9 +369,9 @@ export default function AdminDashboard({ navigation }) {
               return (
                 <View key={index} style={[styles.lecCard, isLive && styles.lecCardLive]}>
                   <View style={styles.cardHeader}>
-                    <View style={[styles.badge, { backgroundColor: isLive ? '#d1fae5' : '#f1f5f9' }]}>
-                      <View style={[styles.dot, { backgroundColor: isLive ? '#10b981' : '#94a3b8' }]} />
-                      <Text style={[styles.badgeText, { color: isLive ? '#065f46' : '#64748b' }]}>
+                    <View style={[styles.badge, { backgroundColor: isLive ? 'rgba(53, 167, 196, 0.12)' : '#ECF0F3' }]}>
+                      <View style={[styles.dot, { backgroundColor: isLive ? '#35A7C4' : '#7C8BA1' }]} />
+                      <Text style={[styles.badgeText, { color: isLive ? '#35A7C4' : '#7C8BA1' }]}>
                         {isLive ? 'LIVE' : 'SCHEDULED'}
                       </Text>
                     </View>
@@ -379,7 +382,7 @@ export default function AdminDashboard({ navigation }) {
                   <Text style={styles.courseName}>{item.course_name}</Text>
                   <View style={styles.infoRow}>
                     <View style={styles.infoPill}>
-                      <MaterialCommunityIcons name="map-marker-radius" size={14} color="#007A68" />
+                      <MaterialCommunityIcons name="map-marker-radius" size={14} color="#35A7C4" style={{ marginRight: 4 }} />
                       <Text style={styles.infoText}>{item.room_name}</Text>
                     </View>
                   </View>
@@ -389,157 +392,214 @@ export default function AdminDashboard({ navigation }) {
           ) : (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconBg}>
-                <MaterialCommunityIcons name="calendar-blank" size={48} color="#cbd5e1" />
+                <MaterialCommunityIcons name="calendar-blank" size={48} color="#7C8BA1" />
               </View>
               <Text style={styles.emptyText}>No lectures scheduled for today.</Text>
             </View>
-        )}
+          )}
 
-          <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Quick Actions</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Quick Actions</Text>
           
+          {/* Create Student */}
           <TouchableOpacity 
             style={styles.actionCard} 
             onPress={() => setIsModalOpen(true)}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#e6f4f2' }]}>
-              <MaterialCommunityIcons name="account-plus-outline" size={26} color="#007A68" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="account-plus-outline" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>Create Student</Text>
               <Text style={styles.actionDesc}>Register a new student with login credentials</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#e6f4f2' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#007A68" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
+          {/* Attendance Reports */}
           <TouchableOpacity 
             style={styles.actionCard} 
             onPress={() => navigation.navigate('AttendanceReports')}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#e6f4f2' }]}>
-              <MaterialCommunityIcons name="file-chart-outline" size={26} color="#007A68" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="file-chart-outline" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>Attendance Reports</Text>
               <Text style={styles.actionDesc}>View student attendance statistics by course</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#e6f4f2' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#007A68" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
+          {/* Assign Subjects */}
           <TouchableOpacity 
             style={styles.actionCard} 
             onPress={() => navigation.navigate('AssignSubjects')}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#e0e7ff' }]}>
-              <MaterialCommunityIcons name="book-open-page-variant-outline" size={26} color="#4f46e5" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="book-open-page-variant-outline" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>Assign Subjects</Text>
               <Text style={styles.actionDesc}>Assign subjects to batches per semester</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#e0e7ff' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#4f46e5" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
+          {/* View Assignments */}
           <TouchableOpacity 
             style={styles.actionCard} 
             onPress={() => navigation.navigate('ViewAssignedSubjects')}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#d1fae5' }]}>
-              <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#059669" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>View Assignments</Text>
               <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#d1fae5' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#059669" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
+          {/* Manage Timetable */}
           <TouchableOpacity 
             style={styles.actionCard} 
             onPress={() => navigation.navigate('ManageTimetable')}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#fef3c7' }]}>
-              <MaterialCommunityIcons name="calendar-clock" size={26} color="#d97706" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>Manage Timetable</Text>
               <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#fef3c7' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#d97706" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
+          {/* Set Class Location */}
           <TouchableOpacity 
-            style={[styles.actionCard, { marginBottom: 12 }]} 
+            style={styles.actionCard} 
             onPress={() => navigation.navigate('AddClassLocation')}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#fff1f2' }]}>
-              <MaterialCommunityIcons name="map-marker-path" size={26} color="#e11d48" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="map-marker-path" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>Set Class Location</Text>
               <Text style={styles.actionDesc}>Define boundary points for geofencing</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#fff1f2' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#e11d48" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
+          {/* Register Admin Face */}
           <TouchableOpacity 
             style={styles.actionCard} 
-            onPress={handleOpenFaceReset}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconCircle, { backgroundColor: '#fef2f2' }]}>
-              <MaterialCommunityIcons name="delete-alert-outline" size={26} color="#ef4444" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Reset Semester</Text>
-              <Text style={styles.actionDesc}>Requires facial verification</Text>
-            </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#fef2f2' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#ef4444" />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, { marginBottom: 12 }]} 
             onPress={handleOpenFaceRegister}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: '#e2e8f0' }]}>
-              <MaterialCommunityIcons name="face-recognition" size={26} color="#475569" />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="face-recognition" size={26} color="#35A7C4" />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.actionTitle}>Register Admin Face</Text>
               <Text style={styles.actionDesc}>Register your face for admin actions</Text>
             </View>
-            <View style={[styles.chevronBg, { backgroundColor: '#e2e8f0' }]}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#475569" />
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
-            <MaterialCommunityIcons name="logout" size={20} color="#ef4444" />
-            <Text style={styles.logoutText}>Logout from System</Text>
+          {/* Reset Semester (Warning Action) */}
+          <TouchableOpacity 
+            style={styles.actionCard} 
+            onPress={handleOpenFaceReset}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconCircle, styles.warningIconCircle]}>
+              <MaterialCommunityIcons name="delete-alert-outline" size={26} color="#E11D48" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={styles.actionTitle}>Reset Semester</Text>
+              <Text style={styles.actionDesc}>Requires facial verification (Destructive)</Text>
+            </View>
+            <View style={styles.chevronBg}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#E11D48" />
+            </View>
           </TouchableOpacity>
+
+          {/* Logout Action Button wrapper */}
+          <View style={styles.logoutBtnContainer}>
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+              <MaterialCommunityIcons name="logout" size={20} color="#E11D48" />
+              <Text style={styles.logoutText}>Logout from System</Text>
+            </TouchableOpacity>
+          </View>
 
         </Animated.View>
       </ScrollView>
+
+      {/* Custom Logout Confirmation Modal */}
+      <Modal
+        visible={isLogoutModalOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsLogoutModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.logoutModalContent]}>
+            <View style={styles.logoutIconWrapper}>
+              <View style={styles.logoutIconOutline}>
+                <View style={styles.logoutIconInner}>
+                  <MaterialCommunityIcons name="logout-variant" size={32} color="#E11D48" />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.logoutModalTitle}>Confirm Logout</Text>
+            <Text style={styles.logoutModalMessage}>Do you want to log out of the Admin panel?</Text>
+            
+            <View style={styles.logoutActionRow}>
+              <TouchableOpacity 
+                style={styles.logoutCancelBtn} 
+                onPress={() => setIsLogoutModalOpen(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.logoutConfirmBtnShadow}>
+                <TouchableOpacity 
+                  style={styles.logoutConfirmBtn} 
+                  onPress={() => {
+                    setIsLogoutModalOpen(false);
+                    navigation.replace('Login', { autoFaceLogin: false });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.logoutConfirmBtnText}>Log Out</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Create Student Modal */}
       <Modal
@@ -557,7 +617,7 @@ export default function AdminDashboard({ navigation }) {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New Student</Text>
                 <TouchableOpacity onPress={() => setIsModalOpen(false)} style={styles.modalCloseBtn}>
-                  <MaterialCommunityIcons name="close" size={24} color="#64748b" />
+                  <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
                 </TouchableOpacity>
               </View>
 
@@ -567,68 +627,72 @@ export default function AdminDashboard({ navigation }) {
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.formGroup}>
-                  <Text style={styles.inputLabel}>Student Index Number (Username for Login) *</Text>
-                  <View style={styles.rowInputContainer}>
+                  <Text style={styles.inputLabel}>Student Index Number *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="account-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
                     <TextInput
-                      style={[styles.input, { flex: 1 }]}
+                      style={styles.textInput}
                       placeholder="e.g. FC221000"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#7C8BA1"
                       value={formStudentId}
                       onChangeText={setFormStudentId}
                       autoCapitalize="none"
                     />
-                    
                   </View>
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Full Name *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. Amal Perera"
-                    placeholderTextColor="#94a3b8"
-                    value={formFullName}
-                    onChangeText={setFormFullName}
-                  />
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="account-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. Amal Perera"
+                      placeholderTextColor="#7C8BA1"
+                      value={formFullName}
+                      onChangeText={setFormFullName}
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Student Registration Number *</Text>
-                  <View style={styles.rowInputContainer}>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="card-account-details-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
                     <TextInput
-                      style={[styles.input, { flex: 1 }]}
+                      style={styles.textInput}
                       placeholder="e.g. FC115000"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#7C8BA1"
                       value={formRegNo}
                       onChangeText={setFormRegNo}
                       autoCapitalize="none"
                     />
-                    
                   </View>
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>NIC (Password for Login) *</Text>
-                  <View style={styles.rowInputContainer}>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="lock-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
                     <TextInput
-                      style={[styles.input, { flex: 1 }]}
+                      style={styles.textInput}
                       placeholder="e.g. 200123456789"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#7C8BA1"
                       value={formNic}
                       onChangeText={setFormNic}
                       autoCapitalize="none"
                     />
-                    
                   </View>
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Department</Text>
-                  <View style={[styles.input, { paddingVertical: 0 }]}>
+                  <View style={styles.pickerContainer}>
+                    <MaterialCommunityIcons name="office-building" size={20} color="#7C8BA1" style={styles.inputIcon} />
                     <Picker
                       selectedValue={formDeptId}
                       onValueChange={(itemValue) => setFormDeptId(itemValue)}
-                      style={{ width: '100%', height: 50, color: '#1e293b' }}
+                      style={{ flex: 1, color: '#2C3A4E' }}
                     >
                       <Picker.Item label="Select Department..." value="" />
                       {departments.map(dept => (
@@ -640,42 +704,39 @@ export default function AdminDashboard({ navigation }) {
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Batch Year</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 2024"
-                    placeholderTextColor="#94a3b8"
-                    value={formBatchYear}
-                    onChangeText={setFormBatchYear}
-                    keyboardType="numeric"
-                  />
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="calendar-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. 2024"
+                      placeholderTextColor="#7C8BA1"
+                      value={formBatchYear}
+                      onChangeText={setFormBatchYear}
+                      keyboardType="numeric"
+                    />
+                  </View>
                 </View>
 
                 {submitting || uploadingExcel ? (
-                  <ActivityIndicator size="large" color="#007A68" style={{ marginVertical: 20 }} />
+                  <ActivityIndicator size="large" color="#35A7C4" style={{ marginVertical: 20 }} />
                 ) : (
                   <>
-                    <TouchableOpacity style={styles.submitBtn} onPress={handleAddStudent}>
-                      <LinearGradient
-                        colors={['#029A84', '#004D40']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.submitBtnGradient}
-                      >
+                    <View style={styles.submitBtnShadowContainer}>
+                      <TouchableOpacity style={styles.submitBtn} onPress={handleAddStudent}>
                         <Text style={styles.submitBtnText}>Create Student</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
+                      </TouchableOpacity>
+                    </View>
 
-                    <TouchableOpacity 
-                      style={[styles.submitBtn, { marginTop: 12, elevation: 1 }]} 
-                      onPress={handleUploadExcel}
-                    >
-                      <View style={[styles.submitBtnGradient, { backgroundColor: '#f1f5f9' }]}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <MaterialCommunityIcons name="microsoft-excel" size={20} color="#0284c7" style={{ marginRight: 8 }} />
-                          <Text style={[styles.submitBtnText, { color: '#0284c7' }]}>Bulk Upload via Excel</Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
+                    <View style={styles.excelBtnShadowContainer}>
+                      <TouchableOpacity 
+                        style={styles.excelBtn} 
+                        onPress={handleUploadExcel}
+                        activeOpacity={0.8}
+                      >
+                        <MaterialCommunityIcons name="microsoft-excel" size={20} color="#10B981" style={{ marginRight: 8 }} />
+                        <Text style={styles.excelBtnText}>Bulk Upload via Excel</Text>
+                      </TouchableOpacity>
+                    </View>
                   </>
                 )}
               </ScrollView>
@@ -688,8 +749,8 @@ export default function AdminDashboard({ navigation }) {
       {isFaceOverlayOpen && (
         <View style={styles.faceOverlayContainer}>
           <View style={styles.faceOverlayHeader}>
-            <TouchableOpacity onPress={() => setIsFaceOverlayOpen(false)} style={styles.closeOverlayBtn}>
-              <MaterialCommunityIcons name="close" size={24} color="#64748b" />
+            <TouchableOpacity onPress={() => setIsFaceOverlayOpen(false)} style={styles.closeOverlayBtn} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
             </TouchableOpacity>
             <Text style={styles.faceOverlayTitle}>
               {overlayMode === 'register' ? 'Register Face' : 'Verify Identity'}
@@ -704,7 +765,7 @@ export default function AdminDashboard({ navigation }) {
             />
             
             <View style={styles.faceInstructionBox}>
-              <MaterialCommunityIcons name="face-recognition" size={32} color="#007A68" />
+              <MaterialCommunityIcons name="face-recognition" size={32} color="#35A7C4" />
               <Text style={styles.faceInstructionText}>
                 {overlayMode === 'register' ? 'Position your face clearly within the frame' : 'Verifying Admin Identity'}
               </Text>
@@ -734,7 +795,7 @@ export default function AdminDashboard({ navigation }) {
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={['#7e22ce', '#9333ea', '#a855f7']}
+          colors={['#35A7C4', '#2CA0C4']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.fabGradient}
@@ -748,53 +809,86 @@ export default function AdminDashboard({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
+  container: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+  },
   loadingIcon: {
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
     elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
   },
-  header: { 
-    paddingTop: 65, 
-    paddingBottom: 28, 
-    paddingHorizontal: 24, 
-    borderBottomLeftRadius: 32, 
-    borderBottomRightRadius: 32,
-    position: 'relative',
+  headerContainer: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#ECF0F3',
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
     overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  headerWave1: {
+  headerRightImage: {
     position: 'absolute',
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    top: -80,
-    right: -80,
+    right: -10,
+    bottom: -10,
+    top: 20,
+    width: '55%',
+    height: '100%',
+    resizeMode: 'contain',
+    opacity: 1.0,
   },
-  headerWave2: {
+  headerSplitOverlay: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    top: -20,
-    left: -40,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '100%',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    paddingBottom: 20,
+    justifyContent: 'space-between',
   },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 3 },
+  headerTopBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 28, color: '#fff', letterSpacing: -0.5 },
+  headerTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 26,
+    color: '#2C3A4E',
+    letterSpacing: -0.5,
+  },
   headerBadge: {
-    backgroundColor: '#5eead4',
+    backgroundColor: '#35A7C4',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -803,132 +897,284 @@ const styles = StyleSheet.create({
   headerBadgeText: {
     fontFamily: 'Outfit-Bold',
     fontSize: 12,
-    color: '#004D40',
+    color: '#FFFFFF',
   },
-  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 4,},
+  headerSubtitle: {
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    fontSize: 14,
+    marginTop: 4,
+  },
   notifBtn: { 
-    backgroundColor: 'rgba(255,255,255,0.12)', 
-    padding: 12, 
-    borderRadius: 16,
+    backgroundColor: '#ECF0F3',
+    padding: 10, 
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 2,
     position: 'relative',
-    zIndex: 3,
   },
   notifBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#ef4444',
-    borderWidth: 2,
-    borderColor: '#029A84'
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E11D48',
+    borderWidth: 1.5,
+    borderColor: '#ECF0F3',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 24,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#ECF0F3',
     borderRadius: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    zIndex: 3,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  statItem: { alignItems: 'center' },
-  statNumber: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
-  statLabel: { fontFamily: 'Outfit-Medium', fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2,},
-  statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 22,
+    color: '#2C3A4E',
+  },
+  statLabel: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: 'rgba(124, 139, 161, 0.2)',
+  },
   
-  scrollContent: { padding: 20 },
+  scrollContent: {
+    padding: 20,
+  },
   
-  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b', marginBottom: 14, marginLeft: 4 },
+  sectionTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+    marginBottom: 14,
+    marginLeft: 4,
+  },
   
   lecCard: { 
-    backgroundColor: '#fff', 
+    backgroundColor: '#ECF0F3', 
     padding: 20, 
     borderRadius: 20, 
     marginBottom: 12, 
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
     borderWidth: 1,
-    borderColor: '#f1f5f9'
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 3,
   },
   lecCardLive: {
-    borderColor: '#00BFA5',
-    backgroundColor: '#e6f4f2',
-    shadowColor: '#00BFA5',
-    shadowOpacity: 0.1,
+    borderColor: '#35A7C4',
+    backgroundColor: '#E5EDF9',
+    shadowColor: '#288BA3',
+    shadowOpacity: 0.2,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  dot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-  badgeText: { fontFamily: 'Outfit-Bold', fontSize: 11,},
-  timeText: { fontFamily: 'Outfit-SemiBold', fontSize: 12, color: '#94a3b8',},
-  courseName: { fontFamily: 'Outfit-Bold', fontSize: 17, color: '#1e293b', marginBottom: 10 },
-  infoRow: { flexDirection: 'row' },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  badgeText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 11,
+  },
+  timeText: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 12,
+    color: '#7C8BA1',
+  },
+  courseName: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 17,
+    color: '#2C3A4E',
+    marginBottom: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+  },
   infoPill: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ECF0F3',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 10
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  infoText: { fontFamily: 'Outfit-Medium', color: '#475569', fontSize: 12, marginLeft: 5,},
+  infoText: {
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    fontSize: 12,
+  },
 
-  emptyContainer: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 40,
+  },
   emptyIconBg: {
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  emptyText: { fontFamily: 'Outfit-Medium', color: '#94a3b8', marginTop: 4, fontSize: 15,},
+  emptyText: {
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    marginTop: 4,
+    fontSize: 15,
+  },
 
   actionCard: { 
     flexDirection: 'row', 
-    backgroundColor: '#fff', 
+    backgroundColor: '#ECF0F3', 
     padding: 18, 
-    borderRadius: 20, 
+    borderRadius: 24, 
     alignItems: 'center', 
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 3,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
   },
-  iconCircle: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  warningIconCircle: {
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#E11D48',
+    shadowOpacity: 0.25,
+  },
   chevronBg: { 
     width: 32, 
     height: 32, 
     borderRadius: 10, 
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  actionTitle: { fontFamily: 'Outfit-Bold', fontSize: 15, color: '#1e293b' },
-  actionDesc: { fontFamily: 'Outfit-Medium', fontSize: 12, color: '#94a3b8', marginTop: 2,},
+  actionTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
+  actionDesc: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginTop: 2,
+  },
 
+  logoutBtnContainer: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+    marginTop: 8,
+    marginBottom: 20,
+  },
   logoutBtn: { 
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
     flexDirection: 'row',
     alignItems: 'center', 
     justifyContent: 'center',
-    paddingVertical: 16,
-    marginTop: 8,
-    marginBottom: 20
+    backgroundColor: '#ECF0F3',
   },
-  logoutText: { fontFamily: 'Outfit-Bold', color: '#ef4444', fontSize: 15, marginLeft: 8 },
+  logoutText: {
+    fontFamily: 'Outfit-Bold',
+    color: '#E11D48',
+    fontSize: 15,
+    marginLeft: 8,
+  },
   
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.40)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -940,13 +1186,15 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     borderRadius: 28,
     padding: 24,
     maxHeight: '90%',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.7,
     shadowRadius: 15,
     elevation: 10,
   },
@@ -955,14 +1203,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
     paddingBottom: 12,
   },
   modalTitle: {
     fontFamily: 'Outfit-Bold',
     fontSize: 20,
-    color: '#1e293b',
+    color: '#2C3A4E',
   },
   modalCloseBtn: {
     padding: 4,
@@ -977,48 +1225,72 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontFamily: 'Outfit-Bold',
     fontSize: 12,
-    color: '#64748b',
+    color: '#7C8BA1',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  input: {
-    fontFamily: 'Outfit-Regular',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 14,
+  inputContainer: {
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#1e293b',
-  },
-  rowInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
-  generatorBtn: {
-    marginLeft: 10,
-    backgroundColor: '#e6f4f2',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 180, 150, 0.2)',
+  pickerContainer: {
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
-  generatorBtnText: {
-    fontFamily: 'Outfit-Bold',
-    color: '#007A68',
-    fontSize: 14,
+  inputIcon: {
+    marginRight: 10,
+  },
+  textInput: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
+  submitBtnShadowContainer: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    marginVertical: 10,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
   submitBtn: {
-    marginTop: 10,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 3,
-  },
-  submitBtnGradient: {
-    paddingVertical: 16,
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1028,35 +1300,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.5,
   },
+  excelBtnShadowContainer: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    marginTop: 8,
+    marginBottom: 10,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  excelBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  excelBtnText: {
+    fontFamily: 'Outfit-Bold',
+    color: '#10B981',
+    fontSize: 15,
+  },
+
   // Face Overlay Styles
   faceOverlayContainer: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     zIndex: 9999,
   },
   faceOverlayHeader: {
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    backgroundColor: '#ECF0F3',
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255,255,255,0.4)',
   },
   closeOverlayBtn: {
     width: 40, height: 40,
     borderRadius: 20,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ECF0F3',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
+    elevation: 2,
   },
   faceOverlayTitle: {
     fontFamily: 'Outfit-Bold',
     fontSize: 20,
-    color: '#0f172a',
+    color: '#2C3A4E',
   },
   faceCameraContainer: {
     flex: 1,
@@ -1066,19 +1375,21 @@ const styles = StyleSheet.create({
   faceInstructionBox: {
     position: 'absolute',
     top: 40, left: 20, right: 20,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: '#ECF0F3',
     padding: 20,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#A3B1C6', shadowOpacity: 0.7, shadowRadius: 10, elevation: 5,
   },
   faceInstructionText: {
     fontFamily: 'Outfit-SemiBold',
     flex: 1,
     marginLeft: 16,
     fontSize: 15,
-    color: '#334155',
+    color: '#2C3A4E',
   },
   captureBtnContainer: {
     position: 'absolute',
@@ -1088,15 +1399,22 @@ const styles = StyleSheet.create({
   captureBtn: {
     width: 72, height: 72,
     borderRadius: 36,
-    backgroundColor: '#007A68',
+    backgroundColor: '#35A7C4',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
     borderColor: 'rgba(255,255,255,0.3)',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
   },
   captureBtnDisabled: {
-    backgroundColor: '#94a3b8',
+    backgroundColor: '#7C8BA1',
   },
+
+  // FAB
   fab: {
     position: 'absolute',
     bottom: 24,
@@ -1105,9 +1423,9 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     elevation: 8,
-    shadowColor: '#9333ea',
+    shadowColor: '#288BA3',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
     zIndex: 999,
   },
@@ -1116,5 +1434,107 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
+
+  // Custom Logout Modal Styles
+  logoutModalContent: {
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    maxWidth: 320,
+    borderRadius: 28,
+  },
+  logoutIconWrapper: {
+    marginBottom: 20,
+  },
+  logoutIconOutline: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  logoutIconInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(225, 29, 72, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutModalTitle: {
+    fontSize: 20,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  logoutModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 26,
+    lineHeight: 20,
+  },
+  logoutActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  logoutCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  logoutCancelBtnText: {
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
+  },
+  logoutConfirmBtnShadow: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    marginLeft: 10,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  logoutConfirmBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#E11D48', // Semantic red for log out
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutConfirmBtnText: {
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
+  },
 });

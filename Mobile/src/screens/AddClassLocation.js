@@ -8,12 +8,16 @@ import {
   Alert, 
   ActivityIndicator,
   StatusBar,
-  Animated
+  Animated,
+  Dimensions,
+  Platform
 } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { post } from '../api';
+
+const { width } = Dimensions.get('window');
 
 export default function AddClassLocation({ navigation }) {
   const [roomName, setRoomName] = useState('');
@@ -80,25 +84,29 @@ export default function AddClassLocation({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
-      {/* Header */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.headerTitle}>Set Geofence</Text>
-            <Text style={styles.headerSubtitle}>Define classroom boundaries</Text>
+      {/* Header Container */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#F3F7FD', '#E5EDF9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
+            </TouchableOpacity>
+            
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerSubtitle}>Define boundaries</Text>
+              <Text style={styles.headerTitle}>Set Geofence</Text>
+            </View>
+            <View style={{ width: 40 }} />
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
 
       <Animated.ScrollView 
         contentContainerStyle={styles.scrollContent}
@@ -109,11 +117,11 @@ export default function AddClassLocation({ navigation }) {
         <View style={styles.card}>
           <Text style={styles.label}>Classroom Information</Text>
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="school" size={20} color="#667eea" style={styles.inputIcon} />
+            <MaterialCommunityIcons name="school" size={20} color="#35A7C4" style={styles.inputIcon} />
             <TextInput 
               style={styles.input} 
               placeholder="e.g. Hall 01, Lab B" 
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor="#7C8BA1"
               value={roomName}
               onChangeText={setRoomName}
             />
@@ -121,11 +129,11 @@ export default function AddClassLocation({ navigation }) {
           
           <Text style={[styles.label, { marginTop: 16 }]}>Seat Capacity</Text>
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="chair-school" size={20} color="#667eea" style={styles.inputIcon} />
+            <MaterialCommunityIcons name="chair-school" size={20} color="#35A7C4" style={styles.inputIcon} />
             <TextInput 
               style={styles.input} 
               placeholder="e.g. 50" 
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor="#7C8BA1"
               keyboardType="numeric"
               value={seatCount}
               onChangeText={setSeatCount}
@@ -135,7 +143,7 @@ export default function AddClassLocation({ navigation }) {
 
         {/* Instructions Card */}
         <View style={[styles.card, styles.instructionCard]}>
-          <MaterialCommunityIcons name="information" size={20} color="#3b82f6" />
+          <MaterialCommunityIcons name="information" size={20} color="#35A7C4" />
           <Text style={styles.instructionText}>
             Walk to each corner (A, B, C, D) of the classroom and tap the corresponding button to record the boundary coordinates.
           </Text>
@@ -161,16 +169,16 @@ export default function AddClassLocation({ navigation }) {
                 activeOpacity={0.8}
               >
                 {isCapturingThis ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color="#35A7C4" size="small" />
                 ) : (
                   <>
-                    <Text style={[styles.pointLabel, isCaptured && styles.pointLabelCaptured]}>
+                    <Text style={[styles.pointLabel, isCaptured ? styles.pointLabelCaptured : styles.pointLabelUncaptured]}>
                       Point {item.toUpperCase()}
                     </Text>
                     {isCaptured ? (
                       <MaterialCommunityIcons name="checkbox-marked-circle" size={22} color="#fff" style={styles.checkIcon} />
                     ) : (
-                      <MaterialCommunityIcons name="map-marker-outline" size={20} color="#94a3b8" style={styles.markerIcon} />
+                      <MaterialCommunityIcons name="map-marker-outline" size={20} color="#7C8BA1" style={styles.markerIcon} />
                     )}
                     {isCaptured && (
                       <Text style={styles.coordText} numberOfLines={1}>
@@ -185,125 +193,249 @@ export default function AddClassLocation({ navigation }) {
         </View>
 
         {/* Save Button */}
-        <TouchableOpacity 
-          style={[styles.saveBtn, loading && { opacity: 0.8 }]} 
-          onPress={handleSave} 
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#10b981', '#059669']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.saveBtnGradient}
+        <View style={styles.saveBtnShadow}>
+          <TouchableOpacity 
+            style={styles.saveBtn} 
+            onPress={handleSave} 
+            disabled={loading}
+            activeOpacity={0.8}
           >
             {loading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <MaterialCommunityIcons name="content-save" size={22} color="#fff" style={{ marginRight: 8 }} />
                 <Text style={styles.saveText}>Save Configuration</Text>
-              </>
+              </View>
             )}
-          </LinearGradient>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </Animated.ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  
-  header: { 
-    paddingTop: 60, 
-    paddingBottom: 28, 
-    paddingHorizontal: 24, 
-    borderBottomLeftRadius: 32, 
-    borderBottomRightRadius: 32,
+  container: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center' },
-  backBtn: { marginRight: 16, backgroundColor: 'rgba(255,255,255,0.15)', padding: 10, borderRadius: 12 },
-  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
-  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
+  headerContainer: {
+    width: '100%',
+    height: 140,
+    backgroundColor: '#ECF0F3',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
+  },
+  headerGradient: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    justifyContent: 'center',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerSubtitle: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 22,
+    color: '#2C3A4E',
+    marginTop: 2,
+  },
   
-  scrollContent: { padding: 20 },
+  scrollContent: {
+    padding: 20,
+  },
   
   card: { 
-    backgroundColor: '#fff', 
+    backgroundColor: '#ECF0F3', 
     padding: 20, 
     borderRadius: 24, 
     marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
     borderWidth: 1,
-    borderColor: '#f1f5f9'
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  label: { fontFamily: 'Outfit-Bold', fontSize: 12, color: '#94a3b8', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   inputContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#f8fafc', 
-    borderWidth: 1.5, 
-    borderColor: '#e2e8f0', 
-    borderRadius: 16, 
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
     paddingHorizontal: 16,
-    height: 56
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
-  inputIcon: { marginRight: 12 },
-  input: { fontFamily: 'Outfit-Medium', flex: 1, fontSize: 15, color: '#1e293b',},
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
   
   instructionCard: { 
     flexDirection: 'row', 
-    backgroundColor: '#eff6ff', 
-    borderColor: '#bfdbfe',
-    alignItems: 'center' 
+    backgroundColor: '#ECF0F3', 
+    borderColor: 'rgba(53, 167, 196, 0.25)',
+    borderWidth: 1.5,
+    alignItems: 'center',
   },
-  instructionText: { fontFamily: 'Outfit-Medium', flex: 1, color: '#1e40af', fontSize: 13, marginLeft: 12, lineHeight: 18 },
+  instructionText: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    color: '#2C3A4E',
+    fontSize: 13,
+    marginLeft: 12,
+    lineHeight: 18,
+  },
   
-  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 16, color: '#1e293b', marginBottom: 12, marginLeft: 4 },
+  sectionTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+    color: '#2C3A4E',
+    marginBottom: 12,
+    marginLeft: 4,
+  },
   
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   pointBtn: { 
     width: '48%', 
     height: 110, 
-    backgroundColor: '#fff', 
+    backgroundColor: '#ECF0F3', 
     borderRadius: 20, 
     justifyContent: 'center', 
     alignItems: 'center', 
     marginBottom: 16,
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderColor: '#FFFFFF',
     padding: 10,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 2,
   },
   pointDone: { 
-    backgroundColor: '#10b981', 
-    borderColor: '#10b981' 
+    backgroundColor: '#35A7C4', // Cyan active corner point background
+    borderColor: '#35A7C4',
+    shadowColor: '#288BA3',
+    shadowOpacity: 0.35,
   },
   pointCapturing: { 
-    backgroundColor: '#667eea', 
-    borderColor: '#667eea' 
+    backgroundColor: '#ECF0F3',
+    borderColor: '#35A7C4',
   },
-  pointLabel: { fontFamily: 'Outfit-Bold', color: '#64748b', fontSize: 15,},
-  pointLabelCaptured: { fontFamily: 'Outfit-Regular', color: '#fff' },
-  markerIcon: { marginTop: 6 },
-  checkIcon: { marginTop: 4 },
-  coordText: { fontFamily: 'Outfit-SemiBold', color: 'rgba(255,255,255,0.85)', fontSize: 10, marginTop: 4 },
+  pointLabel: {
+    fontSize: 15,
+  },
+  pointLabelUncaptured: {
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
+  },
+  pointLabelCaptured: {
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
+  },
+  markerIcon: {
+    marginTop: 6,
+  },
+  checkIcon: {
+    marginTop: 4,
+  },
+  coordText: {
+    fontFamily: 'Outfit-SemiBold',
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 10,
+    marginTop: 4,
+  },
   
-  saveBtn: { borderRadius: 18, overflow: 'hidden', marginTop: 12, elevation: 3 },
-  saveBtnGradient: { 
-    paddingVertical: 16, 
-    alignItems: 'center', 
-    flexDirection: 'row', 
-    justifyContent: 'center' 
+  saveBtnShadow: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+    marginTop: 12,
   },
-  saveText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16 }
+  saveBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4', // Cyan active save boundary button
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveText: {
+    fontFamily: 'Outfit-Bold',
+    color: '#fff',
+    fontSize: 16,
+  },
 });

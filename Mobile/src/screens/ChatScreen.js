@@ -118,7 +118,7 @@ export default function ChatScreen({ navigation }) {
       <View style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAI]}>
         {!isUser && (
           <View style={styles.aiAvatar}>
-            <MaterialCommunityIcons name="robot-outline" size={20} color="#fff" />
+            <MaterialCommunityIcons name="robot-outline" size={18} color="#35A7C4" />
           </View>
         )}
         <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAI]}>
@@ -132,9 +132,9 @@ export default function ChatScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <LinearGradient
-        colors={['#029A84', '#007A68', '#004D40']}
+        colors={['#F3F7FD', '#E5EDF9']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
@@ -143,11 +143,11 @@ export default function ChatScreen({ navigation }) {
         <Animated.View style={[styles.topWave2, { transform: [{ translateY: wave2Anim }] }]} pointerEvents="none" />
 
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
+            <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <MaterialCommunityIcons name="robot-outline" size={24} color="#5eead4" style={{ marginRight: 8 }} />
+            <MaterialCommunityIcons name="robot-outline" size={22} color="#35A7C4" style={{ marginRight: 8 }} />
             <Text style={styles.headerTitle}>AI Assistant</Text>
           </View>
           <View style={{ width: 40 }} />
@@ -166,7 +166,7 @@ export default function ChatScreen({ navigation }) {
 
           {isLoading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#5eead4" />
+              <ActivityIndicator size="small" color="#35A7C4" />
               <Text style={styles.loadingText}>AI is typing...</Text>
             </View>
           )}
@@ -176,23 +176,28 @@ export default function ChatScreen({ navigation }) {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Ask me anything..."
-              placeholderTextColor="#9ca3af"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              maxLength={200}
-            />
-            <TouchableOpacity 
-              style={[styles.sendButton, !inputText.trim() && { opacity: 0.5 }]} 
-              onPress={handleSend}
-              disabled={!inputText.trim()}
-            >
-              <MaterialCommunityIcons name="send" size={24} color="#fff" />
-            </TouchableOpacity>
+          <View style={styles.inputArea}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Ask me anything..."
+                placeholderTextColor="#7C8BA1"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                maxLength={200}
+              />
+            </View>
+            <View style={[styles.sendButtonShadow, !inputText.trim() && { opacity: 0.5 }]}>
+              <TouchableOpacity 
+                style={styles.sendButton} 
+                onPress={handleSend}
+                disabled={!inputText.trim()}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons name="send" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -201,29 +206,205 @@ export default function ChatScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  gradient: { flex: 1 },
-  topWave1: { position: 'absolute', width: width * 1.8, height: width * 1.8, borderRadius: width * 0.9, top: -width * 1.1, left: -width * 0.4, backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-  topWave2: { position: 'absolute', width: width * 1.5, height: width * 1.5, borderRadius: width * 0.75, top: -width * 1.05, left: -width * 0.1, backgroundColor: 'rgba(255, 255, 255, 0.08)' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 10, paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
-  backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  headerTitleContainer: { flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 20,},
-  chatContainer: { flex: 1, paddingHorizontal: 16 },
-  flatListContent: { paddingVertical: 20, paddingBottom: 20 },
-  messageRow: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-end' },
-  messageRowUser: { justifyContent: 'flex-end' },
-  messageRowAI: { justifyContent: 'flex-start' },
-  aiAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  bubble: { maxWidth: '80%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  bubbleUser: { backgroundColor: '#fff', borderBottomRightRadius: 4 },
-  bubbleAI: { backgroundColor: 'rgba(255,255,255,0.15)', borderBottomLeftRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  messageText: { fontFamily: 'Outfit-Regular', fontSize: 15, lineHeight: 22 },
-  messageTextUser: { fontFamily: 'Outfit-Regular', color: '#004D40' },
-  messageTextAI: { fontFamily: 'Outfit-Regular', color: '#fff' },
-  loadingContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 40, marginBottom: 20 },
-  loadingText: { fontFamily: 'Outfit-Regular', color: '#5eead4', marginLeft: 8, fontSize: 14, fontStyle: 'italic' },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', padding: 12, paddingBottom: Platform.OS === 'ios' ? 24 : 12, backgroundColor: 'rgba(0, 0, 0, 0.1)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
-  textInput: { fontFamily: 'Outfit-Regular', flex: 1, minHeight: 46, maxHeight: 120, backgroundColor: '#fff', borderRadius: 23, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 14, fontSize: 16, color: '#1f2937' },
-  sendButton: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#007A68', justifyContent: 'center', alignItems: 'center', marginLeft: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
+  container: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+  },
+  gradient: {
+    flex: 1,
+  },
+  topWave1: {
+    position: 'absolute',
+    width: width * 1.8,
+    height: width * 1.8,
+    borderRadius: width * 0.9,
+    top: -width * 1.1,
+    left: -width * 0.4,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  topWave2: {
+    position: 'absolute',
+    width: width * 1.5,
+    height: width * 1.5,
+    borderRadius: width * 0.75,
+    top: -width * 1.05,
+    left: -width * 0.1,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    fontSize: 20,
+  },
+  chatContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  flatListContent: {
+    paddingVertical: 20,
+    paddingBottom: 20,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    alignItems: 'flex-end',
+  },
+  messageRowUser: {
+    justifyContent: 'flex-end',
+  },
+  messageRowAI: {
+    justifyContent: 'flex-start',
+  },
+  aiAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  bubble: {
+    maxWidth: '80%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  bubbleUser: {
+    backgroundColor: '#35A7C4', // Cyan active user bubble
+    borderBottomRightRadius: 4,
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  bubbleAI: {
+    backgroundColor: '#ECF0F3',
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  messageText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  messageTextUser: {
+    fontFamily: 'Outfit-Medium',
+    color: '#FFFFFF',
+  },
+  messageTextAI: {
+    fontFamily: 'Outfit-Regular',
+    color: '#2C3A4E',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 40,
+    marginBottom: 20,
+  },
+  loadingText: {
+    fontFamily: 'Outfit-Regular',
+    color: '#7C8BA1',
+    marginLeft: 8,
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  inputArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    backgroundColor: '#ECF0F3',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  inputContainer: {
+    flex: 1,
+    minHeight: 46,
+    maxHeight: 120,
+    borderRadius: 23,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
+  },
+  textInput: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    fontSize: 15,
+    color: '#2C3A4E',
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  sendButtonShadow: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginLeft: 12,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  sendButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 23,
+    backgroundColor: '#35A7C4', // Cyan active send button
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

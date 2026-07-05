@@ -10,12 +10,16 @@ import {
   Alert,
   Animated,
   TextInput,
-  FlatList
+  FlatList,
+  Platform,
+  Dimensions
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { post } from '../api';
 import { Picker } from '@react-native-picker/picker';
+
+const { width } = Dimensions.get('window');
 
 export default function AssignSubjects({ navigation }) {
   const [departments, setDepartments] = useState([]);
@@ -80,8 +84,6 @@ export default function AssignSubjects({ navigation }) {
   };
 
   useEffect(() => {
-    // Only fetch automatically when department changes.
-    // Batch year is a text input, so we can wait until user finishes typing or leaves it.
     fetchSubjects();
   }, [selectedDeptId]);
 
@@ -116,25 +118,29 @@ export default function AssignSubjects({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
-      {/* Header */}
-      <LinearGradient
-        colors={['#4f46e5', '#3730a3']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.headerTitle}>Assign Subjects</Text>
-            <Text style={styles.headerSubtitle}>Semester Configuration</Text>
+      {/* Header Container */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#F3F7FD', '#E5EDF9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
+            </TouchableOpacity>
+            
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerSubtitle}>Semester Configuration</Text>
+              <Text style={styles.headerTitle}>Assign Subjects</Text>
+            </View>
+            <View style={{ width: 40 }} />
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
         
@@ -153,26 +159,27 @@ export default function AssignSubjects({ navigation }) {
             </Picker>
           </View>
 
-          <Text style={[styles.filterLabel, { marginTop: 12 }]}>Batch Year</Text>
-          <View style={[styles.pickerWrapper, { paddingHorizontal: 16 }]}>
+          <Text style={[styles.filterLabel, { marginTop: 14 }]}>Batch Year</Text>
+          <View style={styles.inputWrapper}>
             <TextInput
-              style={{ height: 50, color: '#0f172a' }}
+              style={styles.textInput}
               value={batchYear}
               onChangeText={setBatchYear}
               onEndEditing={fetchSubjects}
               keyboardType="numeric"
               placeholder="e.g. 2024"
+              placeholderTextColor="#7C8BA1"
             />
           </View>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <MaterialCommunityIcons name="magnify" size={24} color="#64748b" style={styles.searchIcon} />
+          <MaterialCommunityIcons name="magnify" size={22} color="#7C8BA1" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search subject by name or code..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#7C8BA1"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -182,12 +189,12 @@ export default function AssignSubjects({ navigation }) {
         <View style={{ flex: 1 }}>
           {loading ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#4f46e5" />
-              <Text style={{ marginTop: 12, color: '#64748b' }}>Loading subjects...</Text>
+              <ActivityIndicator size="large" color="#35A7C4" />
+              <Text style={{ marginTop: 12, color: '#7C8BA1', fontFamily: 'Outfit-Medium' }}>Loading subjects...</Text>
             </View>
           ) : subjects.length > 0 ? (
             <View style={[styles.listContainer, { flex: 1 }]}>
-              <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+              <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
                 <Text style={styles.sectionTitle}>
                   Available Subjects
                 </Text>
@@ -202,7 +209,7 @@ export default function AssignSubjects({ navigation }) {
                   s.subject_code.toLowerCase().includes(searchQuery.toLowerCase())
                 )}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item: subject }) => (
                   <TouchableOpacity 
@@ -211,13 +218,17 @@ export default function AssignSubjects({ navigation }) {
                     activeOpacity={0.7}
                   >
                     <View style={styles.subjectInfo}>
-                      <Text style={[styles.subjectCode, subject.assigned && styles.textActive]}>{subject.subject_code}</Text>
-                      <Text style={[styles.subjectName, subject.assigned && styles.textActive]}>{subject.subject_name}</Text>
+                      <Text style={[styles.subjectCode, subject.assigned ? styles.textActiveCode : styles.subjectCodeInactive]}>
+                        {subject.subject_code}
+                      </Text>
+                      <Text style={[styles.subjectName, subject.assigned ? styles.textActiveName : styles.subjectNameInactive]}>
+                        {subject.subject_name}
+                      </Text>
                     </View>
                     <MaterialCommunityIcons 
                       name={subject.assigned ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"} 
-                      size={28} 
-                      color={subject.assigned ? "#fff" : "#cbd5e1"} 
+                      size={26} 
+                      color={subject.assigned ? "#FFFFFF" : "#7C8BA1"} 
                     />
                   </TouchableOpacity>
                 )}
@@ -225,7 +236,9 @@ export default function AssignSubjects({ navigation }) {
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="book-remove-multiple-outline" size={48} color="#cbd5e1" />
+              <View style={styles.emptyIconCircle}>
+                <MaterialCommunityIcons name="book-remove-multiple-outline" size={48} color="#7C8BA1" />
+              </View>
               <Text style={styles.emptyText}>No subjects found for this department.</Text>
             </View>
           )}
@@ -235,23 +248,18 @@ export default function AssignSubjects({ navigation }) {
       {/* Save Button */}
       {!loading && subjects.length > 0 && (
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
-            <LinearGradient
-              colors={['#4f46e5', '#4338ca']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.saveBtnGradient}
-            >
+          <View style={styles.saveBtnShadow}>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
               {saving ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <>
-                  <MaterialCommunityIcons name="content-save-check" size={24} color="#fff" style={{ marginRight: 8 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MaterialCommunityIcons name="content-save-check" size={22} color="#fff" style={{ marginRight: 8 }} />
                   <Text style={styles.saveBtnText}>Save Assignments</Text>
-                </>
+                </View>
               )}
-            </LinearGradient>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -259,97 +267,290 @@ export default function AssignSubjects({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+  },
+  headerContainer: {
+    width: '100%',
+    height: 140,
+    backgroundColor: '#ECF0F3',
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center' },
-  backBtn: { marginRight: 16, backgroundColor: 'rgba(255,255,255,0.15)', padding: 10, borderRadius: 12 },
-  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
-  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
+  headerGradient: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    justifyContent: 'center',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerSubtitle: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 22,
+    color: '#2C3A4E',
+    marginTop: 2,
+  },
   
   filterCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     margin: 20,
     padding: 20,
     borderRadius: 24,
-    elevation: 4,
-    shadowColor: '#4f46e5',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
     shadowRadius: 12,
-    marginTop: -20,
+    elevation: 3,
+    marginTop: 20,
   },
-  filterLabel: { fontFamily: 'Outfit-Bold', fontSize: 13, color: '#64748b', marginBottom: 8, textTransform: 'uppercase' },
+  filterLabel: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   pickerWrapper: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    borderRadius: 16,
-    overflow: 'hidden',
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
-  picker: { fontFamily: 'Outfit-Regular', height: 50, color: '#0f172a' },
+  picker: {
+    width: '100%',
+    color: '#2C3A4E',
+  },
+  inputWrapper: {
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
+  },
+  textInput: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
 
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     marginHorizontal: 20,
     marginBottom: 20,
-    borderRadius: 16,
+    borderRadius: 25,
     paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    height: 50,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
-  searchIcon: { marginRight: 12 },
-  searchInput: { fontFamily: 'Outfit-Regular', flex: 1, fontSize: 15, color: '#0f172a' },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
 
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
-  listContainer: { marginBottom: 20 },
-  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#0f172a', marginBottom: 4 },
-  sectionDesc: { fontFamily: 'Outfit-Regular', fontSize: 13, color: '#64748b', marginBottom: 16, lineHeight: 20 },
+  listContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+    marginBottom: 4,
+  },
+  sectionDesc: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 13,
+    color: '#7C8BA1',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
   
   subjectItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     padding: 16,
     borderRadius: 20,
     marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 2,
   },
   subjectItemActive: {
-    backgroundColor: '#4f46e5',
-    borderColor: '#4f46e5',
+    backgroundColor: '#35A7C4', // Cyan active subject background
+    borderColor: '#35A7C4',
+    shadowColor: '#288BA3',
+    shadowOpacity: 0.3,
   },
-  subjectInfo: { flex: 1, paddingRight: 16 },
-  subjectCode: { fontFamily: 'Outfit-Bold', fontSize: 12, color: '#4f46e5', marginBottom: 4 },
-  subjectName: { fontFamily: 'Outfit-SemiBold', fontSize: 15, color: '#1e293b' },
-  textActive: { fontFamily: 'Outfit-Regular', color: '#fff' },
+  subjectInfo: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  subjectCode: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  subjectCodeInactive: {
+    color: '#35A7C4',
+  },
+  subjectName: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+  },
+  subjectNameInactive: {
+    color: '#2C3A4E',
+  },
+  textActiveCode: {
+    fontFamily: 'Outfit-Bold',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  textActiveName: {
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
+  },
 
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', padding: 40 },
-  emptyText: { fontFamily: 'Outfit-Medium', marginTop: 12, color: '#94a3b8', fontSize: 15,},
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  emptyText: {
+    fontFamily: 'Outfit-Medium',
+    marginTop: 12,
+    color: '#7C8BA1',
+    fontSize: 15,
+  },
 
   footer: {
     position: 'absolute',
     bottom: 0, left: 0, right: 0,
     padding: 20,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    backgroundColor: '#ECF0F3',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.4)',
   },
-  saveBtn: { borderRadius: 20, overflow: 'hidden' },
-  saveBtnGradient: {
-    paddingVertical: 16,
-    flexDirection: 'row',
+  saveBtnShadow: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  saveBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4', // Cyan active save button
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
-  saveBtnText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16,}
+  saveBtnText: {
+    fontFamily: 'Outfit-Bold',
+    color: '#fff',
+    fontSize: 16,
+  }
 });

@@ -9,11 +9,14 @@ import {
   ActivityIndicator, 
   Alert,
   Platform,
-  RefreshControl
+  RefreshControl,
+  Dimensions
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { post } from '../api';
+
+const { width } = Dimensions.get('window');
 
 export default function ViewAssignedSubjects({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -24,7 +27,6 @@ export default function ViewAssignedSubjects({ navigation }) {
     try {
       const res = await post('/get_all_assigned_subjects', {});
       if (res.status === 'success') {
-        // Group the assignments by department and then batch
         const assignments = res.data.assignments || [];
         const grouped = {};
         
@@ -79,7 +81,6 @@ export default function ViewAssignedSubjects({ navigation }) {
     try {
       const res = await post('/unassign_subject', { assignment_id });
       if (res.status === 'success') {
-        // Refresh data after successful deletion
         fetchData();
       } else {
         Alert.alert("Error", res.message || "Failed to remove assignment.");
@@ -93,39 +94,57 @@ export default function ViewAssignedSubjects({ navigation }) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#10b981" />
-        <Text style={{ marginTop: 12, color: '#64748b' }}>Loading Assignments...</Text>
+        <View style={styles.loadingIcon}>
+          <ActivityIndicator size="large" color="#35A7C4" />
+        </View>
+        <Text style={{ marginTop: 16, color: '#7C8BA1', fontFamily: 'Outfit-Medium', fontSize: 15 }}>Loading Assignments...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
-      <LinearGradient
-        colors={['#059669', '#10b981', '#34d399']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.header}
-      >
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <View>
-            <Text style={styles.headerTitle}>View Assignments</Text>
-            <Text style={styles.headerSubtitle}>Subjects per Batch</Text>
-        </View>
-      </LinearGradient>
+      {/* Header Container */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#F3F7FD', '#E5EDF9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
+            </TouchableOpacity>
+            
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerSubtitle}>Subjects per Batch</Text>
+              <Text style={styles.headerTitle}>View Assignments</Text>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
+        </LinearGradient>
+      </View>
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor="#35A7C4" 
+            colors={['#35A7C4']}
+          />
+        }
       >
         {Object.keys(groupedAssignments).length === 0 ? (
           <View style={styles.emptyCard}>
-            <MaterialCommunityIcons name="book-remove-multiple-outline" size={48} color="#cbd5e1" />
+            <View style={styles.emptyIconCircle}>
+              <MaterialCommunityIcons name="book-remove-multiple-outline" size={48} color="#7C8BA1" />
+            </View>
             <Text style={styles.emptyText}>No subjects have been assigned yet.</Text>
           </View>
         ) : (
@@ -136,7 +155,7 @@ export default function ViewAssignedSubjects({ navigation }) {
               {Object.keys(groupedAssignments[dept]).sort().reverse().map(batch => (
                 <View key={`${dept}-${batch}`} style={styles.card}>
                   <View style={styles.cardHeader}>
-                    <MaterialCommunityIcons name="account-group" size={20} color="#10b981" />
+                    <MaterialCommunityIcons name="account-group" size={20} color="#35A7C4" />
                     <Text style={styles.cardTitle}>Batch {batch}</Text>
                   </View>
                   
@@ -144,19 +163,20 @@ export default function ViewAssignedSubjects({ navigation }) {
 
                   {groupedAssignments[dept][batch].map((subject, index) => (
                     <View key={subject.assignment_id} style={[styles.subjectRow, index === groupedAssignments[dept][batch].length - 1 && { borderBottomWidth: 0 }]}>
-                        <View style={styles.iconCircle}>
-                            <MaterialCommunityIcons name="book-open-variant" size={16} color="#059669" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.subjectCode}>{subject.subject_code}</Text>
-                            <Text style={styles.subjectName}>{subject.subject_name}</Text>
-                        </View>
-                        <TouchableOpacity 
-                          style={styles.deleteBtn}
-                          onPress={() => confirmDelete(subject.assignment_id, subject.subject_name)}
-                        >
-                          <MaterialCommunityIcons name="trash-can-outline" size={20} color="#ef4444" />
-                        </TouchableOpacity>
+                      <View style={styles.iconCircle}>
+                        <MaterialCommunityIcons name="book-open-variant" size={16} color="#35A7C4" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.subjectCode}>{subject.subject_code}</Text>
+                        <Text style={styles.subjectName}>{subject.subject_name}</Text>
+                      </View>
+                      <TouchableOpacity 
+                        style={styles.deleteBtn}
+                        onPress={() => confirmDelete(subject.assignment_id, subject.subject_name)}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons name="trash-can-outline" size={20} color="#E11D48" />
+                      </TouchableOpacity>
                     </View>
                   ))}
                 </View>
@@ -170,106 +190,215 @@ export default function ViewAssignedSubjects({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+  },
+  loadingIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  headerContainer: {
+    width: '100%',
+    height: 140,
+    backgroundColor: '#ECF0F3',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
+  },
+  headerGradient: {
+    flex: 1,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    justifyContent: 'center',
+  },
+  headerTop: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  backBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    marginRight: 16
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 22, color: '#fff' },
-  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
-  scrollContent: { padding: 20, paddingBottom: 60 },
+  headerTitleContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerSubtitle: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 22,
+    color: '#2C3A4E',
+    marginTop: 2,
+  },
+  
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 60,
+  },
 
   deptGroup: {
-    marginBottom: 24
+    marginBottom: 24,
   },
   deptTitle: {
     fontFamily: 'Outfit-Bold',
     fontSize: 20,
-    color: '#0f172a',
+    color: '#2C3A4E',
     marginBottom: 12,
     marginLeft: 4,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    backgroundColor: '#ECF0F3',
+    borderRadius: 24,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
     elevation: 3,
-    padding: 16
+    padding: 16,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12
+    marginBottom: 12,
   },
   cardTitle: { 
     fontFamily: 'Outfit-Bold',
     fontSize: 16, 
-    color: '#1e293b',
-    marginLeft: 8
+    color: '#2C3A4E',
+    marginLeft: 8,
   },
   divider: {
-    height: 1,
-    backgroundColor: '#f1f5f9',
-    marginBottom: 12
+    height: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    marginBottom: 12,
   },
   subjectRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9'
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
   },
   iconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#ECF0F3',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+    elevation: 1,
   },
   subjectCode: {
     fontFamily: 'Outfit-Bold',
     fontSize: 12,
-    color: '#059669',
-    marginBottom: 2
+    color: '#35A7C4',
+    marginBottom: 2,
   },
   subjectName: {
-    fontFamily: 'Outfit-SemiBold',
+    fontFamily: 'Outfit-Bold',
     fontSize: 15,
-    color: '#334155'
+    color: '#2C3A4E',
   },
   deleteBtn: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#fef2f2',
-    marginLeft: 8
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ECF0F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 1,
+    marginLeft: 8,
   },
   emptyCard: {
     alignItems: 'center',
     padding: 32,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#7C8BA1',
     borderStyle: 'dashed',
-    marginTop: 40
+    marginTop: 40,
   },
-  emptyText: { fontFamily: 'Outfit-Medium', color: '#94a3b8', marginTop: 12, fontSize: 15,}
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  emptyText: {
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    marginTop: 12,
+    fontSize: 15,
+  },
 });

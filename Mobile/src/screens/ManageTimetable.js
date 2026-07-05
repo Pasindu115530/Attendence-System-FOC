@@ -10,13 +10,15 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  RefreshControl
+  RefreshControl,
+  Dimensions
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Picker } from '@react-native-picker/picker';
 import { post } from '../api';
 
+const { width } = Dimensions.get('window');
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function ManageTimetable({ navigation }) {
@@ -98,7 +100,6 @@ export default function ManageTimetable({ navigation }) {
           batch_year: parseInt(formBatchYear)
         });
         if (res.status === 'success') {
-          // Filter to only assigned subjects
           const assignedSubjects = (res.data.subjects || []).filter(s => s.assigned);
           setCourses(assignedSubjects);
         } else {
@@ -113,7 +114,6 @@ export default function ManageTimetable({ navigation }) {
     fetchSubjects();
   }, [formDeptId, formBatchYear]);
 
-
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
@@ -123,13 +123,10 @@ export default function ManageTimetable({ navigation }) {
     return start1 < end2 && end1 > start2;
   };
 
-  // Determine available classrooms based on day and time selected
   const availableClassrooms = classrooms.filter(room => {
-    if (!formDay || !formStartTime || !formEndTime) return true; // Show all if times not fully picked
+    if (!formDay || !formStartTime || !formEndTime) return true;
     
-    // Check if this room has an overlapping timetable entry
     const overlappingEntry = timetables.find(tt => {
-      // Note: Backend start_time format might be "08:00:00", we can slice it
       const ttStart = tt.start_time.substring(0, 5);
       const ttEnd = tt.end_time.substring(0, 5);
       return tt.classroom_id === room.id && tt.day_of_week === formDay && isTimeOverlapping(formStartTime, formEndTime, ttStart, ttEnd);
@@ -159,7 +156,6 @@ export default function ManageTimetable({ navigation }) {
       });
       if (res.status === 'success') {
         Alert.alert("Success", "Timetable entry added!");
-        // Reset specific fields
         setFormCourseId('');
         setFormClassroomId('');
         fetchData();
@@ -229,27 +225,39 @@ export default function ManageTimetable({ navigation }) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#d97706" />
-        <Text style={{ marginTop: 12, color: '#64748b' }}>Loading Timetable Data...</Text>
+        <View style={styles.loadingIcon}>
+          <ActivityIndicator size="large" color="#35A7C4" />
+        </View>
+        <Text style={{ marginTop: 16, color: '#7C8BA1', fontFamily: 'Outfit-Medium', fontSize: 15 }}>Loading Timetable Data...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
-      <LinearGradient
-        colors={['#b45309', '#d97706', '#f59e0b']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.header}
-      >
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Timetable</Text>
-      </LinearGradient>
+      {/* Header Container */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#F3F7FD', '#E5EDF9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
+            </TouchableOpacity>
+            
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerSubtitle}>Scheduler Engine</Text>
+              <Text style={styles.headerTitle}>Manage Timetable</Text>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
+        </LinearGradient>
+      </View>
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
@@ -258,16 +266,23 @@ export default function ManageTimetable({ navigation }) {
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#d97706" />}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor="#35A7C4" 
+              colors={['#35A7C4']}
+            />
+          }
         >
-          {/* Add Form */}
+          {/* Add Form Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Assign New Class</Text>
 
             <View style={styles.formRow}>
               <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                 <Text style={styles.inputLabel}>Department</Text>
-                <View style={[styles.pickerWrapper]}>
+                <View style={styles.pickerWrapper}>
                   <Picker
                     selectedValue={formDeptId}
                     onValueChange={(itemValue) => setFormDeptId(itemValue)}
@@ -283,7 +298,7 @@ export default function ManageTimetable({ navigation }) {
 
               <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
                 <Text style={styles.inputLabel}>Batch</Text>
-                <View style={[styles.pickerWrapper]}>
+                <View style={styles.pickerWrapper}>
                   <Picker
                     selectedValue={formBatchYear}
                     onValueChange={(itemValue) => setFormBatchYear(itemValue)}
@@ -300,7 +315,7 @@ export default function ManageTimetable({ navigation }) {
 
             <View style={styles.formGroup}>
               <Text style={styles.inputLabel}>Course</Text>
-              <View style={[styles.pickerWrapper]}>
+              <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={formCourseId}
                   onValueChange={(itemValue) => setFormCourseId(itemValue)}
@@ -314,14 +329,16 @@ export default function ManageTimetable({ navigation }) {
                 </Picker>
               </View>
               {courses.length === 0 && !loadingSubjects && formDeptId && formBatchYear && (
-                <Text style={{color: '#ef4444', fontSize: 12, marginTop: 4}}>No subjects assigned to this batch.</Text>
+                <Text style={{ color: '#E11D48', fontSize: 12, marginTop: 4, fontFamily: 'Outfit-Medium' }}>
+                  No subjects assigned to this batch.
+                </Text>
               )}
             </View>
 
             <View style={styles.formRow}>
               <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                 <Text style={styles.inputLabel}>Day</Text>
-                <View style={[styles.pickerWrapper]}>
+                <View style={styles.pickerWrapper}>
                   <Picker
                     selectedValue={formDay}
                     onValueChange={(itemValue) => setFormDay(itemValue)}
@@ -338,7 +355,7 @@ export default function ManageTimetable({ navigation }) {
             <View style={styles.formRow}>
               <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                 <Text style={styles.inputLabel}>Start Time</Text>
-                <View style={[styles.pickerWrapper]}>
+                <View style={styles.pickerWrapper}>
                   <Picker
                     selectedValue={formStartTime}
                     onValueChange={(itemValue) => {
@@ -356,7 +373,7 @@ export default function ManageTimetable({ navigation }) {
 
               <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
                 <Text style={styles.inputLabel}>End Time</Text>
-                <View style={[styles.pickerWrapper]}>
+                <View style={styles.pickerWrapper}>
                   <Picker
                     selectedValue={formEndTime}
                     onValueChange={(itemValue) => {
@@ -375,7 +392,7 @@ export default function ManageTimetable({ navigation }) {
 
             <View style={styles.formGroup}>
               <Text style={styles.inputLabel}>Available Classroom (Seats)</Text>
-              <View style={[styles.pickerWrapper]}>
+              <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={formClassroomId}
                   onValueChange={(itemValue) => setFormClassroomId(itemValue)}
@@ -390,49 +407,61 @@ export default function ManageTimetable({ navigation }) {
             </View>
 
             {submitting ? (
-              <ActivityIndicator size="large" color="#d97706" style={{ marginVertical: 10 }} />
+              <ActivityIndicator size="large" color="#35A7C4" style={{ marginVertical: 10 }} />
             ) : (
-              <TouchableOpacity style={styles.submitBtn} onPress={handleAddTimetable}>
-                <Text style={styles.submitBtnText}>Assign to Timetable</Text>
-              </TouchableOpacity>
+              <View style={styles.submitBtnShadow}>
+                <TouchableOpacity style={styles.submitBtn} onPress={handleAddTimetable} activeOpacity={0.8}>
+                  <Text style={styles.submitBtnText}>Assign to Timetable</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
-          {/* Current Timetable List */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 16 }}>
-            <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Existing Timetable</Text>
-            <TouchableOpacity 
-              style={{ backgroundColor: '#9333ea', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
-              onPress={handleAutoSchedule}
-              disabled={submitting}
-            >
-              <MaterialCommunityIcons name="magic-staff" size={16} color="#fff" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Outfit_600SemiBold' }}>Auto-Schedule</Text>
-            </TouchableOpacity>
+          {/* Current Timetable List Section Header */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Existing Timetable</Text>
+            <View style={styles.autoScheduleBtnShadow}>
+              <TouchableOpacity 
+                style={styles.autoScheduleBtn}
+                onPress={handleAutoSchedule}
+                disabled={submitting}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="magic-staff" size={16} color="#35A7C4" style={{ marginRight: 6 }} />
+                <Text style={styles.autoScheduleBtnText}>Auto-Schedule</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+
           {timetables.length > 0 ? (
             timetables.map((tt) => (
               <View key={tt.id} style={styles.ttCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.ttCourse}>{tt.subject_code} - {tt.course_name}</Text>
                   <Text style={styles.ttInfo}>
-                    <MaterialCommunityIcons name="account-group" size={14} color="#64748b" /> {tt.batch_year ? `Batch ${tt.batch_year}` : 'All Batches'} {tt.department_name ? `(${tt.department_name})` : ''}
+                    <MaterialCommunityIcons name="account-group" size={14} color="#7C8BA1" /> {tt.batch_year ? `Batch ${tt.batch_year}` : 'All Batches'} {tt.department_name ? `(${tt.department_name})` : ''}
                   </Text>
                   <Text style={styles.ttInfo}>
-                    <MaterialCommunityIcons name="calendar" size={14} color="#64748b" /> {tt.day_of_week} | {tt.start_time?.substring(0,5)} - {tt.end_time?.substring(0,5)}
+                    <MaterialCommunityIcons name="calendar" size={14} color="#7C8BA1" /> {tt.day_of_week} | {tt.start_time?.substring(0,5)} - {tt.end_time?.substring(0,5)}
                   </Text>
                   <Text style={styles.ttInfo}>
-                    <MaterialCommunityIcons name="map-marker" size={14} color="#64748b" /> {tt.room_name}
+                    <MaterialCommunityIcons name="map-marker" size={14} color="#7C8BA1" /> {tt.room_name}
                   </Text>
                 </View>
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteTimetable(tt.id)}>
-                  <MaterialCommunityIcons name="delete-outline" size={24} color="#ef4444" />
+                <TouchableOpacity 
+                  style={styles.deleteBtn} 
+                  onPress={() => handleDeleteTimetable(tt.id)}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons name="delete-outline" size={22} color="#E11D48" />
                 </TouchableOpacity>
               </View>
             ))
           ) : (
             <View style={styles.emptyCard}>
-              <MaterialCommunityIcons name="calendar-blank" size={32} color="#cbd5e1" />
+              <View style={styles.emptyIconCircle}>
+                <MaterialCommunityIcons name="calendar-blank" size={32} color="#7C8BA1" />
+              </View>
               <Text style={styles.emptyText}>No timetable entries found.</Text>
             </View>
           )}
@@ -444,95 +473,293 @@ export default function ManageTimetable({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    flexDirection: 'row',
-    alignItems: 'center'
+  container: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
   },
-  backBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    marginRight: 16
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
   },
-  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 22, color: '#fff' },
-  scrollContent: { padding: 20, paddingBottom: 60 },
-  
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+  loadingIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  headerContainer: {
+    width: '100%',
+    height: 140,
+    backgroundColor: '#ECF0F3',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 3,
+    zIndex: 10,
   },
-  cardTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b', marginBottom: 16 },
-  
-  formGroup: { marginBottom: 16 },
-  formRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  inputLabel: { fontFamily: 'Outfit-SemiBold', fontSize: 13, color: '#64748b', marginBottom: 8 },
-  pickerWrapper: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+  headerGradient: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
+    justifyContent: 'center',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    overflow: 'hidden'
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerSubtitle: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 22,
+    color: '#2C3A4E',
+    marginTop: 2,
+  },
+  
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 60,
+  },
+  
+  card: {
+    backgroundColor: '#ECF0F3',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+    marginBottom: 16,
+  },
+  
+  formGroup: {
+    marginBottom: 16,
+  },
+  formRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  inputLabel: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  pickerWrapper: {
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
   picker: {
-    fontFamily: 'Outfit-Regular',
-    height: 50,
     width: '100%',
-    color: '#1e293b'
+    color: '#2C3A4E',
   },
   
+  submitBtnShadow: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+    marginTop: 8,
+  },
   submitBtn: {
-    backgroundColor: '#d97706',
-    borderRadius: 12,
-    paddingVertical: 14,
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4', // Cyan active submit button
     alignItems: 'center',
-    marginTop: 8
+    justifyContent: 'center',
   },
-  submitBtnText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16,},
+  submitBtnText: {
+    fontFamily: 'Outfit-Bold',
+    color: '#fff',
+    fontSize: 16,
+  },
   
-  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b', marginBottom: 12, marginLeft: 4 },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+    marginLeft: 4,
+  },
+  autoScheduleBtnShadow: {
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  autoScheduleBtn: {
+    paddingHorizontal: 16,
+    height: '100%',
+    borderRadius: 19,
+    backgroundColor: '#ECF0F3',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  autoScheduleBtnText: {
+    color: '#35A7C4',
+    fontSize: 13,
+    fontFamily: 'Outfit-Bold',
+  },
   
   ttCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: '#ECF0F3',
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: '#d97706'
+    borderLeftColor: '#35A7C4', // Cyan theme left accent line
   },
-  ttCourse: { fontFamily: 'Outfit-Bold', fontSize: 16, color: '#1e293b', marginBottom: 4 },
-  ttInfo: { fontFamily: 'Outfit-Medium', fontSize: 13, color: '#64748b', marginTop: 2,},
-  deleteBtn: { padding: 8 },
+  ttCourse: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+    color: '#2C3A4E',
+    marginBottom: 4,
+  },
+  ttInfo: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 13,
+    color: '#7C8BA1',
+    marginTop: 2,
+  },
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ECF0F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 1,
+  },
   
   emptyCard: {
     alignItems: 'center',
     padding: 32,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderStyle: 'dashed'
+    backgroundColor: '#ECF0F3',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#7C8BA1',
+    borderStyle: 'dashed',
   },
-  emptyText: { fontFamily: 'Outfit-Medium', color: '#94a3b8', marginTop: 8, fontSize: 14,}
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  emptyText: {
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    marginTop: 8,
+    fontSize: 14,
+  },
 });
