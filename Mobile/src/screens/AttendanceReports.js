@@ -10,7 +10,8 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
-  Platform
+  Platform,
+  TextInput
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,7 +27,12 @@ export default function AdvancedReports({ navigation }) {
   const [departments, setDepartments] = useState([]);
   const [batches, setBatches] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [courseSearchQuery, setCourseSearchQuery] = useState('');
   const [fetchingOptions, setFetchingOptions] = useState(true);
+
+  const filteredCourses = courses.filter(c => 
+    c.course_name.toLowerCase().includes(courseSearchQuery.toLowerCase())
+  );
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -159,58 +165,73 @@ export default function AdvancedReports({ navigation }) {
               <Text style={styles.filterHeaderText}>Filter Options</Text>
             </View>
 
-            <View style={styles.pickerRow}>
-              <View style={{ flex: 1, marginRight: 12 }}>
-                <Text style={styles.label}>Department</Text>
-                {fetchingOptions ? (
-                  <ActivityIndicator size="small" color="#35A7C4" style={{ alignSelf: 'flex-start', padding: 10 }} />
-                ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
-                    {departments.map((item, index) => (
-                      <TouchableOpacity 
-                        key={item.id ? item.id.toString() : `dept_${index}`}
-                        style={[styles.chip, filters.dept_id === item.id && styles.chipSelected]}
-                        onPress={() => {
-                          setFilters({...filters, dept_id: item.id, course_id: ''});
-                          fetchCourses(item.id);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.chipText, filters.dept_id === item.id && styles.chipTextSelected]}>
-                          {item.name || `Dept ${item.id}`}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-              
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Batch</Text>
-                {fetchingOptions ? (
-                  <ActivityIndicator size="small" color="#35A7C4" style={{ alignSelf: 'flex-start', padding: 10 }} />
-                ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
-                    {batches.map((item, index) => (
-                      <TouchableOpacity 
-                        key={item.batch_year ? item.batch_year.toString() : `batch_${index}`}
-                        style={[styles.chip, filters.batch === item.batch_year && styles.chipSelected]}
-                        onPress={() => setFilters({...filters, batch: item.batch_year})}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.chipText, filters.batch === item.batch_year && styles.chipTextSelected]}>
-                          {item.batch_year}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
+            {/* Department Selector */}
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Department</Text>
+              {fetchingOptions ? (
+                <ActivityIndicator size="small" color="#35A7C4" style={{ alignSelf: 'flex-start', padding: 10 }} />
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
+                  {departments.map((item, index) => (
+                    <TouchableOpacity 
+                      key={item.id ? item.id.toString() : `dept_${index}`}
+                      style={[styles.chip, filters.dept_id === item.id && styles.chipSelected]}
+                      onPress={() => {
+                        setFilters({...filters, dept_id: item.id, course_id: ''});
+                        setCourseSearchQuery('');
+                        fetchCourses(item.id);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.chipText, filters.dept_id === item.id && styles.chipTextSelected]}>
+                        {item.name || `Dept ${item.id}`}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+            
+            {/* Batch Selector */}
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Batch</Text>
+              {fetchingOptions ? (
+                <ActivityIndicator size="small" color="#35A7C4" style={{ alignSelf: 'flex-start', padding: 10 }} />
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
+                  {batches.map((item, index) => (
+                    <TouchableOpacity 
+                      key={item.batch_year ? item.batch_year.toString() : `batch_${index}`}
+                      style={[styles.chip, filters.batch === item.batch_year && styles.chipSelected]}
+                      onPress={() => setFilters({...filters, batch: item.batch_year})}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.chipText, filters.batch === item.batch_year && styles.chipTextSelected]}>
+                        {item.batch_year}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
             </View>
 
-            <Text style={[styles.label, { marginTop: 16 }]}>Select Course</Text>
+            {/* Course Selector with Search */}
+            <Text style={styles.label}>Select Course</Text>
+            {courses.length > 0 && (
+              <View style={styles.courseSearchContainer}>
+                <MaterialCommunityIcons name="magnify" size={20} color="#7C8BA1" style={{ marginRight: 8 }} />
+                <TextInput
+                  style={styles.courseSearchInput}
+                  placeholder="Search course..."
+                  placeholderTextColor="#7C8BA1"
+                  value={courseSearchQuery}
+                  onChangeText={setCourseSearchQuery}
+                />
+              </View>
+            )}
+            
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
-              {courses.length > 0 ? courses.map((item, index) => (
+              {filteredCourses.length > 0 ? filteredCourses.map((item, index) => (
                 <TouchableOpacity 
                   key={item.course_id ? item.course_id.toString() : `course_${index}`}
                   style={[styles.chip, filters.course_id === item.course_id && styles.chipSelected]}
@@ -222,7 +243,9 @@ export default function AdvancedReports({ navigation }) {
                   </Text>
                 </TouchableOpacity>
               )) : (
-                <Text style={styles.hintText}>Select Department to load courses</Text>
+                <Text style={styles.hintText}>
+                  {courses.length > 0 ? "No courses matching query" : "Select Department to load courses"}
+                </Text>
               )}
             </ScrollView>
 
@@ -391,9 +414,30 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  pickerRow: {
+  courseSearchContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 12,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
+  },
+  courseSearchInput: {
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+    height: '100%',
+    fontSize: 14,
+    color: '#2C3A4E',
+    paddingVertical: 0,
   },
   selector: {
     flexDirection: 'row',
