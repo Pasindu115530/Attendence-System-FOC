@@ -185,8 +185,8 @@ const styles = StyleSheet.create({
     marginRight: 16
   },
   headerTitleContainer: { flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '500' },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 20, color: '#fff' },
+  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 12,},
   
   chatContainer: { padding: 16, paddingBottom: 20 },
   
@@ -216,9 +216,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#e2e8f0',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1
   },
-  bubbleText: { fontSize: 15, lineHeight: 22 },
-  userText: { color: '#fff' },
-  modelText: { color: '#1e293b' },
+  bubbleText: { fontFamily: 'Outfit-Regular', fontSize: 15, lineHeight: 22 },
+  userText: { fontFamily: 'Outfit-Regular', color: '#fff' },
+  modelText: { fontFamily: 'Outfit-Regular', color: '#1e293b' },
   
   chipsWrapper: { paddingVertical: 8, backgroundColor: '#f8fafc' },
   chipsScroll: { paddingHorizontal: 16 },
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8
   },
-  chipText: { color: '#64748b', fontSize: 13, fontWeight: '600' },
+  chipText: { fontFamily: 'Outfit-SemiBold', color: '#64748b', fontSize: 13,},
   
   inputContainer: {
     flexDirection: 'row',
@@ -239,6 +239,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#e2e8f0'
   },
   textInput: {
+    fontFamily: 'Outfit-Regular',
     flex: 1,
     backgroundColor: '#f1f5f9',
     borderRadius: 20,

@@ -269,8 +269,8 @@ const styles = StyleSheet.create({
   },
   headerTop: { flexDirection: 'row', alignItems: 'center' },
   backBtn: { marginRight: 16, backgroundColor: 'rgba(255,255,255,0.15)', padding: 10, borderRadius: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2, fontWeight: '500' },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
+  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
   
   filterCard: {
     backgroundColor: '#fff',
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     marginTop: -20,
   },
-  filterLabel: { fontSize: 13, fontWeight: '700', color: '#64748b', marginBottom: 8, textTransform: 'uppercase' },
+  filterLabel: { fontFamily: 'Outfit-Bold', fontSize: 13, color: '#64748b', marginBottom: 8, textTransform: 'uppercase' },
   pickerWrapper: {
     backgroundColor: '#f8fafc',
     borderWidth: 1.5,
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
-  picker: { height: 50, color: '#0f172a' },
+  picker: { fontFamily: 'Outfit-Regular', height: 50, color: '#0f172a' },
 
   searchContainer: {
     flexDirection: 'row',
@@ -307,12 +307,12 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   searchIcon: { marginRight: 12 },
-  searchInput: { flex: 1, fontSize: 15, color: '#0f172a' },
+  searchInput: { fontFamily: 'Outfit-Regular', flex: 1, fontSize: 15, color: '#0f172a' },
 
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
   listContainer: { marginBottom: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#0f172a', marginBottom: 4 },
-  sectionDesc: { fontSize: 13, color: '#64748b', marginBottom: 16, lineHeight: 20 },
+  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#0f172a', marginBottom: 4 },
+  sectionDesc: { fontFamily: 'Outfit-Regular', fontSize: 13, color: '#64748b', marginBottom: 16, lineHeight: 20 },
   
   subjectItem: {
     flexDirection: 'row',
@@ -329,12 +329,12 @@ const styles = StyleSheet.create({
     borderColor: '#4f46e5',
   },
   subjectInfo: { flex: 1, paddingRight: 16 },
-  subjectCode: { fontSize: 12, fontWeight: '800', color: '#4f46e5', marginBottom: 4 },
-  subjectName: { fontSize: 15, fontWeight: '600', color: '#1e293b' },
-  textActive: { color: '#fff' },
+  subjectCode: { fontFamily: 'Outfit-Bold', fontSize: 12, color: '#4f46e5', marginBottom: 4 },
+  subjectName: { fontFamily: 'Outfit-SemiBold', fontSize: 15, color: '#1e293b' },
+  textActive: { fontFamily: 'Outfit-Regular', color: '#fff' },
 
   emptyContainer: { alignItems: 'center', justifyContent: 'center', padding: 40 },
-  emptyText: { marginTop: 12, color: '#94a3b8', fontSize: 15, fontWeight: '500' },
+  emptyText: { fontFamily: 'Outfit-Medium', marginTop: 12, color: '#94a3b8', fontSize: 15,},
 
   footer: {
     position: 'absolute',
@@ -351,5 +351,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' }
+  saveBtnText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16,}
 });

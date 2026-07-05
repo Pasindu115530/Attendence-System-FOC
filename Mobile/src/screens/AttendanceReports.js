@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 32,
   },
   headerContent: { alignItems: 'flex-start' },
-  headerSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff', marginTop: 4 },
+  headerSubtitle: { fontFamily: 'Outfit-SemiBold', fontSize: 13, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 1 },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 28, color: '#fff', marginTop: 4 },
   
   scrollView: { flex: 1, marginTop: -25 },
   
@@ -305,9 +305,9 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   filterHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 18, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10 },
-  filterHeaderText: { fontSize: 14, fontWeight: '700', color: '#64748b', marginLeft: 8 },
+  filterHeaderText: { fontFamily: 'Outfit-Bold', fontSize: 14, color: '#64748b', marginLeft: 8 },
   
-  label: { fontSize: 12, fontWeight: '800', color: '#94a3b8', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: { fontFamily: 'Outfit-Bold', fontSize: 12, color: '#94a3b8', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   pickerRow: { flexDirection: 'row', justifyContent: 'space-between' },
   selector: { flexDirection: 'row', marginBottom: 5 },
   chip: { 
@@ -320,18 +320,18 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0' 
   },
   chipSelected: { backgroundColor: '#4ca1af', borderColor: '#4ca1af' },
-  chipText: { fontSize: 13, color: '#475569', fontWeight: '600' },
-  chipTextSelected: { color: '#fff', fontWeight: '700' },
-  hintText: { fontSize: 13, color: '#94a3b8', fontStyle: 'italic', paddingVertical: 8 },
+  chipText: { fontFamily: 'Outfit-SemiBold', fontSize: 13, color: '#475569',},
+  chipTextSelected: { fontFamily: 'Outfit-Bold', color: '#fff',},
+  hintText: { fontFamily: 'Outfit-Regular', fontSize: 13, color: '#94a3b8', fontStyle: 'italic', paddingVertical: 8 },
   
   searchBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 24, elevation: 4 },
   searchBtnGradient: { paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16, marginLeft: 10 },
+  btnText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16, marginLeft: 10 },
   
   resultsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 15, paddingHorizontal: 4 },
-  resultsTitle: { fontSize: 18, fontWeight: '800', color: '#1e293b' },
+  resultsTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b' },
   countBadge: { backgroundColor: '#e2e8f0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  countText: { fontSize: 12, fontWeight: '700', color: '#475569' },
+  countText: { fontFamily: 'Outfit-Bold', fontSize: 12, color: '#475569' },
 
   tableHeader: { 
     flexDirection: 'row', 
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, 
     marginBottom: 10 
   },
-  headerCell: { fontWeight: '700', fontSize: 11, color: '#64748b', textTransform: 'uppercase' },
+  headerCell: { fontFamily: 'Outfit-Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' },
   
   tableRow: { 
     flexDirection: 'row', 
@@ -358,20 +358,20 @@ const styles = StyleSheet.create({
   },
   studentInfo: { flex: 2, flexDirection: 'row', alignItems: 'center' },
   idBadge: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center' },
-  idBadgeText: { fontSize: 14, fontWeight: '800', color: '#4ca1af' },
-  cellText: { fontWeight: '700', fontSize: 15, color: '#1e293b' },
-  subCellText: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  idBadgeText: { fontFamily: 'Outfit-Bold', fontSize: 14, color: '#4ca1af' },
+  cellText: { fontFamily: 'Outfit-Bold', fontSize: 15, color: '#1e293b' },
+  subCellText: { fontFamily: 'Outfit-Regular', fontSize: 12, color: '#64748b', marginTop: 2 },
   
   statusCol: { flex: 1, alignItems: 'center' },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusText: { fontWeight: '800', fontSize: 11 },
+  statusText: { fontFamily: 'Outfit-Bold', fontSize: 11 },
   
   percentageCol: { flex: 1, alignItems: 'flex-end' },
-  percentageText: { fontWeight: '800', color: '#1e293b', fontSize: 16 },
-  percentageLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '600' },
+  percentageText: { fontFamily: 'Outfit-Bold', color: '#1e293b', fontSize: 16 },
+  percentageLabel: { fontFamily: 'Outfit-SemiBold', fontSize: 10, color: '#94a3b8',},
   
   emptyContainer: { alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },
   emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  emptyTextTitle: { fontSize: 18, fontWeight: '700', color: '#475569' },
-  emptyTextSub: { textAlign: 'center', color: '#94a3b8', marginTop: 8, lineHeight: 20 }
+  emptyTextTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#475569' },
+  emptyTextSub: { fontFamily: 'Outfit-Regular', textAlign: 'center', color: '#94a3b8', marginTop: 8, lineHeight: 20 }
 });

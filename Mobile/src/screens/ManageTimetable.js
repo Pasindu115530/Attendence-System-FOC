@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 16
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 22, color: '#fff' },
   scrollContent: { padding: 20, paddingBottom: 60 },
   
   card: {
@@ -475,11 +475,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  cardTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
+  cardTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b', marginBottom: 16 },
   
   formGroup: { marginBottom: 16 },
   formRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  inputLabel: { fontSize: 13, fontWeight: '600', color: '#64748b', marginBottom: 8 },
+  inputLabel: { fontFamily: 'Outfit-SemiBold', fontSize: 13, color: '#64748b', marginBottom: 8 },
   pickerWrapper: {
     backgroundColor: '#f1f5f9',
     borderRadius: 12,
@@ -488,6 +488,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden'
   },
   picker: {
+    fontFamily: 'Outfit-Regular',
     height: 50,
     width: '100%',
     color: '#1e293b'
@@ -500,9 +501,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8
   },
-  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  submitBtnText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16,},
   
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 12, marginLeft: 4 },
+  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b', marginBottom: 12, marginLeft: 4 },
   
   ttCard: {
     backgroundColor: '#fff',
@@ -520,8 +521,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#d97706'
   },
-  ttCourse: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
-  ttInfo: { fontSize: 13, color: '#64748b', marginTop: 2, fontWeight: '500' },
+  ttCourse: { fontFamily: 'Outfit-Bold', fontSize: 16, color: '#1e293b', marginBottom: 4 },
+  ttInfo: { fontFamily: 'Outfit-Medium', fontSize: 13, color: '#64748b', marginTop: 2,},
   deleteBtn: { padding: 8 },
   
   emptyCard: {
@@ -533,5 +534,5 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderStyle: 'dashed'
   },
-  emptyText: { color: '#94a3b8', marginTop: 8, fontSize: 14, fontWeight: '500' }
+  emptyText: { fontFamily: 'Outfit-Medium', color: '#94a3b8', marginTop: 8, fontSize: 14,}
 });

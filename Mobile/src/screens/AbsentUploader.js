@@ -203,8 +203,8 @@ const styles = StyleSheet.create({
   },
   headerTop: { flexDirection: 'row', alignItems: 'center' },
   backBtn: { marginRight: 16, backgroundColor: 'rgba(255,255,255,0.15)', padding: 10, borderRadius: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2, fontWeight: '500' },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
+  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
   
   listContent: { padding: 20 },
   
@@ -223,24 +223,24 @@ const styles = StyleSheet.create({
   },
   cardStatusContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   absentBadge: { backgroundColor: '#fee2e2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  absentBadgeText: { fontSize: 10, fontWeight: '800', color: '#ef4444' },
-  dateText: { fontSize: 13, fontWeight: '600', color: '#64748b' },
+  absentBadgeText: { fontFamily: 'Outfit-Bold', fontSize: 10, color: '#ef4444' },
+  dateText: { fontFamily: 'Outfit-SemiBold', fontSize: 13, color: '#64748b' },
   
-  subjectText: { fontSize: 17, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
+  subjectText: { fontFamily: 'Outfit-Bold', fontSize: 17, color: '#1e293b', marginBottom: 16 },
   
   footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   reportStatus: { flexDirection: 'row', alignItems: 'center' },
-  reportStatusText: { fontSize: 12, fontWeight: '700', marginLeft: 6 },
+  reportStatusText: { fontFamily: 'Outfit-Bold', fontSize: 12, marginLeft: 6 },
   
   uploadBtn: { borderRadius: 12, overflow: 'hidden' },
   uploadBtnCompleted: { opacity: 0.9 },
   uploadBtnGradient: { paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center' },
-  uploadBtnText: { color: '#fff', fontWeight: '700', fontSize: 12, marginLeft: 6 },
+  uploadBtnText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 12, marginLeft: 6 },
   
   emptyContainer: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
   emptyIconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#d1fae5', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  emptyTextTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b' },
-  emptyTextSub: { textAlign: 'center', color: '#64748b', marginTop: 8, fontSize: 14, lineHeight: 20 },
+  emptyTextTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b' },
+  emptyTextSub: { fontFamily: 'Outfit-Regular', textAlign: 'center', color: '#64748b', marginTop: 8, fontSize: 14, lineHeight: 20 },
   
   overlay: { 
     ...StyleSheet.absoluteFillObject, 
@@ -249,5 +249,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 999
   },
-  overlayText: { color: '#fff', marginTop: 16, fontWeight: '600', fontSize: 15 }
+  overlayText: { fontFamily: 'Outfit-SemiBold', color: '#fff', marginTop: 16, fontSize: 15 }
 });

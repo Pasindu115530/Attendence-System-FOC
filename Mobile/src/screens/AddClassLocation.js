@@ -224,8 +224,8 @@ const styles = StyleSheet.create({
   },
   headerTop: { flexDirection: 'row', alignItems: 'center' },
   backBtn: { marginRight: 16, backgroundColor: 'rgba(255,255,255,0.15)', padding: 10, borderRadius: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2, fontWeight: '500' },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
+  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
   
   scrollContent: { padding: 20 },
   
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1f5f9'
   },
-  label: { fontSize: 12, fontWeight: '800', color: '#94a3b8', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: { fontFamily: 'Outfit-Bold', fontSize: 12, color: '#94a3b8', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputContainer: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     height: 56
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 15, color: '#1e293b', fontWeight: '500' },
+  input: { fontFamily: 'Outfit-Medium', flex: 1, fontSize: 15, color: '#1e293b',},
   
   instructionCard: { 
     flexDirection: 'row', 
@@ -262,9 +262,9 @@ const styles = StyleSheet.create({
     borderColor: '#bfdbfe',
     alignItems: 'center' 
   },
-  instructionText: { flex: 1, color: '#1e40af', fontSize: 13, marginLeft: 12, fontWeight: '500', lineHeight: 18 },
+  instructionText: { fontFamily: 'Outfit-Medium', flex: 1, color: '#1e40af', fontSize: 13, marginLeft: 12, lineHeight: 18 },
   
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 12, marginLeft: 4 },
+  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 16, color: '#1e293b', marginBottom: 12, marginLeft: 4 },
   
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   pointBtn: { 
@@ -292,11 +292,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#667eea', 
     borderColor: '#667eea' 
   },
-  pointLabel: { color: '#64748b', fontSize: 15, fontWeight: '700' },
-  pointLabelCaptured: { color: '#fff' },
+  pointLabel: { fontFamily: 'Outfit-Bold', color: '#64748b', fontSize: 15,},
+  pointLabelCaptured: { fontFamily: 'Outfit-Regular', color: '#fff' },
   markerIcon: { marginTop: 6 },
   checkIcon: { marginTop: 4 },
-  coordText: { color: 'rgba(255,255,255,0.85)', fontSize: 10, fontWeight: '600', marginTop: 4 },
+  coordText: { fontFamily: 'Outfit-SemiBold', color: 'rgba(255,255,255,0.85)', fontSize: 10, marginTop: 4 },
   
   saveBtn: { borderRadius: 18, overflow: 'hidden', marginTop: 12, elevation: 3 },
   saveBtnGradient: { 
@@ -305,5 +305,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     justifyContent: 'center' 
   },
-  saveText: { color: '#fff', fontWeight: '700', fontSize: 16 }
+  saveText: { fontFamily: 'Outfit-Bold', color: '#fff', fontSize: 16 }
 });

@@ -455,13 +455,16 @@ export default function LoginScreen({ route, navigation }) {
                     <Text style={styles.faceStatusText}>{scanningStatus}</Text>
 
                     {/* Circular Glowing Camera View */}
-                    <View style={styles.cameraWrapper}>
-                      <CameraView
-                        ref={cameraRef}
-                        style={styles.cameraView}
-                        facing="front"
-                      />
-                      <View style={styles.scanTargetBox} />
+                    <View style={styles.cameraContainer}>
+                      <View style={styles.cameraShadowCircle} />
+                      <View style={styles.cameraWrapper}>
+                        <CameraView
+                          ref={cameraRef}
+                          style={styles.cameraView}
+                          facing="front"
+                        />
+                        <View style={styles.scanTargetBox} />
+                      </View>
                     </View>
 
                     {/* Cancel Action Button */}
@@ -518,13 +521,15 @@ export default function LoginScreen({ route, navigation }) {
                     </View>
 
                     {/* LOG IN Action Button */}
-                    <TouchableOpacity
-                      style={styles.loginButton}
-                      onPress={handleLogin}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.loginButtonText}>Login</Text>
-                    </TouchableOpacity>
+                    <View style={styles.loginButtonShadowContainer}>
+                      <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={handleLogin}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.loginButtonText}>Login</Text>
+                      </TouchableOpacity>
+                    </View>
 
                     {/* FACE ID LOGIN Action Button */}
                     <TouchableOpacity
@@ -618,13 +623,15 @@ export default function LoginScreen({ route, navigation }) {
                     </Text>
 
                     {/* CREATE Action Button */}
-                    <TouchableOpacity
-                      style={styles.loginButton}
-                      onPress={handleCreateAccount}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.loginButtonText}>Create Account</Text>
-                    </TouchableOpacity>
+                    <View style={styles.loginButtonShadowContainer}>
+                      <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={handleCreateAccount}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.loginButtonText}>Create Account</Text>
+                      </TouchableOpacity>
+                    </View>
 
                     {/* Switch to Login Toggle */}
                     <View style={styles.footerLinks}>
@@ -769,7 +776,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#2C3A4E',
     textAlign: 'center',
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     marginBottom: 22,
     letterSpacing: 0.5,
   },
@@ -803,30 +810,36 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 16,
     color: '#2C3A4E',
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
   },
   eyeButton: {
     padding: 8,
   },
 
   // Convex/Raised Neumorphic Button for LOG IN
-  loginButton: {
+  loginButtonShadowContainer: {
     width: '100%',
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#35A7C4',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginVertical: 14,
+    backgroundColor: '#ECF0F3', // Matches canvas
     shadowColor: '#288BA3',
-    shadowOffset: { width: 4, height: 4 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 4,
   },
+  loginButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loginButtonText: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
@@ -857,7 +870,7 @@ const styles = StyleSheet.create({
   },
   faceIdButtonText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#35A7C4',
     letterSpacing: 0.5,
   },
@@ -873,17 +886,18 @@ const styles = StyleSheet.create({
   footerLinkText: {
     fontSize: 14,
     color: '#7C8BA1',
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
   },
   footerDivider: {
     fontSize: 14,
     color: '#7C8BA1',
+    fontFamily: 'Outfit-Medium',
     marginHorizontal: 4,
   },
   footerLinkTextBold: {
     fontSize: 14,
     color: '#35A7C4',
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
   },
 
   // Disclaimer text in sign up
@@ -894,10 +908,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginHorizontal: 10,
     marginBottom: 20,
-    fontWeight: '400',
+    fontFamily: 'Outfit-Regular',
   },
   disclaimerLink: {
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#35A7C4',
     textDecorationLine: 'underline',
   },
@@ -911,9 +925,29 @@ const styles = StyleSheet.create({
   faceStatusText: {
     color: '#35A7C4',
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  cameraContainer: {
+    position: 'relative',
+    width: 240,
+    height: 240,
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraShadowCircle: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#ECF0F3', // Matches card background
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
   },
   cameraWrapper: {
     width: 240,
@@ -924,13 +958,7 @@ const styles = StyleSheet.create({
     borderColor: '#35A7C4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
     backgroundColor: '#000',
-    shadowColor: '#35A7C4',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
   },
   cameraView: {
     width: '100%',
@@ -972,7 +1000,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#E11D48',
     letterSpacing: 0.5,
   },
@@ -986,14 +1014,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#7C8BA1',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     letterSpacing: 0.5,
   },
   footerSubText: {
     textAlign: 'center',
     color: '#7C8BA1',
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     letterSpacing: 0.5,
     marginTop: 2,
   },
@@ -1045,13 +1073,13 @@ const styles = StyleSheet.create({
   },
   focText: {
     fontSize: 32,
-    fontWeight: '900',
+    fontFamily: 'Outfit-Bold',
     color: '#2C3A4E',
     letterSpacing: 1,
   },
   checkText: {
     fontSize: 32,
-    fontWeight: '300',
+    fontFamily: 'Outfit-Regular',
     color: '#2C3A4E',
     marginLeft: 4,
   },
@@ -1069,13 +1097,13 @@ const styles = StyleSheet.create({
   },
   inText: {
     fontSize: 20,
-    fontWeight: '900',
+    fontFamily: 'Outfit-Bold',
     color: '#FFFFFF',
   },
   subtitleTextLoading: {
     fontSize: 13,
     color: '#7C8BA1',
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     marginTop: 8,
     letterSpacing: 3,
     textTransform: 'uppercase',
@@ -1086,7 +1114,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#2C3A4E',
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     marginTop: 15,
     letterSpacing: 1,
   },
@@ -1126,13 +1154,13 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: 'Outfit-Bold',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   notificationMessage: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
     marginTop: 2,
   },
   notificationClose: {
@@ -1149,7 +1177,7 @@ const styles = StyleSheet.create({
     color: '#35A7C4',
     fontSize: 14,
     textAlign: 'center',
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     textDecorationLine: 'underline',
   },
 });

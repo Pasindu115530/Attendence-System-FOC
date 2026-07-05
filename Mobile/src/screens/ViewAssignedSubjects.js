@@ -187,16 +187,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 16
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#fff' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2, fontWeight: '500' },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 22, color: '#fff' },
+  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2,},
   scrollContent: { padding: 20, paddingBottom: 60 },
 
   deptGroup: {
     marginBottom: 24
   },
   deptTitle: {
+    fontFamily: 'Outfit-Bold',
     fontSize: 20,
-    fontWeight: '800',
     color: '#0f172a',
     marginBottom: 12,
     marginLeft: 4,
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   cardTitle: { 
+    fontFamily: 'Outfit-Bold',
     fontSize: 16, 
-    fontWeight: '700', 
     color: '#1e293b',
     marginLeft: 8
   },
@@ -245,14 +245,14 @@ const styles = StyleSheet.create({
     marginRight: 12
   },
   subjectCode: {
+    fontFamily: 'Outfit-Bold',
     fontSize: 12,
-    fontWeight: '700',
     color: '#059669',
     marginBottom: 2
   },
   subjectName: {
+    fontFamily: 'Outfit-SemiBold',
     fontSize: 15,
-    fontWeight: '600',
     color: '#334155'
   },
   deleteBtn: {
@@ -271,5 +271,5 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     marginTop: 40
   },
-  emptyText: { color: '#94a3b8', marginTop: 12, fontSize: 15, fontWeight: '500' }
+  emptyText: { fontFamily: 'Outfit-Medium', color: '#94a3b8', marginTop: 12, fontSize: 15,}
 });

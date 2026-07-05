@@ -792,7 +792,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  headerTitle: { fontFamily: 'Outfit-Bold', fontSize: 28, color: '#fff', letterSpacing: -0.5 },
   headerBadge: {
     backgroundColor: '#5eead4',
     paddingHorizontal: 8,
@@ -801,11 +801,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   headerBadgeText: {
+    fontFamily: 'Outfit-Bold',
     fontSize: 12,
-    fontWeight: '900',
     color: '#004D40',
   },
-  headerSubtitle: { color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 4, fontWeight: '500' },
+  headerSubtitle: { fontFamily: 'Outfit-Medium', color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 4,},
   notifBtn: { 
     backgroundColor: 'rgba(255,255,255,0.12)', 
     padding: 12, 
@@ -836,13 +836,13 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   statItem: { alignItems: 'center' },
-  statNumber: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: '500' },
+  statNumber: { fontFamily: 'Outfit-Bold', fontSize: 24, color: '#fff' },
+  statLabel: { fontFamily: 'Outfit-Medium', fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2,},
   statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
   
   scrollContent: { padding: 20 },
   
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 14, marginLeft: 4 },
+  sectionTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: '#1e293b', marginBottom: 14, marginLeft: 4 },
   
   lecCard: { 
     backgroundColor: '#fff', 
@@ -866,9 +866,9 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   dot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  timeText: { fontSize: 12, color: '#94a3b8', fontWeight: '600' },
-  courseName: { fontSize: 17, fontWeight: '700', color: '#1e293b', marginBottom: 10 },
+  badgeText: { fontFamily: 'Outfit-Bold', fontSize: 11,},
+  timeText: { fontFamily: 'Outfit-SemiBold', fontSize: 12, color: '#94a3b8',},
+  courseName: { fontFamily: 'Outfit-Bold', fontSize: 17, color: '#1e293b', marginBottom: 10 },
   infoRow: { flexDirection: 'row' },
   infoPill: { 
     flexDirection: 'row', 
@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 10
   },
-  infoText: { color: '#475569', fontSize: 12, marginLeft: 5, fontWeight: '500' },
+  infoText: { fontFamily: 'Outfit-Medium', color: '#475569', fontSize: 12, marginLeft: 5,},
 
   emptyContainer: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
   emptyIconBg: {
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12
   },
-  emptyText: { color: '#94a3b8', marginTop: 4, fontSize: 15, fontWeight: '500' },
+  emptyText: { fontFamily: 'Outfit-Medium', color: '#94a3b8', marginTop: 4, fontSize: 15,},
 
   actionCard: { 
     flexDirection: 'row', 
@@ -913,8 +913,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  actionTitle: { fontSize: 15, fontWeight: '700', color: '#1e293b' },
-  actionDesc: { fontSize: 12, color: '#94a3b8', marginTop: 2, fontWeight: '500' },
+  actionTitle: { fontFamily: 'Outfit-Bold', fontSize: 15, color: '#1e293b' },
+  actionDesc: { fontFamily: 'Outfit-Medium', fontSize: 12, color: '#94a3b8', marginTop: 2,},
 
   logoutBtn: { 
     flexDirection: 'row',
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 20
   },
-  logoutText: { color: '#ef4444', fontWeight: '700', fontSize: 15, marginLeft: 8 },
+  logoutText: { fontFamily: 'Outfit-Bold', color: '#ef4444', fontSize: 15, marginLeft: 8 },
   
   modalOverlay: {
     flex: 1,
@@ -960,8 +960,8 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   modalTitle: {
+    fontFamily: 'Outfit-Bold',
     fontSize: 20,
-    fontWeight: '800',
     color: '#1e293b',
   },
   modalCloseBtn: {
@@ -975,14 +975,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inputLabel: {
+    fontFamily: 'Outfit-Bold',
     fontSize: 12,
-    fontWeight: '700',
     color: '#64748b',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
+    fontFamily: 'Outfit-Regular',
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -1006,8 +1007,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 180, 150, 0.2)',
   },
   generatorBtnText: {
+    fontFamily: 'Outfit-Bold',
     color: '#007A68',
-    fontWeight: '700',
     fontSize: 14,
   },
   submitBtn: {
@@ -1022,8 +1023,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitBtnText: {
+    fontFamily: 'Outfit-Bold',
     color: '#fff',
-    fontWeight: '800',
     fontSize: 16,
     letterSpacing: 0.5,
   },
@@ -1053,8 +1054,8 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   faceOverlayTitle: {
+    fontFamily: 'Outfit-Bold',
     fontSize: 20,
-    fontWeight: '800',
     color: '#0f172a',
   },
   faceCameraContainer: {
@@ -1073,10 +1074,10 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5,
   },
   faceInstructionText: {
+    fontFamily: 'Outfit-SemiBold',
     flex: 1,
     marginLeft: 16,
     fontSize: 15,
-    fontWeight: '600',
     color: '#334155',
   },
   captureBtnContainer: {
