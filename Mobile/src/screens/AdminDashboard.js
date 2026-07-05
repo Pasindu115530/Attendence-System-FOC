@@ -268,7 +268,7 @@ export default function AdminDashboard({ navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "ඔබට පද්ධතියෙන් ඉවත් වීමට අවශ්‍යද?", [
+    Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       { text: "Yes, Logout", onPress: () => navigation.replace('Login'), style: 'destructive' }
     ]);
