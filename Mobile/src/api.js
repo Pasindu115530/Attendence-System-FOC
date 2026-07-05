@@ -36,12 +36,19 @@ export async function post(endpoint, body = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    let json;
+    try {
+      json = await response.json();
+    } catch (e) {
+      json = null;
+    }
+
     if (!response.ok) {
-      const errMsg = `Server returned HTTP ${response.status}`;
+      const errMsg = json && json.message ? json.message : (json && json.error ? json.error : `Server returned HTTP ${response.status}`);
       console.error(`[API ERROR] POST ${endpoint} => ${errMsg}`);
       return { status: 'error', message: errMsg };
     }
-    const json = await response.json();
+
     if (json.status === 'error' || json.status === 'failed') {
       console.error(`[API BACKEND ERROR] POST ${endpoint} =>`, json.message || json);
     } else {
@@ -75,12 +82,19 @@ export async function upload(endpoint, formData) {
       body: formData,
       // Do NOT set Content-Type manually — fetch sets it with boundary for multipart
     });
+    let json;
+    try {
+      json = await response.json();
+    } catch (e) {
+      json = null;
+    }
+
     if (!response.ok) {
-      const errMsg = `Server returned HTTP ${response.status}`;
+      const errMsg = json && json.message ? json.message : (json && json.error ? json.error : `Server returned HTTP ${response.status}`);
       console.error(`[API ERROR] UPLOAD ${endpoint} => ${errMsg}`);
       return { status: 'error', message: errMsg };
     }
-    const json = await response.json();
+
     if (json.status === 'error' || json.status === 'failed') {
       console.error(`[API BACKEND ERROR] UPLOAD ${endpoint} =>`, json.message || json);
     } else {
