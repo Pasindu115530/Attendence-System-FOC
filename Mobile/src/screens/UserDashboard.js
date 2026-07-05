@@ -231,7 +231,7 @@ export default function UserDashboard({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={activeTab === 'home' ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       {/* Top Header Bar for non-home tabs */}
       {activeTab !== 'home' && (
@@ -242,7 +242,7 @@ export default function UserDashboard({ route, navigation }) {
             activeOpacity={0.8}
           >
             <View style={styles.avatarPlaceholder}>
-              <MaterialCommunityIcons name="account" size={24} color="#94a3b8" />
+              <MaterialCommunityIcons name="account" size={24} color="#7C8BA1" />
             </View>
           </TouchableOpacity>
           
@@ -251,7 +251,7 @@ export default function UserDashboard({ route, navigation }) {
             onPress={handleLogout}
             activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="close" size={18} color="#1e293b" />
+            <MaterialCommunityIcons name="close" size={18} color="#2C3A4E" />
           </TouchableOpacity>
         </View>
       )}
@@ -278,7 +278,7 @@ export default function UserDashboard({ route, navigation }) {
                 
                 {/* Horizontal Gradient Overlay (Fades out to reveal image on the right) */}
                 <LinearGradient
-                  colors={['#004d40', 'rgba(0, 77, 64, 0.9)', 'rgba(0, 77, 64, 0.2)', 'transparent']}
+                  colors={['#F3F7FD', 'rgba(243, 247, 253, 0.95)', 'rgba(243, 247, 253, 0.3)', 'transparent']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.headerSplitOverlay}
@@ -291,7 +291,7 @@ export default function UserDashboard({ route, navigation }) {
                       activeOpacity={0.8}
                     >
                       <View style={styles.headerAvatarInner}>
-                        <MaterialCommunityIcons name="account" size={22} color="#004D40" />
+                        <MaterialCommunityIcons name="account" size={22} color="#35A7C4" />
                       </View>
                     </TouchableOpacity>
                     
@@ -300,7 +300,7 @@ export default function UserDashboard({ route, navigation }) {
                       onPress={handleLogout}
                       activeOpacity={0.8}
                     >
-                      <MaterialCommunityIcons name="close" size={16} color="#fff" />
+                      <MaterialCommunityIcons name="close" size={16} color="#35A7C4" />
                     </TouchableOpacity>
                   </View>
 
@@ -330,8 +330,8 @@ export default function UserDashboard({ route, navigation }) {
                   <View style={[styles.lectureCard, lecture.isLive && styles.lectureCardLive]}>
                     <View style={styles.cardHeaderRow}>
                       <View style={[styles.badge, lecture.isLive ? styles.badgeLive : styles.badgeUpcoming]}>
-                        <View style={[styles.badgeDot, { backgroundColor: lecture.isLive ? '#007A68' : '#d97706' }]} />
-                        <Text style={[styles.badgeText, { color: lecture.isLive ? '#004D40' : '#92400e' }]}>
+                        <View style={[styles.badgeDot, { backgroundColor: lecture.isLive ? '#35A7C4' : '#d97706' }]} />
+                        <Text style={[styles.badgeText, { color: lecture.isLive ? '#35A7C4' : '#92400e' }]}>
                           {lecture.isLive ? 'LIVE NOW' : 'UPCOMING'}
                         </Text>
                       </View>
@@ -342,7 +342,7 @@ export default function UserDashboard({ route, navigation }) {
                     
                     <View style={styles.cardInfoRow}>
                       <View style={styles.cardPill}>
-                        <MaterialCommunityIcons name="map-marker" size={14} color="#007A68" />
+                        <MaterialCommunityIcons name="map-marker" size={14} color="#35A7C4" />
                         <Text style={styles.cardPillText}>{lecture.room_name}</Text>
                       </View>
                     </View>
@@ -354,35 +354,30 @@ export default function UserDashboard({ route, navigation }) {
                           <Text style={styles.markedBtnText}>Attendance Marked</Text>
                         </View>
                       ) : (
-                        <TouchableOpacity 
-                          style={styles.markBtn} 
-                          onPress={handleMarkAttendance}
-                          disabled={marking}
-                          activeOpacity={0.8}
-                        >
-                          <LinearGradient
-                            colors={['#029A84', '#004D40']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.markBtnGradient}
+                        <View style={styles.submitButtonShadowContainer}>
+                          <TouchableOpacity 
+                            style={styles.submitButton} 
+                            onPress={handleMarkAttendance}
+                            disabled={marking}
+                            activeOpacity={0.8}
                           >
                             {marking ? (
                               <ActivityIndicator color="#fff" size="small" />
                             ) : (
-                              <>
-                                <MaterialCommunityIcons name="map-marker-radius" size={20} color="#fff" />
-                                <Text style={styles.markBtnText}>Mark Attendance</Text>
-                              </>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <MaterialCommunityIcons name="map-marker-radius" size={20} color="#fff" style={{ marginRight: 6 }} />
+                                <Text style={styles.submitButtonText}>Mark Attendance</Text>
+                              </View>
                             )}
-                          </LinearGradient>
-                        </TouchableOpacity>
+                          </TouchableOpacity>
+                        </View>
                       )
                     )}
                   </View>
                 ) : (
                   <View style={styles.emptyStateCard}>
                     <View style={styles.emptyIconCircle}>
-                      <MaterialCommunityIcons name="calendar-blank" size={36} color="#a0aec0" />
+                      <MaterialCommunityIcons name="calendar-blank" size={36} color="#7C8BA1" />
                     </View>
                     <Text style={styles.emptyTitle}>No Lectures Scheduled</Text>
                     <Text style={styles.emptySubtitle}>You're all caught up for today.</Text>
@@ -393,11 +388,11 @@ export default function UserDashboard({ route, navigation }) {
           )}
 
           {activeTab === 'settings' && (
-            <View style={[styles.profileContainer, { paddingHorizontal: 24 }]}>
+            <View style={[styles.profileContainer, { paddingHorizontal: 20 }]}>
               {/* Profile Image card matching mockup */}
               <View style={styles.profileImageContainer}>
                 <View style={styles.largeProfileCircle}>
-                  <MaterialCommunityIcons name="account" size={72} color="#cbd5e1" />
+                  <MaterialCommunityIcons name="account" size={72} color="#7C8BA1" />
                 </View>
                 <Text style={styles.profilePhotoLabel}>Profile Photo</Text>
               </View>
@@ -427,53 +422,47 @@ export default function UserDashboard({ route, navigation }) {
 
               {/* Buttons matching mockup */}
               <TouchableOpacity 
-                style={[styles.logoutBtn, { backgroundColor: '#007A68', marginBottom: 16 }]} 
+                style={styles.logoutBtn} 
                 onPress={handleOpenFaceRegister} 
                 activeOpacity={0.8}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <MaterialCommunityIcons name="face-recognition" size={20} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={[styles.logoutBtnText, { color: '#fff' }]}>Register Face ID</Text>
-                </View>
+                <MaterialCommunityIcons name="face-recognition" size={20} color="#35A7C4" style={{ marginRight: 8 }} />
+                <Text style={[styles.logoutBtnText, { color: '#35A7C4' }]}>Register Face ID</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={[styles.logoutBtn, { backgroundColor: '#029A84', marginBottom: 16 }]} 
+                style={styles.logoutBtn} 
                 onPress={() => setIsPasswordModalOpen(true)} 
                 activeOpacity={0.8}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <MaterialCommunityIcons name="lock-reset" size={20} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={[styles.logoutBtnText, { color: '#fff' }]}>Change Password</Text>
-                </View>
+                <MaterialCommunityIcons name="lock-reset" size={20} color="#35A7C4" style={{ marginRight: 8 }} />
+                <Text style={[styles.logoutBtnText, { color: '#35A7C4' }]}>Change Password</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-                <Text style={styles.logoutBtnText}>Log Out</Text>
+                <MaterialCommunityIcons name="logout" size={20} color="#E11D48" style={{ marginRight: 8 }} />
+                <Text style={[styles.logoutBtnText, { color: '#E11D48' }]}>Log Out</Text>
               </TouchableOpacity>
-
-              
-
-              
             </View>
           )}
 
           {activeTab === 'search' && (
-            <View style={{ width: '100%', paddingHorizontal: 24 }}>
+            <View style={{ width: '100%', paddingHorizontal: 20 }}>
               <Text style={styles.tabSectionTitle}>Search & Reports</Text>
+              
               <View style={styles.searchInputWrapper}>
-                <MaterialCommunityIcons name="magnify" size={20} color="#94a3b8" style={styles.searchIcon} />
+                <MaterialCommunityIcons name="magnify" size={22} color="#7C8BA1" style={styles.searchIcon} />
                 <TextInput
                   style={styles.searchBar}
                   placeholder="Search classes or dates..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#7C8BA1"
                 />
               </View>
 
               {/* Stub for reports/attendance log */}
               <View style={styles.emptyStateCard}>
                 <View style={styles.emptyIconCircle}>
-                  <MaterialCommunityIcons name="file-chart-outline" size={36} color="#a0aec0" />
+                  <MaterialCommunityIcons name="file-chart-outline" size={36} color="#7C8BA1" />
                 </View>
                 <Text style={styles.emptyTitle}>No search results</Text>
                 <Text style={styles.emptySubtitle}>Start typing to search your attendance logs.</Text>
@@ -482,7 +471,7 @@ export default function UserDashboard({ route, navigation }) {
           )}
 
           {activeTab === 'menu' && (
-            <View style={{ width: '100%', paddingHorizontal: 24 }}>
+            <View style={{ width: '100%', paddingHorizontal: 20 }}>
               <Text style={styles.tabSectionTitle}>Today's Actions</Text>
 
               {/* Upload Medical Report quick action card */}
@@ -491,15 +480,15 @@ export default function UserDashboard({ route, navigation }) {
                 onPress={() => navigation.navigate('AbsentUploader', { studentId: user_id })}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuIconCircle, { backgroundColor: '#fff8e1' }]}>
-                  <MaterialCommunityIcons name="medical-bag" size={26} color="#ffb300" />
+                <View style={[styles.menuIconCircle, { backgroundColor: '#FFF8E1' }]}>
+                  <MaterialCommunityIcons name="medical-bag" size={26} color="#FFB300" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Text style={styles.menuCardTitle}>Upload Medical Report</Text>
                   <Text style={styles.menuCardDesc}>Submit medical certificates for absences</Text>
                 </View>
                 <View style={styles.menuChevron}>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#ffb300" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#FFB300" />
                 </View>
               </TouchableOpacity>
 
@@ -508,15 +497,15 @@ export default function UserDashboard({ route, navigation }) {
                 onPress={() => Alert.alert("Support", "FOC Attendance System v1.0. Contact office for support.")}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuIconCircle, { backgroundColor: '#e6f4f2' }]}>
-                  <MaterialCommunityIcons name="help-circle-outline" size={26} color="#007A68" />
+                <View style={[styles.menuIconCircle, { backgroundColor: '#E6F4F2' }]}>
+                  <MaterialCommunityIcons name="help-circle-outline" size={26} color="#35A7C4" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Text style={styles.menuCardTitle}>Help & Support</Text>
                   <Text style={styles.menuCardDesc}>FOC system guidelines and contact details</Text>
                 </View>
                 <View style={styles.menuChevron}>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#007A68" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
                 </View>
               </TouchableOpacity>
             </View>
@@ -530,19 +519,22 @@ export default function UserDashboard({ route, navigation }) {
         <View style={styles.faceOverlayContainer}>
           <View style={styles.faceOverlayHeader}>
             <TouchableOpacity onPress={() => setIsFaceRegisterMode(false)} style={styles.closeOverlayBtn}>
-              <MaterialCommunityIcons name="close" size={24} color="#334155" />
+              <MaterialCommunityIcons name="close" size={24} color="#2C3A4E" />
             </TouchableOpacity>
             <Text style={styles.faceOverlayTitle}>Register Face</Text>
             <View style={{ width: 24 }} />
           </View>
 
           <View style={styles.faceCameraContainer}>
-            <View style={styles.cameraWrapper}>
-              <CameraView
-                ref={cameraRef}
-                style={styles.cameraView}
-                facing="front"
-              />
+            <View style={styles.cameraContainer}>
+              <View style={styles.cameraShadowCircle} />
+              <View style={styles.cameraWrapper}>
+                <CameraView
+                  ref={cameraRef}
+                  style={styles.cameraView}
+                  facing="front"
+                />
+              </View>
             </View>
             <Text style={styles.faceInstructionText}>
               Position your face clearly within the frame
@@ -579,7 +571,7 @@ export default function UserDashboard({ route, navigation }) {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
                 <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)} style={styles.modalCloseBtn}>
-                  <MaterialCommunityIcons name="close" size={24} color="#64748b" />
+                  <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
                 </TouchableOpacity>
               </View>
 
@@ -590,56 +582,60 @@ export default function UserDashboard({ route, navigation }) {
               >
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Current Password *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter current password"
-                    placeholderTextColor="#94a3b8"
-                    value={oldPassword}
-                    onChangeText={setOldPassword}
-                    secureTextEntry={true}
-                    autoCapitalize="none"
-                  />
+                  <View style={styles.modalInputContainer}>
+                    <MaterialCommunityIcons name="lock-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.modalTextInput}
+                      placeholder="Enter current password"
+                      placeholderTextColor="#7C8BA1"
+                      value={oldPassword}
+                      onChangeText={setOldPassword}
+                      secureTextEntry={true}
+                      autoCapitalize="none"
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>New Password *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter new password"
-                    placeholderTextColor="#94a3b8"
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    secureTextEntry={true}
-                    autoCapitalize="none"
-                  />
+                  <View style={styles.modalInputContainer}>
+                    <MaterialCommunityIcons name="lock-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.modalTextInput}
+                      placeholder="Enter new password"
+                      placeholderTextColor="#7C8BA1"
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      secureTextEntry={true}
+                      autoCapitalize="none"
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.inputLabel}>Confirm New Password *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Confirm new password"
-                    placeholderTextColor="#94a3b8"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={true}
-                    autoCapitalize="none"
-                  />
+                  <View style={styles.modalInputContainer}>
+                    <MaterialCommunityIcons name="lock-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.modalTextInput}
+                      placeholder="Confirm new password"
+                      placeholderTextColor="#7C8BA1"
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      secureTextEntry={true}
+                      autoCapitalize="none"
+                    />
+                  </View>
                 </View>
 
                 {changingPassword ? (
-                  <ActivityIndicator size="large" color="#007A68" style={{ marginVertical: 20 }} />
+                  <ActivityIndicator size="large" color="#35A7C4" style={{ marginVertical: 20 }} />
                 ) : (
-                  <TouchableOpacity style={styles.submitBtn} onPress={handleChangePassword}>
-                    <LinearGradient
-                      colors={['#029A84', '#004D40']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.submitBtnGradient}
-                    >
-                      <Text style={styles.submitBtnText}>Update Password</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
+                  <View style={styles.submitButtonShadowContainer}>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleChangePassword}>
+                      <Text style={styles.submitButtonText}>Update Password</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </ScrollView>
             </View>
@@ -654,7 +650,7 @@ export default function UserDashboard({ route, navigation }) {
         activeOpacity={0.9}
       >
         <LinearGradient
-          colors={['#00BFA5', '#007A68']}
+          colors={['#35A7C4', '#2CA0C4']}
           style={styles.fabGradient}
         >
           <MaterialCommunityIcons name="robot-outline" size={28} color="#fff" />
@@ -675,11 +671,11 @@ export default function UserDashboard({ route, navigation }) {
               <View style={styles.activeIndicatorContainer}>
                 <View style={styles.activeProtrusion} />
                 <View style={styles.activeCircle}>
-                  <MaterialCommunityIcons name="home" size={24} color="#007A68" />
+                  <MaterialCommunityIcons name="home" size={24} color="#fff" />
                 </View>
               </View>
             ) : (
-              <MaterialCommunityIcons name="home-outline" size={24} color="#fff" />
+              <MaterialCommunityIcons name="home-outline" size={24} color="#7C8BA1" />
             )}
           </TouchableOpacity>
 
@@ -693,11 +689,11 @@ export default function UserDashboard({ route, navigation }) {
               <View style={styles.activeIndicatorContainer}>
                 <View style={styles.activeProtrusion} />
                 <View style={styles.activeCircle}>
-                  <MaterialCommunityIcons name="cog" size={24} color="#007A68" />
+                  <MaterialCommunityIcons name="cog" size={24} color="#fff" />
                 </View>
               </View>
             ) : (
-              <MaterialCommunityIcons name="cog-outline" size={24} color="#fff" />
+              <MaterialCommunityIcons name="cog-outline" size={24} color="#7C8BA1" />
             )}
           </TouchableOpacity>
 
@@ -711,11 +707,11 @@ export default function UserDashboard({ route, navigation }) {
               <View style={styles.activeIndicatorContainer}>
                 <View style={styles.activeProtrusion} />
                 <View style={styles.activeCircle}>
-                  <MaterialCommunityIcons name="magnify" size={24} color="#007A68" />
+                  <MaterialCommunityIcons name="magnify" size={24} color="#fff" />
                 </View>
               </View>
             ) : (
-              <MaterialCommunityIcons name="magnify" size={24} color="#fff" />
+              <MaterialCommunityIcons name="magnify" size={24} color="#7C8BA1" />
             )}
           </TouchableOpacity>
 
@@ -729,11 +725,11 @@ export default function UserDashboard({ route, navigation }) {
               <View style={styles.activeIndicatorContainer}>
                 <View style={styles.activeProtrusion} />
                 <View style={styles.activeCircle}>
-                  <MaterialCommunityIcons name="apps" size={24} color="#007A68" />
+                  <MaterialCommunityIcons name="apps" size={24} color="#fff" />
                 </View>
               </View>
             ) : (
-              <MaterialCommunityIcons name="apps" size={24} color="#fff" />
+              <MaterialCommunityIcons name="apps" size={24} color="#7C8BA1" />
             )}
           </TouchableOpacity>
 
@@ -746,13 +742,13 @@ export default function UserDashboard({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#fff'
+    backgroundColor: '#ECF0F3',
   },
   center: { 
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    backgroundColor: '#fff' 
+    backgroundColor: '#ECF0F3',
   },
   
   // Top Header Row for non-home tabs
@@ -763,38 +759,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 50 : 35,
     paddingBottom: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     zIndex: 10,
   },
   topAvatarCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   avatarPlaceholder: {
     width: '100%',
     height: '100%',
     borderRadius: 24,
-    backgroundColor: '#cbd5e1',
     alignItems: 'center',
     justifyContent: 'center',
   },
   topCloseSquare: {
     width: 32,
     height: 32,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderRadius: 8,
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
 
   scrollContent: { 
-    paddingGrow: 1,
+    flexGrow: 1,
     paddingBottom: 120, // Extra padding to scroll past the absolute bottom nav bar
     alignItems: 'center',
     width: '100%',
@@ -804,10 +811,17 @@ const styles = StyleSheet.create({
   headerContainer: {
     width: '100%',
     height: 300,
-    backgroundColor: '#004D40', // Solid brand green field background
+    backgroundColor: '#ECF0F3', // Matches canvas
     borderBottomLeftRadius: 60, // Curved bottom left
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
   },
   headerRightImage: {
     position: 'absolute',
@@ -840,20 +854,21 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
   headerAvatarInner: {
     width: '100%',
     height: '100%',
     borderRadius: 22,
-    backgroundColor: '#e6f4f2',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -861,91 +876,82 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
   headerWelcomeSection: {
     marginTop: 10,
   },
   headerGreetingText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#a7f3d0', // Emerald-tinted mint green
+    fontFamily: 'Outfit-Bold',
+    color: '#35A7C4', // Cyan accent
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    textShadowColor: 'rgba(0,0,0,0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   headerStudentNameText: {
     fontSize: 28,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     marginTop: 4,
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0,0,0,0.35)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   headerClockSection: {
     alignItems: 'flex-start',
   },
   headerClockText: {
     fontSize: 44,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0,0,0,0.35)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   headerDateText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#cbd5e1',
+    fontFamily: 'Outfit-SemiBold',
+    color: '#7C8BA1',
     marginTop: 2,
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   homeContentPadding: {
     width: '100%',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingTop: 24,
   },
 
   tabSectionTitle: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     marginBottom: 16,
     letterSpacing: -0.2,
   },
 
-  // Lectures Card styles
+  // Lectures Card styles (Curved Neumorphic raised card)
   lectureCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ECF0F3',
     borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     padding: 24,
     width: '100%',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+    elevation: 4,
     marginBottom: 20,
   },
   lectureCardLive: {
-    borderColor: '#00BFA5',
-    backgroundColor: '#e6f4f2',
-    shadowColor: '#00BFA5',
-    shadowOpacity: 0.08,
+    borderColor: '#35A7C4',
+    borderWidth: 1.5,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -961,10 +967,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   badgeLive: {
-    backgroundColor: 'rgba(0, 180, 150, 0.15)',
+    backgroundColor: 'rgba(53, 167, 196, 0.12)',
   },
   badgeUpcoming: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: '#FEF3C7',
   },
   badgeDot: {
     width: 6,
@@ -974,18 +980,18 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     letterSpacing: 0.3,
   },
   cardTime: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#64748b',
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
   },
   cardCourseName: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     marginBottom: 16,
     lineHeight: 28,
   },
@@ -996,83 +1002,83 @@ const styles = StyleSheet.create({
   cardPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    // Sunken border simulation
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
   cardPillText: {
-    color: '#334155',
+    color: '#2C3A4E',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     marginLeft: 6,
   },
-  markBtn: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 3,
-  },
-  markBtnGradient: {
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markBtnText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 16,
-    marginLeft: 8,
-  },
   markedBtn: {
-    backgroundColor: '#10b981',
-    borderRadius: 16,
-    paddingVertical: 16,
+    backgroundColor: '#10B981',
+    borderRadius: 27,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   markedBtnText: {
     color: '#fff',
-    fontWeight: '800',
+    fontFamily: 'Outfit-Bold',
     fontSize: 16,
     marginLeft: 8,
   },
 
   // Empty state card
   emptyStateCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ECF0F3',
     borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 3,
   },
   emptyIconCircle: {
     width: 68,
     height: 68,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderColor: '#FFFFFF',
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#64748b',
-    fontWeight: '500',
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-Medium',
     textAlign: 'center',
   },
 
@@ -1090,17 +1096,22 @@ const styles = StyleSheet.create({
     width: 130,
     height: 130,
     borderRadius: 65,
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1.5,
-    borderColor: '#cbd5e1',
-    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
     marginBottom: 12,
   },
   profilePhotoLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
+    fontFamily: 'Outfit-SemiBold',
+    color: '#7C8BA1',
   },
   profileForm: {
     width: '100%',
@@ -1108,51 +1119,60 @@ const styles = StyleSheet.create({
   },
   profileField: {
     width: '100%',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#ECF0F3',
     borderRadius: 16,
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
     marginBottom: 12,
+    // Sunken border simulation
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
   profileFieldLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#94a3b8',
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
   },
   profileFieldValue: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
   },
   logoutBtn: {
-    backgroundColor: '#e2e8f0',
     width: '100%',
-    paddingVertical: 14,
-    borderRadius: 20,
-    alignItems: 'center',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginVertical: 8,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#FFFFFF',
+    borderLeftColor: '#FFFFFF',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#D1D9E6',
+    borderRightColor: '#D1D9E6',
   },
   logoutBtnText: {
-    color: '#475569',
     fontWeight: '700',
-    fontSize: 15,
-  },
-  deleteBtn: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteBtnText: {
-    color: '#ef4444',
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     fontSize: 15,
   },
 
@@ -1160,12 +1180,19 @@ const styles = StyleSheet.create({
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#ECF0F3',
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 20,
+    // Sunken border simulation
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
   searchIcon: {
     marginRight: 10,
@@ -1174,25 +1201,26 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#2C3A4E',
+    fontFamily: 'Outfit-Medium',
   },
 
   // Quick Tools styles
   quickActionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#ECF0F3',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 24,
     padding: 18,
     marginBottom: 12,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 8,
-    elevation: 1,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 3,
   },
   menuIconCircle: {
     width: 52,
@@ -1200,25 +1228,37 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 1,
   },
   menuCardTitle: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
   },
   menuCardDesc: {
     fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-Medium',
     marginTop: 2,
   },
   menuChevron: {
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ECF0F3',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
 
   // Custom Bottom Curved Tab Bar matching mockup
@@ -1232,17 +1272,18 @@ const styles = StyleSheet.create({
   },
   navBar: {
     flexDirection: 'row',
-    backgroundColor: '#004D40', // Rich dark teal matching the theme
+    backgroundColor: '#ECF0F3', // Matches canvas
     borderRadius: 24,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'space-around',
-    shadowColor: '#000',
+    shadowColor: '#A3B1C6',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
     elevation: 8,
-    position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   navItem: {
     flex: 1,
@@ -1262,25 +1303,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 68,
     height: 38,
-    backgroundColor: '#004D40', // Matches the tab bar color
+    backgroundColor: '#ECF0F3', // Matches canvas
     borderTopLeftRadius: 34,
     borderTopRightRadius: 34,
     top: 10, // Sits under the circle to blend
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   activeCircle: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#fff',
+    backgroundColor: '#35A7C4', // Cyan active tab background
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#288BA3',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 4,
     borderWidth: 3,
-    borderColor: '#029A84', // Matches primary teal
+    borderColor: '#FFFFFF',
   },
   
   // AI Chatbot FAB
@@ -1292,7 +1335,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     zIndex: 100,
-    shadowColor: '#00BFA5',
+    shadowColor: '#288BA3',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -1313,7 +1356,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     zIndex: 999,
   },
   faceOverlayHeader: {
@@ -1323,16 +1366,16 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 50 : 35,
     paddingHorizontal: 20,
     paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
   },
   closeOverlayBtn: {
     padding: 5,
   },
   faceOverlayTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
   },
   faceCameraContainer: {
     flex: 1,
@@ -1340,21 +1383,47 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingHorizontal: 20,
   },
+  cameraContainer: {
+    width: 240,
+    height: 240,
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 30,
+  },
+  cameraShadowCircle: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 6,
+  },
   cameraWrapper: {
-    width: Dimensions.get('window').width * 0.8,
-    height: Dimensions.get('window').width * 0.8,
-    borderRadius: (Dimensions.get('window').width * 0.8) / 2,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     overflow: 'hidden',
     borderWidth: 4,
-    borderColor: '#00BFA5',
-    marginBottom: 30,
+    borderColor: '#35A7C4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
   },
   cameraView: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   faceInstructionText: {
     fontSize: 15,
-    color: '#64748b',
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-Medium',
     textAlign: 'center',
     marginBottom: 50,
   },
@@ -1362,18 +1431,20 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#007A68',
+    backgroundColor: '#35A7C4',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#007A68',
+    shadowColor: '#288BA3',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 6,
   },
+
+  // Modal / Change password styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -1385,29 +1456,31 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     borderRadius: 28,
     padding: 24,
     maxHeight: '90%',
-    shadowColor: '#000',
+    shadowColor: '#A3B1C6',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.6,
     shadowRadius: 15,
     elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
     paddingBottom: 12,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#1e293b',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
   },
   modalCloseBtn: {
     padding: 4,
@@ -1421,37 +1494,66 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  input: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#1e293b',
-  },
-  submitBtn: {
-    marginTop: 10,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 3,
-  },
-  submitBtnGradient: {
-    paddingVertical: 16,
+
+  // Modal specific inputs (Sunken Neumorphic style)
+  modalInputContainer: {
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ECF0F3',
+    paddingLeft: 18,
+    paddingRight: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    // Sunken border simulation
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
-  submitBtnText: {
-    color: '#fff',
-    fontWeight: '800',
+  modalTextInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#2C3A4E',
+    fontFamily: 'Outfit-Medium',
+  },
+
+  // Primary Button wrappers
+  submitButtonShadowContainer: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    marginVertical: 14,
+    backgroundColor: '#ECF0F3', // Matches canvas
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  submitButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitButtonText: {
     fontSize: 16,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
-  }
+  },
 });
