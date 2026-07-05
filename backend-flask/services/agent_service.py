@@ -213,6 +213,115 @@ def get_late_students(time_threshold: str = "09:00:00") -> list:
     return result
 
 
+    return result
+
+def add_student_tool(index_number: str, registration_number: str, full_name: str, nic: str, department_id: int, batch_year: int) -> dict:
+    """Register a new student with login credentials into the system."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year)
+                    VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s)
+                    """,
+                    (index_number, registration_number, full_name, nic, nic, department_id, batch_year),
+                )
+                conn.commit()
+                return {"success": True, "message": f"Student {full_name} added successfully."}
+            except Exception as e:
+                conn.rollback()
+                return {"error": str(e)}
+
+def assign_subject_to_batch(batch_year: int, department_id: int, subject_ids: list) -> dict:
+    """Assign a list of subject IDs to a specific batch and department."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                # Delete existing
+                cur.execute(
+                    """
+                    DELETE FROM batch_subjects
+                    WHERE batch_year = %s 
+                    AND subject_id IN (SELECT id FROM subjects WHERE department_id = %s)
+                    """,
+                    (batch_year, department_id)
+                )
+                # Insert new
+                if subject_ids:
+                    unique_sids = list(set(subject_ids))
+                    args = [(batch_year, department_id, sid) for sid in unique_sids]
+                    args_str = ",".join(["(%s, %s, %s)"] * len(unique_sids))
+                    flat_args = [item for pair in args for item in pair]
+                    cur.execute(
+                        f"INSERT INTO batch_subjects (batch_year, department_id, subject_id) VALUES {args_str}",
+                        flat_args
+                    )
+                conn.commit()
+                return {"success": True, "message": "Subjects assigned successfully."}
+            except Exception as e:
+                conn.rollback()
+                return {"error": str(e)}
+
+def get_all_subjects_for_dept(department_id: int) -> list:
+    """Get all subjects for a specific department. Useful for finding subject IDs."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, subject_code, subject_name FROM subjects WHERE department_id = %s", (department_id,))
+            rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
+def remove_subject_assignment(assignment_id: int) -> dict:
+    """Remove a subject assignment from a batch by assignment ID."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("DELETE FROM batch_subjects WHERE id = %s RETURNING id", (assignment_id,))
+                deleted = cur.fetchone()
+                if not deleted:
+                    return {"error": "Assignment not found"}
+                conn.commit()
+                return {"success": True, "message": "Subject assignment removed successfully."}
+            except Exception as e:
+                conn.rollback()
+                return {"error": str(e)}
+
+def schedule_timetable(subject_id: int, classroom_id: int, day_of_week: str, start_time: str, end_time: str) -> dict:
+    """Add a new timetable/lecture slot for a subject in a classroom."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO timetable (subject_id, classroom_id, day_of_week, start_time, end_time)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (subject_id, classroom_id, day_of_week, start_time, end_time)
+                )
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+                return {"success": True, "message": f"Timetable slot created with ID {new_id}."}
+            except Exception as e:
+                conn.rollback()
+                return {"error": str(e)}
+
+def get_all_departments() -> list:
+    """Get all departments. Useful for resolving department names to IDs."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, name FROM departments ORDER BY id ASC")
+            rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
+def get_all_batches() -> list:
+    """Get all distinct batch years that have registered students."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT batch_year FROM users WHERE role = 'Student' AND batch_year IS NOT NULL ORDER BY batch_year DESC")
+            rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
 # ==========================================
 # 2. CORE ORCHESTRATOR LOGIC (GEMINI)
 # ==========================================
@@ -229,11 +338,12 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
         model = genai.GenerativeModel(
             model_name='gemini-2.5-flash',
             system_instruction=(
-                "You are the Smart Attendance Assistant for the Faculty of Computing. "
-                "Help administrators and lecturers manage attendance and hall bookings securely. "
-                "Never invent attendance or booking data. Always rely strictly on available backend tools. "
-                "If database lookup returns an error or no data, state it transparently. "
-                "Be highly concise, professional, and present tables/lists clearly using Markdown when required."
+                "You are the Smart Admin Assistant for the Faculty of Computing Attendance System. "
+                "You can READ data (students, attendance, halls, timetable) AND WRITE data "
+                "(add students, assign subjects, schedule lectures). "
+                "Always confirm the user's intent before performing write/delete operations. "
+                "Ask for any missing required fields before proceeding. "
+                "Present results as clean, concise markdown tables or lists."
             ),
             tools=[
                 get_student,
@@ -251,7 +361,14 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 search_booking,
                 get_available_halls,
                 get_course_attendance,
-                get_late_students
+                get_late_students,
+                add_student_tool,
+                assign_subject_to_batch,
+                get_all_subjects_for_dept,
+                remove_subject_assignment,
+                schedule_timetable,
+                get_all_departments,
+                get_all_batches
             ]
         )
 

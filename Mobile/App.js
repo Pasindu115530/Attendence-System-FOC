@@ -13,6 +13,7 @@ import ContactAdminScreen from './src/screens/ContactAdminScreen';
 import AssignSubjects from './src/screens/AssignSubjects';
 import ManageTimetable from './src/screens/ManageTimetable';
 import ViewAssignedSubjects from './src/screens/ViewAssignedSubjects';
+import AdminAIChat from './src/screens/AdminAIChat';
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,7 @@ export default function App() {
         <Stack.Screen name="AssignSubjects" component={AssignSubjects} />
         <Stack.Screen name="ManageTimetable" component={ManageTimetable} />
         <Stack.Screen name="ViewAssignedSubjects" component={ViewAssignedSubjects} />
+        <Stack.Screen name="AdminAIChat" component={AdminAIChat} />
  
       </Stack.Navigator>
     </NavigationContainer>

@@ -727,6 +727,22 @@ export default function AdminDashboard({ navigation }) {
         </View>
       )}
 
+      {/* AI Assistant FAB */}
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => navigation.navigate('AdminAIChat')}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={['#7e22ce', '#9333ea', '#a855f7']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fabGradient}
+        >
+          <MaterialCommunityIcons name="robot-outline" size={28} color="#fff" />
+        </LinearGradient>
+      </TouchableOpacity>
+
     </View>
   );
 }
@@ -1079,5 +1095,25 @@ const styles = StyleSheet.create({
   },
   captureBtnDisabled: {
     backgroundColor: '#94a3b8',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#9333ea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    zIndex: 999,
+  },
+  fabGradient: {
+    flex: 1,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 });
