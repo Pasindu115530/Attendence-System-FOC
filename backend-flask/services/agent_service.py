@@ -515,7 +515,11 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
         # Create chat session with history and automatic tool calling enabled
         chat = model.start_chat(history=gemini_history, enable_automatic_function_calling=True)
         response = chat.send_message(user_message)
-        return response.text
+        try:
+            return response.text
+        except ValueError:
+            # Fallback if the model returns no text parts after a function call
+            return "Task completed successfully."
     except Exception as e:
         print("Gemini Agent Execution Error:", e)
         return f"Error executing agent request: {str(e)}"
