@@ -455,16 +455,13 @@ export default function LoginScreen({ route, navigation }) {
                     <Text style={styles.faceStatusText}>{scanningStatus}</Text>
 
                     {/* Circular Glowing Camera View */}
-                    <View style={styles.cameraContainer}>
-                      <View style={styles.cameraShadowCircle} />
-                      <View style={styles.cameraWrapper}>
-                        <CameraView
-                          ref={cameraRef}
-                          style={styles.cameraView}
-                          facing="front"
-                        />
-                        <View style={styles.scanTargetBox} />
-                      </View>
+                    <View style={styles.cameraWrapper}>
+                      <CameraView
+                        ref={cameraRef}
+                        style={styles.cameraView}
+                        facing="front"
+                      />
+                      <View style={styles.scanTargetBox} />
                     </View>
 
                     {/* Cancel Action Button */}
@@ -507,29 +504,27 @@ export default function LoginScreen({ route, navigation }) {
                         onChangeText={setPassword}
                         autoCapitalize="none"
                       />
-                      <TouchableOpacity 
-                        style={styles.eyeButton} 
+                      <TouchableOpacity
+                        style={styles.eyeButton}
                         onPress={() => setShowPassword(!showPassword)}
                         activeOpacity={0.7}
                       >
-                        <MaterialCommunityIcons 
-                          name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                          size={22} 
-                          color="#7C8BA1" 
+                        <MaterialCommunityIcons
+                          name={showPassword ? "eye-outline" : "eye-off-outline"}
+                          size={22}
+                          color="#7C8BA1"
                         />
                       </TouchableOpacity>
                     </View>
 
                     {/* LOG IN Action Button */}
-                    <View style={styles.loginButtonShadowContainer}>
-                      <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={handleLogin}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.loginButtonText}>Login</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                      style={styles.loginButton}
+                      onPress={handleLogin}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
 
                     {/* FACE ID LOGIN Action Button */}
                     <TouchableOpacity
@@ -577,15 +572,15 @@ export default function LoginScreen({ route, navigation }) {
                         onChangeText={setNewPassword}
                         autoCapitalize="none"
                       />
-                      <TouchableOpacity 
-                        style={styles.eyeButton} 
+                      <TouchableOpacity
+                        style={styles.eyeButton}
                         onPress={() => setShowNewPassword(!showNewPassword)}
                         activeOpacity={0.7}
                       >
-                        <MaterialCommunityIcons 
-                          name={showNewPassword ? "eye-outline" : "eye-off-outline"} 
-                          size={22} 
-                          color="#7C8BA1" 
+                        <MaterialCommunityIcons
+                          name={showNewPassword ? "eye-outline" : "eye-off-outline"}
+                          size={22}
+                          color="#7C8BA1"
                         />
                       </TouchableOpacity>
                     </View>
@@ -602,15 +597,15 @@ export default function LoginScreen({ route, navigation }) {
                         onChangeText={setReTypePassword}
                         autoCapitalize="none"
                       />
-                      <TouchableOpacity 
-                        style={styles.eyeButton} 
+                      <TouchableOpacity
+                        style={styles.eyeButton}
                         onPress={() => setShowReTypePassword(!showReTypePassword)}
                         activeOpacity={0.7}
                       >
-                        <MaterialCommunityIcons 
-                          name={showReTypePassword ? "eye-outline" : "eye-off-outline"} 
-                          size={22} 
-                          color="#7C8BA1" 
+                        <MaterialCommunityIcons
+                          name={showReTypePassword ? "eye-outline" : "eye-off-outline"}
+                          size={22}
+                          color="#7C8BA1"
                         />
                       </TouchableOpacity>
                     </View>
@@ -623,15 +618,13 @@ export default function LoginScreen({ route, navigation }) {
                     </Text>
 
                     {/* CREATE Action Button */}
-                    <View style={styles.loginButtonShadowContainer}>
-                      <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={handleCreateAccount}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.loginButtonText}>Create Account</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                      style={styles.loginButton}
+                      onPress={handleCreateAccount}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.loginButtonText}>Create Account</Text>
+                    </TouchableOpacity>
 
                     {/* Switch to Login Toggle */}
                     <View style={styles.footerLinks}>
@@ -776,7 +769,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#2C3A4E',
     textAlign: 'center',
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
     marginBottom: 22,
     letterSpacing: 0.5,
   },
@@ -810,36 +803,30 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 16,
     color: '#2C3A4E',
-    fontFamily: 'Outfit-Medium',
+    fontWeight: '500',
   },
   eyeButton: {
     padding: 8,
   },
 
   // Convex/Raised Neumorphic Button for LOG IN
-  loginButtonShadowContainer: {
-    width: '100%',
-    height: 54,
-    borderRadius: 27,
-    marginVertical: 14,
-    backgroundColor: '#ECF0F3', // Matches canvas to render rounded shadow correctly and animate opacity cleanly
-    shadowColor: '#288BA3',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 4,
-  },
   loginButton: {
     width: '100%',
-    height: '100%',
+    height: 54,
     borderRadius: 27,
     backgroundColor: '#35A7C4',
     justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 14,
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
   loginButtonText: {
     fontSize: 17,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
@@ -870,7 +857,7 @@ const styles = StyleSheet.create({
   },
   faceIdButtonText: {
     fontSize: 16,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
     color: '#35A7C4',
     letterSpacing: 0.5,
   },
@@ -886,18 +873,17 @@ const styles = StyleSheet.create({
   footerLinkText: {
     fontSize: 14,
     color: '#7C8BA1',
-    fontFamily: 'Outfit-Medium',
+    fontWeight: '500',
   },
   footerDivider: {
     fontSize: 14,
     color: '#7C8BA1',
     marginHorizontal: 4,
-    fontFamily: 'Outfit-Regular',
   },
   footerLinkTextBold: {
     fontSize: 14,
     color: '#35A7C4',
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
   },
 
   // Disclaimer text in sign up
@@ -908,10 +894,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginHorizontal: 10,
     marginBottom: 20,
-    fontFamily: 'Outfit-Regular',
+    fontWeight: '400',
   },
   disclaimerLink: {
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
     color: '#35A7C4',
     textDecorationLine: 'underline',
   },
@@ -925,29 +911,9 @@ const styles = StyleSheet.create({
   faceStatusText: {
     color: '#35A7C4',
     fontSize: 15,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 20,
-  },
-  cameraContainer: {
-    width: 240,
-    height: 240,
-    marginVertical: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  cameraShadowCircle: {
-    position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: '#ECF0F3', // Matches canvas to render rounded shadow and prevent square backing artifacts
-    shadowColor: '#35A7C4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 6,
   },
   cameraWrapper: {
     width: 240,
@@ -958,7 +924,13 @@ const styles = StyleSheet.create({
     borderColor: '#35A7C4',
     justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 10,
     backgroundColor: '#000',
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
   },
   cameraView: {
     width: '100%',
@@ -1000,7 +972,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '700',
     color: '#E11D48',
     letterSpacing: 0.5,
   },
@@ -1014,14 +986,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#7C8BA1',
     fontSize: 13,
-    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   footerSubText: {
     textAlign: 'center',
     color: '#7C8BA1',
     fontSize: 12,
-    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0.5,
     marginTop: 2,
   },
@@ -1073,13 +1045,13 @@ const styles = StyleSheet.create({
   },
   focText: {
     fontSize: 32,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '900',
     color: '#2C3A4E',
     letterSpacing: 1,
   },
   checkText: {
     fontSize: 32,
-    fontFamily: 'Outfit-Regular',
+    fontWeight: '300',
     color: '#2C3A4E',
     marginLeft: 4,
   },
@@ -1097,13 +1069,13 @@ const styles = StyleSheet.create({
   },
   inText: {
     fontSize: 20,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '900',
     color: '#FFFFFF',
   },
   subtitleTextLoading: {
     fontSize: 13,
     color: '#7C8BA1',
-    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '600',
     marginTop: 8,
     letterSpacing: 3,
     textTransform: 'uppercase',
@@ -1114,7 +1086,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#2C3A4E',
     fontSize: 15,
-    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '600',
     marginTop: 15,
     letterSpacing: 1,
   },
@@ -1154,13 +1126,13 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 13,
-    fontFamily: 'Outfit-Bold',
+    fontWeight: '800',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   notificationMessage: {
     fontSize: 14,
-    fontFamily: 'Outfit-Medium',
+    fontWeight: '500',
     marginTop: 2,
   },
   notificationClose: {
@@ -1177,7 +1149,7 @@ const styles = StyleSheet.create({
     color: '#35A7C4',
     fontSize: 14,
     textAlign: 'center',
-    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });
