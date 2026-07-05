@@ -13,13 +13,28 @@ model = None
 # 1. REAL DATABASE FUNCTIONS (SQL EXECUTORS)
 # ==========================================
 
+import datetime
+
+def serialize_dict(d: dict) -> dict:
+    if not d: return d
+    res = {}
+    for k, v in d.items():
+        if isinstance(v, datetime.datetime) or isinstance(v, datetime.date) or isinstance(v, datetime.time) or hasattr(v, 'isoformat'):
+            res[k] = str(v)
+        else:
+            res[k] = v
+    return res
+
+def serialize_list(lst: list) -> list:
+    return [serialize_dict(d) for d in lst]
+
 def get_student(student_index: str) -> dict:
     """Get profile details of a student by index number."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM users WHERE index_number = %s AND role = 'Student' LIMIT 1", (student_index,))
             row = cur.fetchone()
-    return dict(row) if row else {"error": "Student not found"}
+    return serialize_dict(dict(row)) if row else {"error": "Student not found"}
 
 def get_student_attendance(student_index: str) -> list:
     """Get full attendance logs of a student."""
@@ -27,7 +42,7 @@ def get_student_attendance(student_index: str) -> list:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM attendance WHERE index_number = %s ORDER BY marked_at DESC", (student_index,))
             rows = cur.fetchall()
-    return [dict(r) for r in rows]
+    return serialize_list([dict(r) for r in rows])
 
 def get_today_attendance() -> dict:
     """Get overall summary of today's attendance count."""
