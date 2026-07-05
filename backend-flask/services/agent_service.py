@@ -181,6 +181,45 @@ def search_booking(date: str = None, hall_id: str = None) -> list:
             rows = cur.fetchall()
     return serialize_list([dict(r) for r in rows])
 
+def get_timetable_schedule(batch_year: int = None, day_of_week: str = None, department_id: int = None) -> list:
+    """Get the lecture timetable schedule, optionally filtered by batch year, day of the week (e.g. 'Monday'), and department ID."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            query = """
+                SELECT 
+                    t.id as timetable_id,
+                    s.subject_name,
+                    s.subject_code,
+                    c.room_name as classroom,
+                    t.day_of_week,
+                    t.start_time,
+                    t.end_time,
+                    bs.batch_year,
+                    d.name as department_name
+                FROM timetable t
+                JOIN subjects s ON t.subject_id = s.id
+                JOIN classrooms c ON t.classroom_id = c.id
+                JOIN batch_subjects bs ON s.id = bs.subject_id
+                JOIN departments d ON bs.department_id = d.id
+                WHERE 1=1
+            """
+            args = []
+            if batch_year:
+                query += " AND bs.batch_year = %s"
+                args.append(batch_year)
+            if day_of_week:
+                query += " AND t.day_of_week ILIKE %s"
+                args.append(day_of_week)
+            if department_id:
+                query += " AND bs.department_id = %s"
+                args.append(department_id)
+                
+            query += " ORDER BY t.day_of_week ASC, t.start_time ASC"
+            
+            cur.execute(query, tuple(args))
+            rows = cur.fetchall()
+    return serialize_list([dict(r) for r in rows])
+
 def get_available_halls() -> list:
     """Get a list of all currently vacant or available lecture halls."""
     with get_connection() as conn:
@@ -353,6 +392,7 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 get_scan_history,
                 search_course,
                 search_booking,
+                get_timetable_schedule,
                 get_available_halls,
                 get_course_attendance,
                 get_late_students,
