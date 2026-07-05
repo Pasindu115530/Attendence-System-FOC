@@ -13,7 +13,9 @@ import {
   Dimensions,
   Platform,
   ImageBackground,
-  Image
+  Image,
+  Modal,
+  KeyboardAvoidingView
 } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -41,6 +43,46 @@ export default function UserDashboard({ route, navigation }) {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+
+  // Change Password State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
+      Alert.alert("Error", "All fields are required");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "New passwords do not match");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const res = await post('/change_password', {
+        user_id,
+        old_password: oldPassword.trim(),
+        new_password: newPassword.trim(),
+      });
+      if (res.status === 'success') {
+        Alert.alert("Success", "Password changed successfully!");
+        setIsPasswordModalOpen(false);
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        Alert.alert("Error", res.message || "Failed to change password");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Could not connect to the server.");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   // Real-time ticking clock loop
   useEffect(() => {
@@ -400,6 +442,17 @@ export default function UserDashboard({ route, navigation }) {
               </TouchableOpacity>
 
               <TouchableOpacity 
+                style={[styles.logoutBtn, { backgroundColor: '#029A84', marginBottom: 16 }]} 
+                onPress={() => setIsPasswordModalOpen(true)} 
+                activeOpacity={0.8}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MaterialCommunityIcons name="lock-reset" size={20} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={[styles.logoutBtnText, { color: '#fff' }]}>Change Password</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
                 style={styles.deleteBtn} 
                 onPress={() => Alert.alert("Request Delete", "Please contact your administrator to delete your account.")}
                 activeOpacity={0.8}
@@ -513,6 +566,90 @@ export default function UserDashboard({ route, navigation }) {
           </View>
         </View>
       )}
+
+      {/* Change Password Modal */}
+      <Modal
+        visible={isPasswordModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsPasswordModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+            style={styles.modalKeyboardContainer}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Change Password</Text>
+                <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)} style={styles.modalCloseBtn}>
+                  <MaterialCommunityIcons name="close" size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView 
+                contentContainerStyle={styles.modalScroll}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Current Password *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter current password"
+                    placeholderTextColor="#94a3b8"
+                    value={oldPassword}
+                    onChangeText={setOldPassword}
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>New Password *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter new password"
+                    placeholderTextColor="#94a3b8"
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Confirm New Password *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirm new password"
+                    placeholderTextColor="#94a3b8"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {changingPassword ? (
+                  <ActivityIndicator size="large" color="#007A68" style={{ marginVertical: 20 }} />
+                ) : (
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleChangePassword}>
+                    <LinearGradient
+                      colors={['#029A84', '#004D40']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.submitBtnGradient}
+                    >
+                      <Text style={styles.submitBtnText}>Update Password</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
       {/* AI Chatbot FAB */}
       <TouchableOpacity 
@@ -1237,5 +1374,88 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalKeyboardContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    padding: 24,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalScroll: {
+    paddingBottom: 10,
+  },
+  formGroup: {
+    marginBottom: 16,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  input: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#1e293b',
+  },
+  submitBtn: {
+    marginTop: 10,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+  },
+  submitBtnGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: 0.5,
   }
 });

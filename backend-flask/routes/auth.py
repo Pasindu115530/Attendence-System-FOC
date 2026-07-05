@@ -55,3 +55,39 @@ def get_user_by_id():
         return success(dict(row))
     return error("User not found")
 
+
+@auth_bp.post("/change_password")
+def change_password():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = data.get("user_id", "").strip()
+    old_password = data.get("old_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+
+    if not all([user_id, old_password, new_password]):
+        return error("user_id, old_password, and new_password are required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT nic FROM users WHERE index_number = %s LIMIT 1",
+                (user_id,)
+            )
+            row = cur.fetchone()
+            if not row:
+                return error("User not found")
+            
+            if row["nic"] != old_password:
+                return error("Incorrect old password")
+
+            try:
+                cur.execute(
+                    "UPDATE users SET nic = %s WHERE index_number = %s",
+                    (new_password, user_id)
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                return error("Failed to update password. Password must be unique.")
+    return success({"message": "Password changed successfully"})
+
+
