@@ -386,7 +386,7 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
 
     try:
         # Create chat session with history and automatic tool calling enabled
-        chat = model.start_chat(history=gemini_history)
+        chat = model.start_chat(history=gemini_history, enable_automatic_function_calling=True)
         response = chat.send_message(user_message)
         return response.text
     except Exception as e:
