@@ -437,10 +437,6 @@ export default function UserDashboard({ route, navigation }) {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-                <Text style={styles.logoutBtnText}>Log Out</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity 
                 style={[styles.logoutBtn, { backgroundColor: '#029A84', marginBottom: 16 }]} 
                 onPress={() => setIsPasswordModalOpen(true)} 
@@ -452,13 +448,13 @@ export default function UserDashboard({ route, navigation }) {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.deleteBtn} 
-                onPress={() => Alert.alert("Request Delete", "Please contact your administrator to delete your account.")}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.deleteBtnText}>Delete Account</Text>
+              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+                <Text style={styles.logoutBtnText}>Log Out</Text>
               </TouchableOpacity>
+
+              
+
+              
             </View>
           )}
 
