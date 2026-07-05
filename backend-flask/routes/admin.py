@@ -58,23 +58,24 @@ def get_courses():
 def add_student():
     data = request.get_json(force=True, silent=True) or {}
     user_id = data.get("user_id") or data.get("index_number")
+    registration_number = data.get("registration_number")
     full_name = data.get("full_name")
     nic = data.get("nic")
     dept_id = data.get("dept_id") or data.get("department_id")
     batch_year = data.get("batch_year")
 
-    if not all([user_id, full_name, nic]):
-        return error("user_id, full_name, and nic are required")
+    if not all([user_id, registration_number, full_name, nic]):
+        return error("user_id, registration_number, full_name, and nic are required")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             try:
                 cur.execute(
                     """
-                    INSERT INTO users (index_number, full_name, nic, role, department_id, batch_year)
-                    VALUES (%s, %s, %s, 'Student', %s, %s)
+                    INSERT INTO users (index_number, registration_number, full_name, nic, role, department_id, batch_year)
+                    VALUES (%s, %s, %s, %s, 'Student', %s, %s)
                     """,
-                    (user_id, full_name, nic, dept_id, batch_year),
+                    (user_id, registration_number, full_name, nic, dept_id, batch_year),
                 )
                 conn.commit()
             except Exception as e:
@@ -110,6 +111,13 @@ def upload_students():
         dept_col = 'department_id' if 'department_id' in df.columns else ('dept_id' if 'dept_id' in df.columns else None)
         batch_col = 'batch_year' if 'batch_year' in df.columns else None
         
+        # Look for a registration number column, otherwise fallback to user_id
+        reg_col = None
+        for col in ['registration_number', 'reg_no', 'reg_number', 'registration number']:
+            if col in df.columns:
+                reg_col = col
+                break
+
         added_count = 0
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -121,15 +129,17 @@ def upload_students():
                     if dept_id and dept_id.lower() == 'nan': dept_id = None
                     batch_year = int(row[batch_col]) if batch_col and pd.notna(row[batch_col]) else None
                     
+                    registration_number = str(row[reg_col]).strip() if reg_col and pd.notna(row[reg_col]) else user_id
+
                     if user_id and full_name and nic:
                         try:
                             cur.execute(
                                 """
-                                INSERT INTO users (index_number, full_name, nic, role, department_id, batch_year)
-                                VALUES (%s, %s, %s, 'Student', %s, %s)
+                                INSERT INTO users (index_number, registration_number, full_name, nic, role, department_id, batch_year)
+                                VALUES (%s, %s, %s, %s, 'Student', %s, %s)
                                 ON CONFLICT (index_number) DO NOTHING
                                 """,
-                                (user_id, full_name, nic, dept_id, batch_year),
+                                (user_id, registration_number, full_name, nic, dept_id, batch_year),
                             )
                             added_count += cur.rowcount
                         except Exception as e:

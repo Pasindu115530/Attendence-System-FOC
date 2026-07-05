@@ -33,6 +33,7 @@ export default function AdminDashboard({ navigation }) {
   const [formStudentId, setFormStudentId] = useState('');
   const [formFullName, setFormFullName] = useState('');
   const [formNic, setFormNic] = useState('');
+  const [formRegNo, setFormRegNo] = useState('');
   const [formDeptId, setFormDeptId] = useState('');
   const [formBatchYear, setFormBatchYear] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -200,8 +201,8 @@ export default function AdminDashboard({ navigation }) {
   };
 
   const handleAddStudent = async () => {
-    if (!formStudentId.trim() || !formFullName.trim() || !formNic.trim()) {
-      Alert.alert("Error", "Student ID, Full Name and NIC are required");
+    if (!formStudentId.trim() || !formFullName.trim() || !formNic.trim() || !formRegNo.trim()) {
+      Alert.alert("Error", "Student ID, Full Name, Registration Number and NIC are required");
       return;
     }
     setSubmitting(true);
@@ -210,6 +211,7 @@ export default function AdminDashboard({ navigation }) {
         user_id: formStudentId.trim(),
         full_name: formFullName.trim(),
         nic: formNic.trim(),
+        registration_number: formRegNo.trim(),
         dept_id: formDeptId.trim(),
         batch_year: formBatchYear.trim() ? parseInt(formBatchYear.trim()) : null
       });
@@ -220,6 +222,7 @@ export default function AdminDashboard({ navigation }) {
         setFormStudentId('');
         setFormFullName('');
         setFormNic('');
+        setFormRegNo('');
         setFormDeptId('');
         setFormBatchYear('');
         fetchAdminData();
@@ -553,6 +556,21 @@ export default function AdminDashboard({ navigation }) {
                     value={formFullName}
                     onChangeText={setFormFullName}
                   />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Student Registration Number *</Text>
+                  <View style={styles.rowInputContainer}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="e.g. FC115000"
+                      placeholderTextColor="#94a3b8"
+                      value={formRegNo}
+                      onChangeText={setFormRegNo}
+                      autoCapitalize="none"
+                    />
+                    
+                  </View>
                 </View>
 
                 <View style={styles.formGroup}>
