@@ -64,8 +64,8 @@ def add_student():
     dept_id = data.get("dept_id") or data.get("department_id")
     batch_year = data.get("batch_year")
 
-    if not all([user_id, registration_number, full_name, nic]):
-        return error("user_id, registration_number, full_name, and nic are required")
+    if not all([user_id, registration_number, full_name, nic, dept_id, batch_year]):
+        return error("user_id, registration_number, full_name, nic, dept_id, and batch_year are required")
 
     with get_connection() as conn:
         with conn.cursor() as cur:

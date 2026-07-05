@@ -201,8 +201,8 @@ export default function AdminDashboard({ navigation }) {
   };
 
   const handleAddStudent = async () => {
-    if (!formStudentId.trim() || !formFullName.trim() || !formNic.trim() || !formRegNo.trim()) {
-      Alert.alert("Error", "Student ID, Full Name, Registration Number and NIC are required");
+    if (!formStudentId.trim() || !formFullName.trim() || !formNic.trim() || !formRegNo.trim() || !formDeptId.trim() || !formBatchYear.trim()) {
+      Alert.alert("Error", "All fields (Student ID, Full Name, Registration Number, NIC, Department, and Batch Year) are required");
       return;
     }
     setSubmitting(true);
