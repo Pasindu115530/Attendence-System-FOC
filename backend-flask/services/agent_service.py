@@ -75,7 +75,7 @@ def get_absent_students(course_code: str = None) -> list:
                     WHERE a.status = 'Absent'
                 """)
             rows = cur.fetchall()
-    return [dict(r) for r in rows]
+    return serialize_list([dict(r) for r in rows])
 
 def get_hall_status(hall_id: str) -> dict:
     """Get current usage/details of a specific lecture hall."""
@@ -87,7 +87,7 @@ def get_hall_status(hall_id: str) -> dict:
             except ValueError:
                 cur.execute("SELECT * FROM classrooms WHERE room_name = %s LIMIT 1", (hall_id,))
             row = cur.fetchone()
-    return dict(row) if row else {"error": "Hall not found"}
+    return serialize_dict(dict(row)) if row else {"error": "Hall not found"}
 
 def book_hall(hall_id: str, booking_date: str, start_time: str, end_time: str, booked_by: str) -> dict:
     """Book a lecture hall for a specific date and time slot."""
@@ -156,11 +156,7 @@ def get_scan_history(student_index: str = None, limit: int = 10) -> list:
             else:
                 cur.execute("SELECT * FROM attendance ORDER BY marked_at DESC LIMIT %s", (limit,))
             rows = cur.fetchall()
-    result = [dict(r) for r in rows]
-    for r in result:
-        if r.get("marked_at"):
-            r["marked_at"] = str(r["marked_at"])
-    return result
+    return serialize_list([dict(r) for r in rows])
 
 def search_course(search_query: str) -> list:
     """Search for a course/subject by name or keyword."""
@@ -168,7 +164,7 @@ def search_course(search_query: str) -> list:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM subjects WHERE subject_name ILIKE %s", (f"%{search_query}%",))
             rows = cur.fetchall()
-    return [dict(r) for r in rows]
+    return serialize_list([dict(r) for r in rows])
 
 def search_booking(date: str = None, hall_id: str = None) -> list:
     """Find bookings filtered by date or hall ID."""
@@ -183,13 +179,7 @@ def search_booking(date: str = None, hall_id: str = None) -> list:
             else:
                 cur.execute("SELECT * FROM timetable")
             rows = cur.fetchall()
-    result = [dict(r) for r in rows]
-    for r in result:
-        if r.get("start_time"):
-            r["start_time"] = str(r["start_time"])
-        if r.get("end_time"):
-            r["end_time"] = str(r["end_time"])
-    return result
+    return serialize_list([dict(r) for r in rows])
 
 def get_available_halls() -> list:
     """Get a list of all currently vacant or available lecture halls."""
@@ -197,7 +187,7 @@ def get_available_halls() -> list:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM classrooms")
             rows = cur.fetchall()
-    return [dict(r) for r in rows]
+    return serialize_list([dict(r) for r in rows])
 
 def get_course_attendance(course_code: str) -> list:
     """Get all attendance logs for a specific course code."""
@@ -209,11 +199,7 @@ def get_course_attendance(course_code: str) -> list:
             except ValueError:
                 cur.execute("SELECT * FROM attendance")
             rows = cur.fetchall()
-    result = [dict(r) for r in rows]
-    for r in result:
-        if r.get("marked_at"):
-            r["marked_at"] = str(r["marked_at"])
-    return result
+    return serialize_list([dict(r) for r in rows])
 
 def get_late_students(time_threshold: str = "09:00:00") -> list:
     """List students who scanned/arrived after a given time threshold."""
@@ -221,14 +207,7 @@ def get_late_students(time_threshold: str = "09:00:00") -> list:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM attendance WHERE marked_at::time > %s", (time_threshold,))
             rows = cur.fetchall()
-    result = [dict(r) for r in rows]
-    for r in result:
-        if r.get("marked_at"):
-            r["marked_at"] = str(r["marked_at"])
-    return result
-
-
-    return result
+    return serialize_list([dict(r) for r in rows])
 
 def add_student_tool(index_number: str, registration_number: str, full_name: str, nic: str, department_id: int, batch_year: int) -> dict:
     """Register a new student with login credentials into the system."""
