@@ -29,6 +29,7 @@ export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
  * @returns {Promise<object>}
  */
 export async function post(endpoint, body = {}) {
+  console.log(`[API] POST => ${endpoint}`);
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
@@ -36,15 +37,23 @@ export async function post(endpoint, body = {}) {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
-      return { status: 'error', message: `Server returned HTTP ${response.status}` };
+      const errMsg = `Server returned HTTP ${response.status}`;
+      console.error(`[API ERROR] POST ${endpoint} => ${errMsg}`);
+      return { status: 'error', message: errMsg };
     }
     const json = await response.json();
+    if (json.status === 'error' || json.status === 'failed') {
+      console.error(`[API BACKEND ERROR] POST ${endpoint} =>`, json.message || json);
+    } else {
+      console.log(`[API SUCCESS] POST ${endpoint} =>`, json);
+    }
+
     if (json.status === 'success' && !json.hasOwnProperty('data')) {
       return { status: 'success', data: json };
     }
     return json;
   } catch (error) {
-    console.error(`POST ${endpoint} error:`, error);
+    console.error(`[API NETWORK ERROR] POST ${endpoint} error:`, error);
     return { status: 'error', message: 'Network request failed' };
   }
 }
@@ -59,6 +68,7 @@ export async function post(endpoint, body = {}) {
  * @returns {Promise<object>}
  */
 export async function upload(endpoint, formData) {
+  console.log(`[API] UPLOAD => ${endpoint}`);
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
@@ -66,15 +76,23 @@ export async function upload(endpoint, formData) {
       // Do NOT set Content-Type manually — fetch sets it with boundary for multipart
     });
     if (!response.ok) {
-      return { status: 'error', message: `Server returned HTTP ${response.status}` };
+      const errMsg = `Server returned HTTP ${response.status}`;
+      console.error(`[API ERROR] UPLOAD ${endpoint} => ${errMsg}`);
+      return { status: 'error', message: errMsg };
     }
     const json = await response.json();
+    if (json.status === 'error' || json.status === 'failed') {
+      console.error(`[API BACKEND ERROR] UPLOAD ${endpoint} =>`, json.message || json);
+    } else {
+      console.log(`[API SUCCESS] UPLOAD ${endpoint} =>`, json);
+    }
+
     if (json.status === 'success' && !json.hasOwnProperty('data')) {
       return { status: 'success', data: json };
     }
     return json;
   } catch (error) {
-    console.error(`UPLOAD ${endpoint} error:`, error);
+    console.error(`[API NETWORK ERROR] UPLOAD ${endpoint} error:`, error);
     return { status: 'error', message: 'File upload failed' };
   }
 }

@@ -449,6 +449,23 @@ export default function AdminDashboard({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity 
+            style={styles.actionCard} 
+            onPress={() => navigation.navigate('ManageTimetable')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: '#fef3c7' }]}>
+              <MaterialCommunityIcons name="calendar-clock" size={26} color="#d97706" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={styles.actionTitle}>Manage Timetable</Text>
+              <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
+            </View>
+            <View style={[styles.chevronBg, { backgroundColor: '#fef3c7' }]}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#d97706" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
             style={[styles.actionCard, { marginBottom: 12 }]} 
             onPress={() => navigation.navigate('AddClassLocation')}
             activeOpacity={0.7}

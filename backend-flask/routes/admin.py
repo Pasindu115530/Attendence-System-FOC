@@ -379,7 +379,7 @@ def assign_batch_subjects():
                     f"""
                     INSERT INTO batch_subjects (batch_year, subject_id)
                     VALUES {args_str}
-                    ON CONFLICT DO NOTHING
+                    ON CONFLICT (batch_year, subject_id) DO NOTHING
                     """,
                     flat_args
                 )

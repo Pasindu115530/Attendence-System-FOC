@@ -11,6 +11,7 @@ import AbsentUploader from './src/screens/AbsentUploader';
 import ChatScreen from './src/screens/ChatScreen';
 import ContactAdminScreen from './src/screens/ContactAdminScreen';
 import AssignSubjects from './src/screens/AssignSubjects';
+import ManageTimetable from './src/screens/ManageTimetable';
 
 const Stack = createStackNavigator();
 
@@ -27,6 +28,7 @@ export default function App() {
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
         <Stack.Screen name="ContactAdmin" component={ContactAdminScreen} />
         <Stack.Screen name="AssignSubjects" component={AssignSubjects} />
+        <Stack.Screen name="ManageTimetable" component={ManageTimetable} />
  
       </Stack.Navigator>
     </NavigationContainer>
