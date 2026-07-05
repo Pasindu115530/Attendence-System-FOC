@@ -270,7 +270,7 @@ export default function AdminDashboard({ navigation }) {
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Yes, Logout", onPress: () => navigation.replace('Login'), style: 'destructive' }
+      { text: "Yes, Logout", onPress: () => navigation.replace('Login', { autoFaceLogin: false }), style: 'destructive' }
     ]);
   };
 

@@ -22,9 +22,9 @@ import { post, upload } from '../api';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ route, navigation }) {
   // Loading screen state
-  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [isAppLoading, setIsAppLoading] = useState(route?.params?.autoFaceLogin !== false);
 
   // Screen toggle state: false = Login, true = Create Account
   const [isSignUpMode, setIsSignUpMode] = useState(false);
@@ -85,14 +85,17 @@ export default function LoginScreen({ navigation }) {
     ]).start();
 
     // Auto loading redirection to Face ID
-    const timer = setTimeout(() => {
-      setIsAppLoading(false);
-      handleFaceLogin();
-    }, 2000);
+    let timer = null;
+    if (route?.params?.autoFaceLogin !== false) {
+      timer = setTimeout(() => {
+        setIsAppLoading(false);
+        handleFaceLogin();
+      }, 2000);
+    }
 
     return () => {
       if (pulseLoop) pulseLoop.stop();
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
     };
   }, []);
 

@@ -116,7 +116,7 @@ export default function UserDashboard({ route, navigation }) {
   const handleLogout = () => {
     Alert.alert("Logout", "Do you want to exit ?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Yes, Logout", onPress: () => navigation.replace('Login'), style: 'destructive' }
+      { text: "Yes, Logout", onPress: () => navigation.replace('Login', { autoFaceLogin: false }), style: 'destructive' }
     ]);
   };
 
