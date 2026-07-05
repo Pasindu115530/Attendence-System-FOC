@@ -120,9 +120,9 @@ export default function ContactAdminScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <LinearGradient
-        colors={['#029A84', '#007A68', '#004D40']}
+        colors={['#F3F7FD', '#E5EDF9']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
@@ -139,14 +139,14 @@ export default function ContactAdminScreen({ navigation }) {
               <MaterialCommunityIcons
                 name={notification.type === 'error' ? "alert-circle-outline" : "check-circle-outline"}
                 size={22}
-                color="#fff"
+                color={notification.type === 'error' ? "#E11D48" : "#10B981"}
                 style={styles.notificationIcon}
               />
               <View style={styles.notificationTextContainer}>
-                <Text style={styles.notificationTitle}>
+                <Text style={[styles.notificationTitle, { color: notification.type === 'error' ? "#E11D48" : "#10B981" }]}>
                   {notification.type === 'error' ? 'Validation Error' : 'Success'}
                 </Text>
-                <Text style={styles.notificationMessage}>{notification.message}</Text>
+                <Text style={[styles.notificationMessage, { color: '#2C3A4E' }]}>{notification.message}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => {
@@ -159,7 +159,7 @@ export default function ContactAdminScreen({ navigation }) {
                 style={styles.notificationClose}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons name="close" size={16} color="rgba(255, 255, 255, 0.7)" />
+                <MaterialCommunityIcons name="close" size={16} color="#7C8BA1" />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -182,7 +182,7 @@ export default function ContactAdminScreen({ navigation }) {
               style={styles.backButton}
               activeOpacity={0.7}
             >
-              <MaterialCommunityIcons name="chevron-left" size={28} color="#00796B" />
+              <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Contact Administrator</Text>
             <View style={{ width: 44 }} />
@@ -225,14 +225,14 @@ export default function ContactAdminScreen({ navigation }) {
                   onPress={() => handleContactAction('email')}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.contactIconCircle, { backgroundColor: '#e0f2fe' }]}>
-                    <MaterialCommunityIcons name="email-outline" size={20} color="#0369a1" />
+                  <View style={[styles.contactIconCircle, { backgroundColor: '#E0F2FE' }]}>
+                    <MaterialCommunityIcons name="email-outline" size={20} color="#0369A1" />
                   </View>
                   <View style={styles.contactDetails}>
                     <Text style={styles.contactLabel}>Email Address</Text>
                     <Text style={styles.contactValue}>foc.admin@sjp.ac.lk</Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#94a3b8" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#7C8BA1" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -240,14 +240,14 @@ export default function ContactAdminScreen({ navigation }) {
                   onPress={() => handleContactAction('phone')}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.contactIconCircle, { backgroundColor: '#f0fdf4' }]}>
-                    <MaterialCommunityIcons name="phone-outline" size={20} color="#15803d" />
+                  <View style={[styles.contactIconCircle, { backgroundColor: '#F0FDF4' }]}>
+                    <MaterialCommunityIcons name="phone-outline" size={20} color="#15803D" />
                   </View>
                   <View style={styles.contactDetails}>
                     <Text style={styles.contactLabel}>Faculty Office</Text>
                     <Text style={styles.contactValue}>+94 11 280 2000</Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#94a3b8" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#7C8BA1" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -255,14 +255,14 @@ export default function ContactAdminScreen({ navigation }) {
                   onPress={() => handleContactAction('web')}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.contactIconCircle, { backgroundColor: '#faf5ff' }]}>
-                    <MaterialCommunityIcons name="web" size={20} color="#6b21a8" />
+                  <View style={[styles.contactIconCircle, { backgroundColor: '#FAF5FF' }]}>
+                    <MaterialCommunityIcons name="web" size={20} color="#6B21A8" />
                   </View>
                   <View style={styles.contactDetails}>
                     <Text style={styles.contactLabel}>Official Website</Text>
                     <Text style={styles.contactValue}>foc.sjp.ac.lk</Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#94a3b8" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#7C8BA1" />
                 </TouchableOpacity>
               </View>
 
@@ -270,33 +270,45 @@ export default function ContactAdminScreen({ navigation }) {
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Submit Request</Text>
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  placeholderTextColor="#a0aec0"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
+                {/* Full Name Input Container */}
+                <View style={styles.inputContainer}>
+                  <MaterialCommunityIcons name="account-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Full Name"
+                    placeholderTextColor="#7C8BA1"
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                  />
+                </View>
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email Address"
-                  placeholderTextColor="#a0aec0"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
+                {/* Email Address Input Container */}
+                <View style={styles.inputContainer}>
+                  <MaterialCommunityIcons name="email-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Email Address"
+                    placeholderTextColor="#7C8BA1"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Student / Lecturer ID (Optional)"
-                  placeholderTextColor="#a0aec0"
-                  value={userId}
-                  onChangeText={setUserId}
-                  autoCapitalize="characters"
-                />
+                {/* Student / Lecturer ID Input Container */}
+                <View style={styles.inputContainer}>
+                  <MaterialCommunityIcons name="card-account-details-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Student / Lecturer ID (Optional)"
+                    placeholderTextColor="#7C8BA1"
+                    value={userId}
+                    onChangeText={setUserId}
+                    autoCapitalize="characters"
+                  />
+                </View>
 
                 {/* Role Selection Toggle */}
                 <View style={styles.roleContainer}>
@@ -319,35 +331,36 @@ export default function ContactAdminScreen({ navigation }) {
                   </View>
                 </View>
 
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Message (e.g. Please register my account under batch 2022/2023)"
-                  placeholderTextColor="#a0aec0"
-                  value={message}
-                  onChangeText={setMessage}
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                />
+                {/* Message TextArea Container */}
+                <View style={[styles.inputContainer, styles.textAreaContainer]}>
+                  <MaterialCommunityIcons name="pencil-outline" size={22} color="#7C8BA1" style={[styles.inputIcon, { marginTop: 14, alignSelf: 'flex-start' }]} />
+                  <TextInput
+                    style={[styles.textInput, styles.textAreaInput]}
+                    placeholder="Message (e.g. Register account for batch 2022/2023)"
+                    placeholderTextColor="#7C8BA1"
+                    value={message}
+                    onChangeText={setMessage}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
+                </View>
 
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={handleSubmitRequest}
-                  disabled={isSubmitting}
-                  activeOpacity={0.9}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#007A68" style={{ alignSelf: 'center', flex: 1 }} />
-                  ) : (
-                    <>
-                      <View style={styles.buttonIconCircle}>
-                        <MaterialCommunityIcons name="send" size={18} color="#fff" />
-                      </View>
-                      <Text style={styles.actionButtonText}>SUBMIT REQUEST</Text>
-                      <View style={{ width: 42 }} />
-                    </>
-                  )}
-                </TouchableOpacity>
+                {/* Submit Action Button */}
+                <View style={styles.submitButtonShadowContainer}>
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSubmitRequest}
+                    disabled={isSubmitting}
+                    activeOpacity={0.8}
+                  >
+                    {isSubmitting ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.submitButtonText}>Submit Request</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Footer */}
@@ -365,13 +378,14 @@ export default function ContactAdminScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '#ECF0F3',
   },
   gradient: {
-    flex: 1
+    flex: 1,
   },
   keyboardView: {
-    flex: 1
+    flex: 1,
   },
   headerBar: {
     flexDirection: 'row',
@@ -386,28 +400,30 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: 40,
   },
   content: {
     alignItems: 'center',
-    width: '100%'
+    width: '100%',
   },
   topWave1: {
     position: 'absolute',
@@ -416,7 +432,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.9,
     top: -width * 1.1,
     left: -width * 0.4,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
   topWave2: {
     position: 'absolute',
@@ -425,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.75,
     top: -width * 1.05,
     left: -width * 0.1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   bottomWave1: {
     position: 'absolute',
@@ -434,7 +450,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.45,
     bottom: -width * 0.45,
     left: -width * 0.25,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(163, 177, 198, 0.15)',
   },
   bottomWave2: {
     position: 'absolute',
@@ -443,7 +459,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.6,
     bottom: -width * 0.6,
     right: -width * 0.35,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(163, 177, 198, 0.1)',
   },
   creativeLogoRow: {
     flexDirection: 'row',
@@ -454,64 +470,67 @@ const styles = StyleSheet.create({
   },
   focText: {
     fontSize: 26,
-    fontWeight: '900',
-    color: '#fff',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     letterSpacing: 1.5,
   },
   checkText: {
     fontSize: 26,
-    fontWeight: '300',
-    color: '#fff',
+    fontFamily: 'Outfit-Regular',
+    color: '#2C3A4E',
     marginLeft: 5,
   },
   inBadge: {
-    backgroundColor: '#5eead4',
+    backgroundColor: '#35A7C4',
     paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: 6,
     marginLeft: 5,
-    shadowColor: '#5eead4',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
   },
   inText: {
     fontSize: 18,
-    fontWeight: '900',
-    color: '#004D40',
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
   },
   welcomeText: {
     fontSize: 22,
-    color: '#fff',
-    fontWeight: '700',
+    color: '#2C3A4E',
+    fontFamily: 'Outfit-Bold',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitleText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: '#7C8BA1',
     textAlign: 'center',
+    fontFamily: 'Outfit-Medium',
     lineHeight: 20,
     paddingHorizontal: 15,
     marginBottom: 25,
   },
   card: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#ECF0F3',
     borderRadius: 24,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
     shadowRadius: 10,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#004D40',
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
     marginBottom: 16,
     letterSpacing: 0.5,
   },
@@ -519,8 +538,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.5)',
   },
   contactIconCircle: {
     width: 40,
@@ -535,35 +554,62 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 12,
-    color: '#64748b',
-    fontWeight: '600',
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   contactValue: {
     fontSize: 15,
-    color: '#334155',
-    fontWeight: '700',
+    color: '#2C3A4E',
+    fontFamily: 'Outfit-Bold',
     marginTop: 2,
   },
-  input: {
+
+  // Sunken Neumorphic Input Container
+  inputContainer: {
     width: '100%',
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    paddingHorizontal: 20,
+    backgroundColor: '#ECF0F3',
+    paddingLeft: 18,
+    paddingRight: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    // Sunken border simulation
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
     fontSize: 15,
-    color: '#2d3748',
-    marginBottom: 12,
+    color: '#2C3A4E',
+    fontFamily: 'Outfit-Medium',
   },
-  textArea: {
-    height: 100,
+  textAreaContainer: {
+    height: 110,
     borderRadius: 18,
-    paddingTop: 14,
-    paddingBottom: 14,
+    alignItems: 'flex-start',
+    paddingTop: 4,
+    paddingBottom: 4,
   },
+  textAreaInput: {
+    textAlignVertical: 'top',
+    height: '100%',
+    paddingTop: 10,
+  },
+
   roleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -574,14 +620,23 @@ const styles = StyleSheet.create({
   },
   roleLabel: {
     fontSize: 14,
-    color: '#64748b',
-    fontWeight: '600',
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-Bold',
   },
   roleSelector: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ECF0F3',
     borderRadius: 20,
     padding: 3,
+    // Sunken border simulation
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
   },
   roleOption: {
     paddingHorizontal: 16,
@@ -589,77 +644,72 @@ const styles = StyleSheet.create({
     borderRadius: 17,
   },
   roleOptionActive: {
-    backgroundColor: '#007A68',
+    backgroundColor: '#35A7C4',
   },
   roleText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#64748b',
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
   },
   roleTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
-  actionButton: {
+
+  // Neumorphic Primary Action Button
+  submitButtonShadowContainer: {
     width: '100%',
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#007A68',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
     marginTop: 10,
-    shadowColor: '#000',
+    backgroundColor: '#ECF0F3', // Matches canvas
+    shadowColor: '#288BA3',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.4,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: 4,
   },
-  buttonIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#007A68',
+  submitButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 26,
+    backgroundColor: '#35A7C4',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionButtonText: {
+  submitButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#007A68',
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
     letterSpacing: 1.2,
   },
+
+  // Footer Faculty layout
   footerContainer: {
     marginTop: 20,
     alignItems: 'center',
   },
   footerText: {
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: '#7C8BA1',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     letterSpacing: 0.5,
   },
   footerSubText: {
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: '#7C8BA1',
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     letterSpacing: 0.5,
     marginTop: 2,
   },
+
+  // Notification Toast Styles
   notificationBox: {
     position: 'absolute',
     left: 20,
     right: 20,
     zIndex: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 8,
   },
   notificationContent: {
     flexDirection: 'row',
@@ -667,15 +717,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderWidth: 1,
+    borderWidth: 2,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 5,
   },
   notificationError: {
-    backgroundColor: 'rgba(225, 29, 72, 0.95)',
-    borderColor: 'rgba(244, 63, 94, 0.4)',
+    borderColor: '#E11D48',
   },
   notificationSuccess: {
-    backgroundColor: 'rgba(16, 185, 129, 0.95)',
-    borderColor: 'rgba(52, 211, 153, 0.4)',
+    borderColor: '#10B981',
   },
   notificationIcon: {
     marginRight: 12,
@@ -684,22 +738,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationTitle: {
-    color: '#fff',
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: 'Outfit-Bold',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   notificationMessage: {
-    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
     marginTop: 2,
   },
   notificationClose: {
     marginLeft: 12,
     padding: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-  }
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
 });
