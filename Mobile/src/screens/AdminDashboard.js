@@ -450,6 +450,23 @@ export default function AdminDashboard({ navigation }) {
 
           <TouchableOpacity 
             style={styles.actionCard} 
+            onPress={() => navigation.navigate('ViewAssignedSubjects')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: '#d1fae5' }]}>
+              <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#059669" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={styles.actionTitle}>View Assignments</Text>
+              <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
+            </View>
+            <View style={[styles.chevronBg, { backgroundColor: '#d1fae5' }]}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#059669" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard} 
             onPress={() => navigation.navigate('ManageTimetable')}
             activeOpacity={0.7}
           >

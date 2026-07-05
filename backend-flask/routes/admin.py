@@ -408,3 +408,28 @@ def reset_semester():
         conn.commit()
 
     return success({"message": "Semester data has been completely reset."})
+@admin_bp.post("/get_all_assigned_subjects")
+def get_all_assigned_subjects():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT 
+                        bs.id as assignment_id,
+                        bs.batch_year, 
+                        d.name as department_name, 
+                        s.subject_code, 
+                        s.subject_name
+                    FROM batch_subjects bs
+                    JOIN subjects s ON bs.subject_id = s.id
+                    JOIN departments d ON bs.department_id = d.id
+                    ORDER BY d.name ASC, bs.batch_year DESC, s.subject_name ASC
+                    """
+                )
+                assignments = [dict(r) for r in cur.fetchall()]
+        return success({"assignments": assignments})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e), "error": str(e)}), 500
