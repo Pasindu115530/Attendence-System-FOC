@@ -56,6 +56,9 @@ export default function UserDashboard({ route, navigation }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
 
+  // Logout Confirmation Modal State
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
   const handleChangePassword = async () => {
     if (!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       Alert.alert("Error", "All fields are required");
@@ -167,10 +170,7 @@ export default function UserDashboard({ route, navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Do you want to exit ?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Yes, Logout", onPress: () => navigation.replace('Login', { autoFaceLogin: false }), style: 'destructive' }
-    ]);
+    setIsLogoutModalOpen(true);
   };
 
   const handleOpenFaceRegister = async () => {
@@ -330,7 +330,7 @@ export default function UserDashboard({ route, navigation }) {
                 <LinearGradient
                   colors={['#F3F7FD', 'rgba(243, 247, 253, 0.95)', 'rgba(243, 247, 253, 0.3)', 'transparent']}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+                  end={{ x: 0.7, y: 0 }}
                   style={styles.headerSplitOverlay}
                 >
                   {/* Embedded Top Row for Avatar & Logout */}
@@ -690,6 +690,52 @@ export default function UserDashboard({ route, navigation }) {
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* Custom Logout Confirmation Modal */}
+      <Modal
+        visible={isLogoutModalOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsLogoutModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.logoutModalContent]}>
+            <View style={styles.logoutIconWrapper}>
+              <View style={styles.logoutIconOutline}>
+                <View style={styles.logoutIconInner}>
+                  <MaterialCommunityIcons name="logout-variant" size={32} color="#E11D48" />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.logoutModalTitle}>Confirm Logout</Text>
+            <Text style={styles.logoutModalMessage}>Do you want to log out of your session?</Text>
+            
+            <View style={styles.logoutActionRow}>
+              <TouchableOpacity 
+                style={styles.logoutCancelBtn} 
+                onPress={() => setIsLogoutModalOpen(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.logoutCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.logoutConfirmBtnShadow}>
+                <TouchableOpacity 
+                  style={styles.logoutConfirmBtn} 
+                  onPress={() => {
+                    setIsLogoutModalOpen(false);
+                    navigation.replace('Login', { autoFaceLogin: false });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.logoutConfirmBtnText}>Log Out</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </View>
       </Modal>
 
@@ -1604,5 +1650,107 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Bold',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+
+  // Custom Logout Modal Styles
+  logoutModalContent: {
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    maxWidth: 320,
+    borderRadius: 28,
+  },
+  logoutIconWrapper: {
+    marginBottom: 20,
+  },
+  logoutIconOutline: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  logoutIconInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(225, 29, 72, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutModalTitle: {
+    fontSize: 20,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  logoutModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 26,
+    lineHeight: 20,
+  },
+  logoutActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  logoutCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  logoutCancelBtnText: {
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
+  },
+  logoutConfirmBtnShadow: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    marginLeft: 10,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  logoutConfirmBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#E11D48', // Semantic red for log out
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutConfirmBtnText: {
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
   },
 });
