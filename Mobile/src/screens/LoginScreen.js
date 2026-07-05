@@ -33,6 +33,11 @@ export default function LoginScreen({ route, navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  // Password visibility states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showReTypePassword, setShowReTypePassword] = useState(false);
+
   // Sign Up form state
   const [signUpEmail, setSignUpEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -479,15 +484,28 @@ export default function LoginScreen({ route, navigation }) {
                   />
 
                   {/* Password Input */}
-                  <TextInput
-                    style={styles.input}
-                    placeholder="password"
-                    placeholderTextColor="#a0aec0"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    autoCapitalize="none"
-                  />
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="password"
+                      placeholderTextColor="#a0aec0"
+                      secureTextEntry={!showPassword}
+                      value={password}
+                      onChangeText={setPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity 
+                      style={styles.eyeButton} 
+                      onPress={() => setShowPassword(!showPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons 
+                        name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                        size={22} 
+                        color="#a0aec0" 
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   {/* LOG IN Action Button */}
                   <TouchableOpacity
@@ -537,26 +555,52 @@ export default function LoginScreen({ route, navigation }) {
                   />
 
                   {/* New Password */}
-                  <TextInput
-                    style={styles.input}
-                    placeholder="new password"
-                    placeholderTextColor="#a0aec0"
-                    secureTextEntry
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    autoCapitalize="none"
-                  />
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="new password"
+                      placeholderTextColor="#a0aec0"
+                      secureTextEntry={!showNewPassword}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity 
+                      style={styles.eyeButton} 
+                      onPress={() => setShowNewPassword(!showNewPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons 
+                        name={showNewPassword ? "eye-outline" : "eye-off-outline"} 
+                        size={22} 
+                        color="#a0aec0" 
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   {/* Re-type Password */}
-                  <TextInput
-                    style={styles.input}
-                    placeholder="re-type password"
-                    placeholderTextColor="#a0aec0"
-                    secureTextEntry
-                    value={reTypePassword}
-                    onChangeText={setReTypePassword}
-                    autoCapitalize="none"
-                  />
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="re-type password"
+                      placeholderTextColor="#a0aec0"
+                      secureTextEntry={!showReTypePassword}
+                      value={reTypePassword}
+                      onChangeText={setReTypePassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity 
+                      style={styles.eyeButton} 
+                      onPress={() => setShowReTypePassword(!showReTypePassword)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons 
+                        name={showReTypePassword ? "eye-outline" : "eye-off-outline"} 
+                        size={22} 
+                        color="#a0aec0" 
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   {/* Terms & Privacy Disclaimer */}
                   <Text style={styles.disclaimerText}>
@@ -1051,5 +1095,30 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  passwordContainer: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#fff',
+    paddingLeft: 24,
+    paddingRight: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  passwordInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 16,
+    color: '#2d3748',
+  },
+  eyeButton: {
+    padding: 8,
   }
 });
