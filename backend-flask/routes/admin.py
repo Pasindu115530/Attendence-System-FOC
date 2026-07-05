@@ -433,3 +433,28 @@ def get_all_assigned_subjects():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e), "error": str(e)}), 500
+
+@admin_bp.post("/unassign_subject")
+def unassign_subject():
+    data = request.get_json(force=True, silent=True) or {}
+    assignment_id = data.get("assignment_id")
+
+    if not assignment_id:
+        return error("assignment_id is required")
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM batch_subjects WHERE id = %s RETURNING id", 
+                    (assignment_id,)
+                )
+                deleted = cur.fetchone()
+                if not deleted:
+                    return error("Assignment not found")
+            conn.commit()
+        return success({"message": "Subject assignment removed successfully"})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e), "error": str(e)}), 500

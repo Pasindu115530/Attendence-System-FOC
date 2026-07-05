@@ -60,6 +60,36 @@ export default function ViewAssignedSubjects({ navigation }) {
     fetchData();
   };
 
+  const confirmDelete = (assignment_id, subject_name) => {
+    Alert.alert(
+      "Remove Assignment",
+      `Are you sure you want to remove ${subject_name} from this batch?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Remove", 
+          style: "destructive",
+          onPress: () => handleDelete(assignment_id)
+        }
+      ]
+    );
+  };
+
+  const handleDelete = async (assignment_id) => {
+    try {
+      const res = await post('/unassign_subject', { assignment_id });
+      if (res.status === 'success') {
+        // Refresh data after successful deletion
+        fetchData();
+      } else {
+        Alert.alert("Error", res.message || "Failed to remove assignment.");
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Network or server error.");
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -121,6 +151,12 @@ export default function ViewAssignedSubjects({ navigation }) {
                             <Text style={styles.subjectCode}>{subject.subject_code}</Text>
                             <Text style={styles.subjectName}>{subject.subject_name}</Text>
                         </View>
+                        <TouchableOpacity 
+                          style={styles.deleteBtn}
+                          onPress={() => confirmDelete(subject.assignment_id, subject.subject_name)}
+                        >
+                          <MaterialCommunityIcons name="trash-can-outline" size={20} color="#ef4444" />
+                        </TouchableOpacity>
                     </View>
                   ))}
                 </View>
@@ -219,7 +255,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#334155'
   },
-
+  deleteBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#fef2f2',
+    marginLeft: 8
+  },
   emptyCard: {
     alignItems: 'center',
     padding: 32,
