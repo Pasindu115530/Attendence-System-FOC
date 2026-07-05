@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  TextInput
+  TextInput,
+  FlatList
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -178,40 +179,49 @@ export default function AssignSubjects({ navigation }) {
         </View>
 
         {/* Subjects List */}
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={{ flex: 1 }}>
           {loading ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#4f46e5" />
               <Text style={{ marginTop: 12, color: '#64748b' }}>Loading subjects...</Text>
             </View>
           ) : subjects.length > 0 ? (
-            <View style={styles.listContainer}>
-              <Text style={styles.sectionTitle}>Available Subjects</Text>
-              <Text style={styles.sectionDesc}>Check the subjects you want to assign to this batch for the current semester.</Text>
+            <View style={[styles.listContainer, { flex: 1 }]}>
+              <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+                <Text style={styles.sectionTitle}>
+                  Available Subjects
+                </Text>
+                <Text style={styles.sectionDesc}>
+                  Assign subjects for {departments.find(d => d.id.toString() === selectedDeptId)?.name || 'Department'} (Batch {batchYear || '?'})
+                </Text>
+              </View>
               
-              {subjects
-                .filter(s => 
+              <FlatList
+                data={subjects.filter(s => 
                   s.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                   s.subject_code.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map(subject => (
-                <TouchableOpacity 
-                  key={subject.id} 
-                  style={[styles.subjectItem, subject.assigned && styles.subjectItemActive]}
-                  onPress={() => toggleSubject(subject.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.subjectInfo}>
-                    <Text style={[styles.subjectCode, subject.assigned && styles.textActive]}>{subject.subject_code}</Text>
-                    <Text style={[styles.subjectName, subject.assigned && styles.textActive]}>{subject.subject_name}</Text>
-                  </View>
-                  <MaterialCommunityIcons 
-                    name={subject.assigned ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"} 
-                    size={28} 
-                    color={subject.assigned ? "#fff" : "#cbd5e1"} 
-                  />
-                </TouchableOpacity>
-              ))}
+                )}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item: subject }) => (
+                  <TouchableOpacity 
+                    style={[styles.subjectItem, subject.assigned && styles.subjectItemActive]}
+                    onPress={() => toggleSubject(subject.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.subjectInfo}>
+                      <Text style={[styles.subjectCode, subject.assigned && styles.textActive]}>{subject.subject_code}</Text>
+                      <Text style={[styles.subjectName, subject.assigned && styles.textActive]}>{subject.subject_name}</Text>
+                    </View>
+                    <MaterialCommunityIcons 
+                      name={subject.assigned ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"} 
+                      size={28} 
+                      color={subject.assigned ? "#fff" : "#cbd5e1"} 
+                    />
+                  </TouchableOpacity>
+                )}
+              />
             </View>
           ) : (
             <View style={styles.emptyContainer}>
@@ -219,7 +229,7 @@ export default function AssignSubjects({ navigation }) {
               <Text style={styles.emptyText}>No subjects found for this department.</Text>
             </View>
           )}
-        </ScrollView>
+        </View>
       </Animated.View>
 
       {/* Save Button */}
