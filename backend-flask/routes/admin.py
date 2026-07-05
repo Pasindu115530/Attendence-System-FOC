@@ -460,3 +460,73 @@ def unassign_subject():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e), "error": str(e)}), 500
+
+@admin_bp.post("/auto_schedule_timetable")
+def auto_schedule_timetable():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # 1. Clear existing timetable
+                cur.execute("DELETE FROM timetable")
+                
+                # 2. Get classrooms
+                cur.execute("SELECT id FROM classrooms")
+                classroom_ids = [r['id'] for r in cur.fetchall()]
+                if not classroom_ids:
+                    return error("No classrooms available to schedule.")
+
+                # 3. Get batch assignments
+                cur.execute("SELECT subject_id, batch_year FROM batch_subjects")
+                assignments = cur.fetchall()
+
+                days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                # Start and End time strings
+                slots = [("08:00:00", "10:00:00"), ("10:00:00", "12:00:00"), ("13:00:00", "15:00:00"), ("15:00:00", "17:00:00")]
+
+                # (day, slot_index) -> list of available classroom ids
+                available_classrooms = {}
+                for day in days:
+                    for i, slot in enumerate(slots):
+                        available_classrooms[(day, i)] = list(classroom_ids)
+                
+                # (batch_year, day, slot_index) -> True if busy
+                batch_busy = {}
+
+                inserts = []
+                
+                for assign in assignments:
+                    subject_id = assign['subject_id']
+                    batch_year = assign['batch_year']
+                    
+                    scheduled = False
+                    for day in days:
+                        if scheduled: break
+                        for i, slot in enumerate(slots):
+                            if not batch_busy.get((batch_year, day, i), False):
+                                rooms = available_classrooms[(day, i)]
+                                if rooms:
+                                    room_id = rooms.pop(0) 
+                                    batch_busy[(batch_year, day, i)] = True
+                                    start_t, end_t = slot
+                                    inserts.append((subject_id, room_id, day, start_t, end_t))
+                                    scheduled = True
+                                    break
+                    
+                    if not scheduled:
+                        conn.rollback()
+                        return error(f"Not enough slots or classrooms to schedule subject ID {subject_id} for batch {batch_year}.")
+
+                if inserts:
+                    from psycopg2.extras import execute_values
+                    execute_values(
+                        cur,
+                        "INSERT INTO timetable (subject_id, classroom_id, day_of_week, start_time, end_time) VALUES %s",
+                        inserts
+                    )
+                
+            conn.commit()
+        return success({"message": f"Successfully auto-scheduled {len(inserts)} lectures."})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return error(str(e))

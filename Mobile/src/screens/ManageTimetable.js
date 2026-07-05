@@ -195,6 +195,37 @@ export default function ManageTimetable({ navigation }) {
     ]);
   };
 
+  const handleAutoSchedule = () => {
+    Alert.alert(
+      "Confirm Auto-Schedule",
+      "This will DELETE the current timetable and automatically schedule all assigned subjects for the semester. Are you sure?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Yes, Auto-Schedule", 
+          style: "destructive",
+          onPress: async () => {
+            setSubmitting(true);
+            try {
+              const res = await post('/auto_schedule_timetable', {});
+              if (res.status === 'success') {
+                Alert.alert("Success", res.data.message);
+                fetchData();
+              } else {
+                Alert.alert("Error", res.message || "Failed to auto-schedule.");
+              }
+            } catch (err) {
+              console.error(err);
+              Alert.alert("Error", "An unexpected error occurred.");
+            } finally {
+              setSubmitting(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -368,7 +399,17 @@ export default function ManageTimetable({ navigation }) {
           </View>
 
           {/* Current Timetable List */}
-          <Text style={styles.sectionTitle}>Existing Timetable</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 16 }}>
+            <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Existing Timetable</Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#9333ea', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+              onPress={handleAutoSchedule}
+              disabled={submitting}
+            >
+              <MaterialCommunityIcons name="magic-staff" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Outfit_600SemiBold' }}>Auto-Schedule</Text>
+            </TouchableOpacity>
+          </View>
           {timetables.length > 0 ? (
             timetables.map((tt) => (
               <View key={tt.id} style={styles.ttCard}>
