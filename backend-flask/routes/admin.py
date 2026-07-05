@@ -375,13 +375,13 @@ def assign_batch_subjects():
                 if subject_ids:
                     # Deduplicate subject_ids in case frontend sent duplicates
                     unique_sids = list(set(subject_ids))
-                    args = [(batch_year, sid) for sid in unique_sids]
-                    args_str = ",".join(["(%s, %s)"] * len(unique_sids))
+                    args = [(batch_year, department_id, sid) for sid in unique_sids]
+                    args_str = ",".join(["(%s, %s, %s)"] * len(unique_sids))
                     flat_args = [item for pair in args for item in pair]
                     
                     cur.execute(
                         f"""
-                        INSERT INTO batch_subjects (batch_year, subject_id)
+                        INSERT INTO batch_subjects (batch_year, department_id, subject_id)
                         VALUES {args_str}
                         """,
                         flat_args
