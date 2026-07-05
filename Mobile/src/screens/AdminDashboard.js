@@ -530,19 +530,17 @@ export default function AdminDashboard({ navigation }) {
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.formGroup}>
-                  <Text style={styles.inputLabel}>Student ID (Username for Login) *</Text>
+                  <Text style={styles.inputLabel}>Student Index Number (Username for Login) *</Text>
                   <View style={styles.rowInputContainer}>
                     <TextInput
                       style={[styles.input, { flex: 1 }]}
-                      placeholder="e.g. S001"
+                      placeholder="e.g. FC221000"
                       placeholderTextColor="#94a3b8"
                       value={formStudentId}
                       onChangeText={setFormStudentId}
                       autoCapitalize="none"
                     />
-                    <TouchableOpacity style={styles.generatorBtn} onPress={generateStudentId}>
-                      <Text style={styles.generatorBtnText}>Generate</Text>
-                    </TouchableOpacity>
+                    
                   </View>
                 </View>
 
@@ -550,7 +548,7 @@ export default function AdminDashboard({ navigation }) {
                   <Text style={styles.inputLabel}>Full Name *</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="e.g. Pasindu Udana"
+                    placeholder="e.g. Amal Perera"
                     placeholderTextColor="#94a3b8"
                     value={formFullName}
                     onChangeText={setFormFullName}
@@ -568,9 +566,7 @@ export default function AdminDashboard({ navigation }) {
                       onChangeText={setFormNic}
                       autoCapitalize="none"
                     />
-                    <TouchableOpacity style={styles.generatorBtn} onPress={generatePassword}>
-                      <Text style={styles.generatorBtnText}>Generate</Text>
-                    </TouchableOpacity>
+                    
                   </View>
                 </View>
 
