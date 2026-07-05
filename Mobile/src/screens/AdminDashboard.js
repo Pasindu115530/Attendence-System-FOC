@@ -25,12 +25,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function AdminDashboard({ navigation }) {
   const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Tab State: 'home', 'search', 'settings'
+  const [activeTab, setActiveTab] = useState('home');
 
   // Add Student states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,8 +50,21 @@ export default function AdminDashboard({ navigation }) {
   // Custom Logout Confirmation Modal State
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
+  // Academic Reports Tab states
+  const [reportFilters, setReportFilters] = useState({ dept_id: '', batch: '', course_id: '' });
+  const [reportResults, setReportResults] = useState([]);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportBatches, setReportBatches] = useState([]);
+  const [reportCourses, setReportCourses] = useState([]);
+  const [reportCourseSearchQuery, setReportCourseSearchQuery] = useState('');
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+
+  // Tab Bar animated value
+  const tabNames = ['home', 'search', 'settings'];
+  const getIndexFromTab = (tab) => tabNames.indexOf(tab);
+  const animatedTabValue = useRef(new Animated.Value(getIndexFromTab('home'))).current;
 
   // Face Camera States
   const [isFaceOverlayOpen, setIsFaceOverlayOpen] = useState(false);
@@ -160,6 +176,52 @@ export default function AdminDashboard({ navigation }) {
     }
   };
 
+  const fetchReportOptions = async () => {
+    try {
+      const batchRes = await post('/get_batches', {});
+      if (batchRes.status === 'success') {
+        setReportBatches(batchRes.data.batches || []);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const fetchReportCourses = async (deptId) => {
+    try {
+      const res = await post('/get_courses', { dept_id: deptId });
+      if (res.status === 'success') {
+        setReportCourses(res.data.courses || []);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const fetchFilteredReport = async () => {
+    if (!reportFilters.dept_id || !reportFilters.course_id || !reportFilters.batch) {
+      Alert.alert("Error", "Please select Department, Batch and Course");
+      return;
+    }
+    setReportLoading(true);
+    setReportResults([]);
+    try {
+      const res = await post('/get_filtered_report', reportFilters);
+      if (res.status === 'success') {
+        setReportResults(res.data.report || []);
+        if (res.data.report?.length === 0) {
+          Alert.alert("Notice", "No records found for the selected filters.");
+        }
+      } else {
+        Alert.alert("Notice", res.message || "No records found");
+      }
+    } catch (e) {
+      Alert.alert("Error", "Failed to fetch report.");
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   const handleUploadExcel = async () => {
     try {
       const res = await DocumentPicker.getDocumentAsync({
@@ -264,11 +326,21 @@ export default function AdminDashboard({ navigation }) {
   useEffect(() => {
     fetchAdminData();
     fetchDepartments();
+    fetchReportOptions();
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
     ]).start();
   }, [fetchAdminData]);
+
+  useEffect(() => {
+    Animated.spring(animatedTabValue, {
+      toValue: getIndexFromTab(activeTab),
+      useNativeDriver: true,
+      bounciness: 6,
+      speed: 10,
+    }).start();
+  }, [activeTab]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -297,13 +369,55 @@ export default function AdminDashboard({ navigation }) {
     return now >= start && now <= end;
   });
 
+  const filteredCourses = reportCourses.filter(c => 
+    c.course_name.toLowerCase().includes(reportCourseSearchQuery.toLowerCase())
+  );
+
+  // Interpolation for sliding bottom active indicator
+  const navBarWidth = width - 40;
+  const stepWidth = navBarWidth / 3;
+  const translateX = animatedTabValue.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [
+      0 * stepWidth + (stepWidth - 68) / 2,
+      1 * stepWidth + (stepWidth - 68) / 2,
+      2 * stepWidth + (stepWidth - 68) / 2,
+    ],
+  });
+
+  const circleScale = animatedTabValue.interpolate({
+    inputRange: [0, 0.5, 1, 1.5, 2],
+    outputRange: [1, 0.82, 1, 0.82, 1],
+  });
+
+  const circleTranslateY = animatedTabValue.interpolate({
+    inputRange: [0, 0.5, 1, 1.5, 2],
+    outputRange: [0, 12, 0, 12, 0],
+  });
+
+  const makeIconStyle = (index) => {
+    const opacity = animatedTabValue.interpolate({
+      inputRange: [index - 0.5, index, index + 0.5],
+      outputRange: [1, 0, 1],
+      extrapolate: 'clamp',
+    });
+    const scale = animatedTabValue.interpolate({
+      inputRange: [index - 0.5, index, index + 0.5],
+      outputRange: [1, 0.01, 1],
+      extrapolate: 'clamp',
+    });
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       {/* Header Container */}
       <View style={styles.headerContainer}>
-        {/* Neumorphic Header Gradient */}
         <LinearGradient
           colors={['#F3F7FD', '#E5EDF9']}
           start={{ x: 0, y: 0 }}
@@ -314,36 +428,43 @@ export default function AdminDashboard({ navigation }) {
           <View style={styles.headerTopBar}>
             <View>
               <View style={styles.headerTitleRow}>
-                <Text style={styles.headerTitle}>Admin Panel</Text>
+                <Text style={styles.headerTitle}>
+                  {activeTab === 'home' ? 'Admin Panel' :
+                   activeTab === 'search' ? 'Academic Reports' : 'Admin Settings'}
+                </Text>
                 <View style={styles.headerBadge}>
                   <Text style={styles.headerBadgeText}>FOC</Text>
                 </View>
               </View>
               <Text style={styles.headerSubtitle}>Faculty of Computing</Text>
             </View>
-            <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
-              <MaterialCommunityIcons name="bell-outline" size={22} color="#35A7C4" />
-              {liveLectures.length > 0 && <View style={styles.notifBadge} />}
-            </TouchableOpacity>
+            {activeTab === 'home' && (
+              <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
+                <MaterialCommunityIcons name="bell-outline" size={22} color="#35A7C4" />
+                {liveLectures.length > 0 && <View style={styles.notifBadge} />}
+              </TouchableOpacity>
+            )}
           </View>
 
-          {/* Stats Bar */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{lectures.length}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+          {/* Stats Bar (Only on Home) */}
+          {activeTab === 'home' && (
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{lectures.length}</Text>
+                <Text style={styles.statLabel}>Total</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: '#35A7C4' }]}>{liveLectures.length}</Text>
+                <Text style={styles.statLabel}>Live Now</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{Math.max(0, lectures.length - liveLectures.length)}</Text>
+                <Text style={styles.statLabel}>Upcoming</Text>
+              </View>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#35A7C4' }]}>{liveLectures.length}</Text>
-              <Text style={styles.statLabel}>Live Now</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{Math.max(0, lectures.length - liveLectures.length)}</Text>
-              <Text style={styles.statLabel}>Upcoming</Text>
-            </View>
-          </View>
+          )}
         </LinearGradient>
       </View>
 
@@ -351,207 +472,383 @@ export default function AdminDashboard({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-            tintColor="#35A7C4"
-            colors={['#35A7C4']}
-          />
+          activeTab === 'home' ? (
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor="#35A7C4"
+              colors={['#35A7C4']}
+            />
+          ) : null
         }
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], width: '100%' }}>
           
-          <Text style={styles.sectionTitle}>Today's Schedule</Text>
-          
-          {lectures.length > 0 ? (
-            lectures.map((item, index) => {
-              const isLive = liveLectures.includes(item);
-              return (
-                <View key={index} style={[styles.lecCard, isLive && styles.lecCardLive]}>
-                  <View style={styles.cardHeader}>
-                    <View style={[styles.badge, { backgroundColor: isLive ? 'rgba(53, 167, 196, 0.12)' : '#ECF0F3' }]}>
-                      <View style={[styles.dot, { backgroundColor: isLive ? '#35A7C4' : '#7C8BA1' }]} />
-                      <Text style={[styles.badgeText, { color: isLive ? '#35A7C4' : '#7C8BA1' }]}>
-                        {isLive ? 'LIVE' : 'SCHEDULED'}
-                      </Text>
+          {/* HOME TAB VIEW */}
+          {activeTab === 'home' && (
+            <>
+              <Text style={styles.sectionTitle}>Today's Schedule</Text>
+              
+              {lectures.length > 0 ? (
+                lectures.map((item, index) => {
+                  const isLive = liveLectures.includes(item);
+                  return (
+                    <View key={index} style={[styles.lecCard, isLive && styles.lecCardLive]}>
+                      <View style={styles.cardHeader}>
+                        <View style={[styles.badge, { backgroundColor: isLive ? 'rgba(53, 167, 196, 0.12)' : '#ECF0F3' }]}>
+                          <View style={[styles.dot, { backgroundColor: isLive ? '#35A7C4' : '#7C8BA1' }]} />
+                          <Text style={[styles.badgeText, { color: isLive ? '#35A7C4' : '#7C8BA1' }]}>
+                            {isLive ? 'LIVE' : 'SCHEDULED'}
+                          </Text>
+                        </View>
+                        <Text style={styles.timeText}>
+                          {item.start_time?.substring(0, 5)} - {item.end_time?.substring(0, 5)}
+                        </Text>
+                      </View>
+                      <Text style={styles.courseName}>{item.course_name}</Text>
+                      <View style={styles.infoRow}>
+                        <View style={styles.infoPill}>
+                          <MaterialCommunityIcons name="map-marker-radius" size={14} color="#35A7C4" style={{ marginRight: 4 }} />
+                          <Text style={styles.infoText}>{item.room_name}</Text>
+                        </View>
+                      </View>
                     </View>
-                    <Text style={styles.timeText}>
-                      {item.start_time?.substring(0, 5)} - {item.end_time?.substring(0, 5)}
-                    </Text>
+                  );
+                })
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBg}>
+                    <MaterialCommunityIcons name="calendar-blank" size={48} color="#7C8BA1" />
                   </View>
-                  <Text style={styles.courseName}>{item.course_name}</Text>
-                  <View style={styles.infoRow}>
-                    <View style={styles.infoPill}>
-                      <MaterialCommunityIcons name="map-marker-radius" size={14} color="#35A7C4" style={{ marginRight: 4 }} />
-                      <Text style={styles.infoText}>{item.room_name}</Text>
-                    </View>
-                  </View>
+                  <Text style={styles.emptyText}>No lectures scheduled for today.</Text>
                 </View>
-              );
-            })
-          ) : (
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconBg}>
-                <MaterialCommunityIcons name="calendar-blank" size={48} color="#7C8BA1" />
+              )}
+
+              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Quick Actions</Text>
+              
+              {/* Create Student */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => setIsModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="account-plus-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Create Student</Text>
+                  <Text style={styles.actionDesc}>Register a new student with login credentials</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Assign Subjects */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('AssignSubjects')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="book-open-page-variant-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Assign Subjects</Text>
+                  <Text style={styles.actionDesc}>Assign subjects to batches per semester</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
+              {/* View Assignments */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('ViewAssignedSubjects')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>View Assignments</Text>
+                  <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Manage Timetable */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('ManageTimetable')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Manage Timetable</Text>
+                  <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Set Class Location */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('AddClassLocation')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="map-marker-path" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Set Class Location</Text>
+                  <Text style={styles.actionDesc}>Define boundary points for geofencing</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* SEARCH/REPORTS TAB VIEW */}
+          {activeTab === 'search' && (
+            <View style={{ paddingHorizontal: 4 }}>
+              {/* Reports Filter Card */}
+              <View style={styles.formCard}>
+                <View style={styles.filterHeader}>
+                  <MaterialCommunityIcons name="filter-variant" size={20} color="#35A7C4" />
+                  <Text style={styles.filterHeaderText}>Report Filters</Text>
+                </View>
+
+                {/* Department Selector */}
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={styles.label}>Department</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
+                    {departments.map((item, index) => (
+                      <TouchableOpacity 
+                        key={item.id ? item.id.toString() : `dept_${index}`}
+                        style={[styles.chip, reportFilters.dept_id === item.id && styles.chipSelected]}
+                        onPress={() => {
+                          setReportFilters({...reportFilters, dept_id: item.id, course_id: ''});
+                          setReportCourseSearchQuery('');
+                          fetchReportCourses(item.id);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.chipText, reportFilters.dept_id === item.id && styles.chipTextSelected]}>
+                          {item.name || `Dept ${item.id}`}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                
+                {/* Batch Selector */}
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={styles.label}>Batch</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
+                    {reportBatches.map((item, index) => (
+                      <TouchableOpacity 
+                        key={item.batch_year ? item.batch_year.toString() : `batch_${index}`}
+                        style={[styles.chip, reportFilters.batch === item.batch_year && styles.chipSelected]}
+                        onPress={() => setReportFilters({...reportFilters, batch: item.batch_year})}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.chipText, reportFilters.batch === item.batch_year && styles.chipTextSelected]}>
+                          {item.batch_year}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Course Selector with Search */}
+                <Text style={styles.label}>Select Course</Text>
+                {reportCourses.length > 0 && (
+                  <View style={styles.courseSearchContainer}>
+                    <MaterialCommunityIcons name="magnify" size={20} color="#7C8BA1" style={{ marginRight: 8 }} />
+                    <TextInput
+                      style={styles.courseSearchInput}
+                      placeholder="Search course..."
+                      placeholderTextColor="#7C8BA1"
+                      value={reportCourseSearchQuery}
+                      onChangeText={setReportCourseSearchQuery}
+                    />
+                  </View>
+                )}
+                
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
+                  {filteredCourses.length > 0 ? filteredCourses.map((item, index) => (
+                    <TouchableOpacity 
+                      key={item.course_id ? item.course_id.toString() : `course_${index}`}
+                      style={[styles.chip, reportFilters.course_id === item.course_id && styles.chipSelected]}
+                      onPress={() => setReportFilters({...reportFilters, course_id: item.course_id})}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.chipText, reportFilters.course_id === item.course_id && styles.chipTextSelected]}>
+                        {item.course_name}
+                      </Text>
+                    </TouchableOpacity>
+                  )) : (
+                    <Text style={styles.hintText}>
+                      {reportCourses.length > 0 ? "No courses matching query" : "Select Department to load courses"}
+                    </Text>
+                  )}
+                </ScrollView>
+
+                <View style={styles.submitBtnShadowContainer}>
+                  <TouchableOpacity 
+                    style={styles.submitBtn} 
+                    onPress={fetchFilteredReport}
+                    disabled={reportLoading}
+                    activeOpacity={0.8}
+                  >
+                    {reportLoading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <MaterialCommunityIcons name="file-chart-outline" size={22} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.submitBtnText}>Generate Report</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.emptyText}>No lectures scheduled for today.</Text>
+
+              {/* Results List */}
+              {reportResults.length > 0 && (
+                <View style={{ marginTop: 10 }}>
+                  <View style={styles.resultsHeader}>
+                    <Text style={styles.resultsTitle}>Students List</Text>
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countText}>{reportResults.length} Students</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.headerCell, { flex: 2, textAlign: 'left' }]}>Student Info</Text>
+                    <Text style={[styles.headerCell, { flex: 1, textAlign: 'center' }]}>Status</Text>
+                    <Text style={[styles.headerCell, { flex: 1, textAlign: 'right' }]}>Attendance</Text>
+                  </View>
+
+                  {reportResults.map((item, index) => (
+                    <View key={item.user_id} style={styles.tableRow}>
+                      <View style={styles.studentInfo}>
+                        <View style={styles.idBadge}>
+                          <Text style={styles.idBadgeText}>{item.user_id.substring(0, 2)}</Text>
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                          <Text style={styles.cellText}>{item.user_id}</Text>
+                          <Text style={styles.subCellText}>{item.full_name}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.statusCol}>
+                        <View style={[styles.statusBadge, { backgroundColor: item.status === 'Active' ? 'rgba(53, 167, 196, 0.12)' : 'rgba(225, 29, 72, 0.12)' }]}>
+                          <Text style={[styles.statusText, { color: item.status === 'Active' ? '#35A7C4' : '#E11D48' }]}>
+                            {item.status}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.percentageCol}>
+                        <Text style={styles.percentageText}>{item.percentage}</Text>
+                        <Text style={styles.percentageLabel}>Attendance</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {reportResults.length === 0 && !reportLoading && (
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBg}>
+                    <MaterialCommunityIcons name="file-search-outline" size={48} color="#7C8BA1" />
+                  </View>
+                  <Text style={styles.emptyTextTitle}>No Report Data</Text>
+                  <Text style={styles.emptyTextSub}>Select filters above and click generate to view the report.</Text>
+                </View>
+              )}
             </View>
           )}
 
-          <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Quick Actions</Text>
-          
-          {/* Create Student */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => setIsModalOpen(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="account-plus-outline" size={26} color="#35A7C4" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Create Student</Text>
-              <Text style={styles.actionDesc}>Register a new student with login credentials</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
+          {/* SETTINGS TAB VIEW */}
+          {activeTab === 'settings' && (
+            <View style={{ paddingHorizontal: 4 }}>
+              <View style={styles.profileImageContainer}>
+                <View style={styles.largeProfileCircle}>
+                  <MaterialCommunityIcons name="account" size={72} color="#7C8BA1" />
+                </View>
+                <Text style={styles.profilePhotoLabel}>Administrator Settings</Text>
+              </View>
 
-          {/* Attendance Reports */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('AttendanceReports')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="file-chart-outline" size={26} color="#35A7C4" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Attendance Reports</Text>
-              <Text style={styles.actionDesc}>View student attendance statistics by course</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
+              {/* Admin profile fields */}
+              <View style={styles.profileForm}>
+                <View style={styles.profileField}>
+                  <Text style={styles.profileFieldLabel}>Role</Text>
+                  <Text style={styles.profileFieldValue}>System Administrator</Text>
+                </View>
+                <View style={styles.profileField}>
+                  <Text style={styles.profileFieldLabel}>Faculty</Text>
+                  <Text style={styles.profileFieldValue}>Faculty of Computing (FOC)</Text>
+                </View>
+              </View>
 
-          {/* Assign Subjects */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('AssignSubjects')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="book-open-page-variant-outline" size={26} color="#35A7C4" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Assign Subjects</Text>
-              <Text style={styles.actionDesc}>Assign subjects to batches per semester</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
+              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Security & Operations</Text>
 
-          {/* View Assignments */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('ViewAssignedSubjects')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#35A7C4" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>View Assignments</Text>
-              <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
+              {/* Register Admin Face */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={handleOpenFaceRegister}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="face-recognition" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Register Admin Face</Text>
+                  <Text style={styles.actionDesc}>Register your face for admin actions</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-          {/* Manage Timetable */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('ManageTimetable')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Manage Timetable</Text>
-              <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
+              {/* Reset Semester (Warning Action) */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={handleOpenFaceReset}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconCircle, styles.warningIconCircle]}>
+                  <MaterialCommunityIcons name="delete-alert-outline" size={26} color="#E11D48" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Reset Semester</Text>
+                  <Text style={styles.actionDesc}>Requires facial verification (Destructive)</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#E11D48" />
+                </View>
+              </TouchableOpacity>
 
-          {/* Set Class Location */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => navigation.navigate('AddClassLocation')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="map-marker-path" size={26} color="#35A7C4" />
+              {/* Logout Action Button wrapper */}
+              <View style={styles.logoutBtnContainer}>
+                <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+                  <MaterialCommunityIcons name="logout" size={20} color="#E11D48" />
+                  <Text style={styles.logoutText}>Logout from System</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Set Class Location</Text>
-              <Text style={styles.actionDesc}>Define boundary points for geofencing</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
+          )}
 
-          {/* Register Admin Face */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={handleOpenFaceRegister}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons name="face-recognition" size={26} color="#35A7C4" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Register Admin Face</Text>
-              <Text style={styles.actionDesc}>Register your face for admin actions</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-            </View>
-          </TouchableOpacity>
-
-          {/* Reset Semester (Warning Action) */}
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={handleOpenFaceReset}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconCircle, styles.warningIconCircle]}>
-              <MaterialCommunityIcons name="delete-alert-outline" size={26} color="#E11D48" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 16 }}>
-              <Text style={styles.actionTitle}>Reset Semester</Text>
-              <Text style={styles.actionDesc}>Requires facial verification (Destructive)</Text>
-            </View>
-            <View style={styles.chevronBg}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#E11D48" />
-            </View>
-          </TouchableOpacity>
-
-          {/* Logout Action Button wrapper */}
-          <View style={styles.logoutBtnContainer}>
-            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-              <MaterialCommunityIcons name="logout" size={20} color="#E11D48" />
-              <Text style={styles.logoutText}>Logout from System</Text>
-            </TouchableOpacity>
-          </View>
-
+          <View style={{ height: 100 }} />
         </Animated.View>
       </ScrollView>
 
@@ -804,6 +1101,72 @@ export default function AdminDashboard({ navigation }) {
         </LinearGradient>
       </TouchableOpacity>
 
+      {/* Bottom Sliding Navigation Bar matching UserDashboard */}
+      <View style={styles.navBarContainer}>
+        <View style={styles.navBar}>
+          
+          {/* Sliding Circle Indicator */}
+          <Animated.View
+            style={[
+              styles.activeIndicatorContainer,
+              {
+                transform: [
+                  { translateX },
+                  { translateY: circleTranslateY },
+                  { scale: circleScale },
+                ],
+              },
+            ]}
+          >
+            <View style={styles.activeProtrusion} />
+            <View style={styles.activeCircle}>
+              <MaterialCommunityIcons
+                name={
+                  activeTab === 'home' ? 'home' :
+                  activeTab === 'search' ? 'magnify' : 'cog'
+                }
+                size={26}
+                color="#fff"
+              />
+            </View>
+          </Animated.View>
+
+          {/* Tab 1: Home */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('home')}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={makeIconStyle(0)}>
+              <MaterialCommunityIcons name="home-outline" size={24} color="#7C8BA1" />
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Tab 2: Search / Reports */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('search')}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={makeIconStyle(1)}>
+              <MaterialCommunityIcons name="file-chart-outline" size={24} color="#7C8BA1" />
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Tab 3: Settings */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('settings')}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={makeIconStyle(2)}>
+              <MaterialCommunityIcons name="cog-outline" size={24} color="#7C8BA1" />
+            </Animated.View>
+          </TouchableOpacity>
+
+        </View>
+      </View>
+
     </View>
   );
 }
@@ -836,7 +1199,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     width: '100%',
-    height: 240,
+    height: 180,
     backgroundColor: '#ECF0F3',
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
@@ -849,16 +1212,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 4,
-  },
-  headerRightImage: {
-    position: 'absolute',
-    right: -10,
-    bottom: -10,
-    top: 20,
-    width: '55%',
-    height: '100%',
-    resizeMode: 'contain',
-    opacity: 1.0,
   },
   headerSplitOverlay: {
     position: 'absolute',
@@ -1417,7 +1770,7 @@ const styles = StyleSheet.create({
   // FAB
   fab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 110,
     right: 24,
     width: 60,
     height: 60,
@@ -1528,7 +1881,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 24,
-    backgroundColor: '#E11D48', // Semantic red for log out
+    backgroundColor: '#E11D48',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1536,5 +1889,317 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Outfit-Bold',
     color: '#FFFFFF',
+  },
+
+  // Bottom Navigation Bar matching UserDashboard
+  navBarContainer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 20,
+    right: 20,
+    height: 70,
+    zIndex: 99,
+  },
+  navBar: {
+    flexDirection: 'row',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 24,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  navItem: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeIndicatorContainer: {
+    position: 'absolute',
+    left: 0,
+    top: -24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 68,
+    height: 68,
+  },
+  activeProtrusion: {
+    position: 'absolute',
+    width: 68,
+    height: 38,
+    backgroundColor: '#ECF0F3',
+    borderTopLeftRadius: 34,
+    borderTopRightRadius: 34,
+    top: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  activeCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#35A7C4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+
+  // Settings specific profiles
+  profileImageContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  largeProfileCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  profilePhotoLabel: {
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    fontSize: 16,
+    marginTop: 10,
+  },
+  profileForm: {
+    backgroundColor: '#ECF0F3',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 2,
+    marginBottom: 20,
+  },
+  profileField: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255,255,255,0.4)',
+    paddingVertical: 12,
+  },
+  profileFieldLabel: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 11,
+    color: '#7C8BA1',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  profileFieldValue: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
+
+  // Reports table styles
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 15,
+    paddingHorizontal: 4,
+  },
+  resultsTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+  },
+  countBadge: {
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  countText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#35A7C4',
+  },
+  tableHeader: { 
+    flexDirection: 'row', 
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+    paddingVertical: 12, 
+    paddingHorizontal: 16, 
+    borderRadius: 12, 
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  headerCell: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 11,
+    color: '#7C8BA1',
+    textTransform: 'uppercase',
+  },
+  tableRow: { 
+    flexDirection: 'row', 
+    backgroundColor: '#ECF0F3', 
+    padding: 16, 
+    borderRadius: 20, 
+    marginBottom: 12, 
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 2, 
+    alignItems: 'center',
+  },
+  studentInfo: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  idBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  idBadgeText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 14,
+    color: '#35A7C4',
+  },
+  cellText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    color: '#2C3A4E',
+  },
+  subCellText: {
+    fontFamily: 'Outfit-Regular',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginTop: 2,
+  },
+  statusCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  statusText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 11,
+  },
+  percentageCol: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  percentageText: {
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    fontSize: 16,
+  },
+  percentageLabel: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 10,
+    color: '#7C8BA1',
+  },
+  emptyTextTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+  },
+  emptyTextSub: {
+    fontFamily: 'Outfit-Regular',
+    textAlign: 'center',
+    color: '#7C8BA1',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+
+  // Reports selector details
+  label: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#7C8BA1',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  selector: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  chip: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    borderRadius: 14, 
+    backgroundColor: '#ECF0F3', 
+    marginRight: 10, 
+    borderWidth: 1.5, 
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  chipSelected: {
+    backgroundColor: '#35A7C4',
+    borderColor: '#35A7C4',
+    shadowColor: '#288BA3',
+  },
+  chipText: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 13,
+    color: '#7C8BA1',
+  },
+  chipTextSelected: {
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
+  },
+  hintText: {
+    fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    color: '#7C8BA1',
+    fontStyle: 'italic',
+    paddingVertical: 8,
   },
 });
