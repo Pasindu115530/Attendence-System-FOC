@@ -307,9 +307,9 @@ export default function LoginScreen({ route, navigation }) {
   if (isAppLoading) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
         <LinearGradient
-          colors={['#029A84', '#007A68', '#004D40']}
+          colors={['#F3F7FD', '#E5EDF9']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.gradient}
@@ -334,7 +334,7 @@ export default function LoginScreen({ route, navigation }) {
               />
               {/* Circular Central Face ID Logo container */}
               <Animated.View style={[styles.logoCircle, { transform: [{ scale: pulseAnim }] }]}>
-                <MaterialCommunityIcons name="face-recognition" size={46} color="#007A68" />
+                <MaterialCommunityIcons name="face-recognition" size={46} color="#35A7C4" />
               </Animated.View>
             </View>
 
@@ -351,7 +351,7 @@ export default function LoginScreen({ route, navigation }) {
             <Text style={styles.subtitleTextLoading}>Smart Attendance</Text>
 
             {/* Spinner & Text */}
-            <ActivityIndicator size="large" color="#5eead4" style={styles.loadingSpinner} />
+            <ActivityIndicator size="large" color="#35A7C4" style={styles.loadingSpinner} />
             <Text style={styles.loadingText}>Initializing Face ID...</Text>
           </View>
         </LinearGradient>
@@ -361,9 +361,9 @@ export default function LoginScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <LinearGradient
-        colors={['#029A84', '#007A68', '#004D40']}
+        colors={['#F3F7FD', '#E5EDF9']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
@@ -380,14 +380,14 @@ export default function LoginScreen({ route, navigation }) {
               <MaterialCommunityIcons
                 name={notification.type === 'error' ? "alert-circle-outline" : "check-circle-outline"}
                 size={22}
-                color="#fff"
+                color={notification.type === 'error' ? "#E11D48" : "#10B981"}
                 style={styles.notificationIcon}
               />
               <View style={styles.notificationTextContainer}>
-                <Text style={styles.notificationTitle}>
+                <Text style={[styles.notificationTitle, { color: notification.type === 'error' ? "#E11D48" : "#10B981" }]}>
                   {notification.type === 'error' ? 'Login Failed' : 'Success'}
                 </Text>
-                <Text style={styles.notificationMessage}>{notification.message}</Text>
+                <Text style={[styles.notificationMessage, { color: '#2C3A4E' }]}>{notification.message}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => {
@@ -400,7 +400,7 @@ export default function LoginScreen({ route, navigation }) {
                 style={styles.notificationClose}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons name="close" size={16} color="rgba(255, 255, 255, 0.7)" />
+                <MaterialCommunityIcons name="close" size={16} color="#7C8BA1" />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -429,205 +429,220 @@ export default function LoginScreen({ route, navigation }) {
                 }
               ]}
             >
-              {/* FOC CheckIn Creative Text Layout */}
-              <View style={styles.creativeLogoRow}>
-                <Text style={styles.focText}>FOC</Text>
-                <Text style={styles.checkText}>Check</Text>
-                <View style={styles.inBadge}>
-                  <Text style={styles.inText}>In</Text>
+              <View style={styles.cardContainer}>
+                {/* Top Avatar Circle from Mockup */}
+                {!isFaceLoginMode && (
+                  <View style={styles.avatarOutline}>
+                    <View style={styles.avatarInner}>
+                      <MaterialCommunityIcons name="face-recognition" size={38} color="#35A7C4" />
+                    </View>
+                  </View>
+                )}
+
+                {/* FOC CheckIn Creative Text Layout */}
+                <View style={styles.creativeLogoRow}>
+                  <Text style={styles.focText}>FOC</Text>
+                  <Text style={styles.checkText}>Check</Text>
+                  <View style={styles.inBadge}>
+                    <Text style={styles.inText}>In</Text>
+                  </View>
                 </View>
+
+                {isFaceLoginMode ? (
+                  /* Face Verification Screen Mode */
+                  <View style={styles.faceVerificationContainer}>
+                    <Text style={styles.welcomeText}>Face Verification</Text>
+                    <Text style={styles.faceStatusText}>{scanningStatus}</Text>
+
+                    {/* Circular Glowing Camera View */}
+                    <View style={styles.cameraContainer}>
+                      <View style={styles.cameraShadowCircle} />
+                      <View style={styles.cameraWrapper}>
+                        <CameraView
+                          ref={cameraRef}
+                          style={styles.cameraView}
+                          facing="front"
+                        />
+                        <View style={styles.scanTargetBox} />
+                      </View>
+                    </View>
+
+                    {/* Cancel Action Button */}
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => setIsFaceLoginMode(false)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : !isSignUpMode ? (
+                  /* Login Screen Mode */
+                  <View style={styles.formContainer}>
+                    <Text style={styles.welcomeText}>Welcome Back!</Text>
+
+                    {/* Username/Email Input Container */}
+                    <View style={styles.inputContainer}>
+                      <MaterialCommunityIcons name="account-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="email"
+                        placeholderTextColor="#7C8BA1"
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                      />
+                    </View>
+
+                    {/* Password Input Container */}
+                    <View style={styles.inputContainer}>
+                      <MaterialCommunityIcons name="lock-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="password"
+                        placeholderTextColor="#7C8BA1"
+                        secureTextEntry={!showPassword}
+                        value={password}
+                        onChangeText={setPassword}
+                        autoCapitalize="none"
+                      />
+                      <TouchableOpacity 
+                        style={styles.eyeButton} 
+                        onPress={() => setShowPassword(!showPassword)}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons 
+                          name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                          size={22} 
+                          color="#7C8BA1" 
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* LOG IN Action Button */}
+                    <View style={styles.loginButtonShadowContainer}>
+                      <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={handleLogin}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.loginButtonText}>Login</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* FACE ID LOGIN Action Button */}
+                    <TouchableOpacity
+                      style={styles.faceIdButton}
+                      onPress={handleFaceLogin}
+                      activeOpacity={0.8}
+                    >
+                      <MaterialCommunityIcons name="face-recognition" size={22} color="#35A7C4" style={{ marginRight: 8 }} />
+                      <Text style={styles.faceIdButtonText}>Face ID Login</Text>
+                    </TouchableOpacity>
+
+                    {/* Switch to Contact Admin Screen */}
+                    <TouchableOpacity onPress={() => navigation.navigate('ContactAdmin')} activeOpacity={0.7} style={styles.switchModeButton}>
+                      <Text style={styles.switchModeText}>Don't have an account ? Contact Administrator</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  /* Create Account Screen Mode */
+                  <View style={styles.formContainer}>
+                    <Text style={styles.welcomeText}>Create Account</Text>
+
+                    {/* Sign Up Email */}
+                    <View style={styles.inputContainer}>
+                      <MaterialCommunityIcons name="email-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="email"
+                        placeholderTextColor="#7C8BA1"
+                        value={signUpEmail}
+                        onChangeText={setSignUpEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                      />
+                    </View>
+
+                    {/* New Password */}
+                    <View style={styles.inputContainer}>
+                      <MaterialCommunityIcons name="lock-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="new password"
+                        placeholderTextColor="#7C8BA1"
+                        secureTextEntry={!showNewPassword}
+                        value={newPassword}
+                        onChangeText={setNewPassword}
+                        autoCapitalize="none"
+                      />
+                      <TouchableOpacity 
+                        style={styles.eyeButton} 
+                        onPress={() => setShowNewPassword(!showNewPassword)}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons 
+                          name={showNewPassword ? "eye-outline" : "eye-off-outline"} 
+                          size={22} 
+                          color="#7C8BA1" 
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Re-type Password */}
+                    <View style={styles.inputContainer}>
+                      <MaterialCommunityIcons name="lock-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="re-type password"
+                        placeholderTextColor="#7C8BA1"
+                        secureTextEntry={!showReTypePassword}
+                        value={reTypePassword}
+                        onChangeText={setReTypePassword}
+                        autoCapitalize="none"
+                      />
+                      <TouchableOpacity 
+                        style={styles.eyeButton} 
+                        onPress={() => setShowReTypePassword(!showReTypePassword)}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons 
+                          name={showReTypePassword ? "eye-outline" : "eye-off-outline"} 
+                          size={22} 
+                          color="#7C8BA1" 
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Terms & Privacy Disclaimer */}
+                    <Text style={styles.disclaimerText}>
+                      By creating an account, you agree to our{' '}
+                      <Text style={styles.disclaimerLink}>Terms of Service</Text> and{' '}
+                      <Text style={styles.disclaimerLink}>Privacy Policy</Text>
+                    </Text>
+
+                    {/* CREATE Action Button */}
+                    <View style={styles.loginButtonShadowContainer}>
+                      <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={handleCreateAccount}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.loginButtonText}>Create Account</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Switch to Login Toggle */}
+                    <View style={styles.footerLinks}>
+                      <Text style={styles.footerLinkText}>Already have an account? </Text>
+                      <TouchableOpacity onPress={() => setIsSignUpMode(false)} activeOpacity={0.7}>
+                        <Text style={styles.footerLinkTextBold}>Log in</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
-
-              {isFaceLoginMode ? (
-                /* Face Verification Screen Mode */
-                <View style={styles.faceVerificationContainer}>
-                  <Text style={styles.welcomeText}>Face Verification</Text>
-                  <Text style={styles.faceStatusText}>{scanningStatus}</Text>
-
-                  {/* Circular Glowing Camera View */}
-                  <View style={styles.cameraWrapper}>
-                    <CameraView
-                      ref={cameraRef}
-                      style={styles.cameraView}
-                      facing="front"
-                    />
-                    <View style={styles.scanTargetBox} />
-                  </View>
-
-                  {/* Cancel Action Button (Red Chevron-style) */}
-                  <TouchableOpacity
-                    style={styles.cancelActionButton}
-                    onPress={() => setIsFaceLoginMode(false)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.cancelButtonIconCircle}>
-                      <MaterialCommunityIcons name="close" size={22} color="#fff" />
-                    </View>
-                    <Text style={styles.cancelActionButtonText}>CANCEL</Text>
-                    <View style={{ width: 42 }} />
-                  </TouchableOpacity>
-                </View>
-              ) : !isSignUpMode ? (
-                /* Login Screen Mode */
-                <View style={styles.formContainer}>
-                  <Text style={styles.welcomeText}>Welcome Back!</Text>
-
-                  {/* Username/Email Input */}
-                  <TextInput
-                    style={styles.input}
-                    placeholder="email"
-                    placeholderTextColor="#a0aec0"
-                    value={username}
-                    onChangeText={setUsername}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
-
-                  {/* Password Input */}
-                  <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="password"
-                      placeholderTextColor="#a0aec0"
-                      secureTextEntry={!showPassword}
-                      value={password}
-                      onChangeText={setPassword}
-                      autoCapitalize="none"
-                    />
-                    <TouchableOpacity 
-                      style={styles.eyeButton} 
-                      onPress={() => setShowPassword(!showPassword)}
-                      activeOpacity={0.7}
-                    >
-                      <MaterialCommunityIcons 
-                        name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                        size={22} 
-                        color="#a0aec0" 
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* LOG IN Action Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleLogin}
-                    activeOpacity={0.9}
-                  >
-                    <View style={styles.buttonIconCircle}>
-                      <MaterialCommunityIcons name="chevron-right" size={26} color="#fff" />
-                    </View>
-                    <Text style={styles.actionButtonText}>LOG IN</Text>
-                    <View style={{ width: 42 }} />
-                  </TouchableOpacity>
-
-                  {/* FACE ID LOGIN Action Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleFaceLogin}
-                    activeOpacity={0.9}
-                  >
-                    <View style={styles.buttonIconCircle}>
-                      <MaterialCommunityIcons name="face-recognition" size={22} color="#fff" />
-                    </View>
-                    <Text style={styles.actionButtonText}>FACE ID LOGIN</Text>
-                    <View style={{ width: 42 }} />
-                  </TouchableOpacity>
-
-                  {/* Switch to Contact Admin Screen */}
-                  <TouchableOpacity onPress={() => navigation.navigate('ContactAdmin')} activeOpacity={0.7}>
-                    <Text style={styles.switchModeText}>Don't have an account ? Contact Administrator</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                /* Create Account Screen Mode */
-                <View style={styles.formContainer}>
-                  <Text style={styles.welcomeText}>Create Account</Text>
-
-                  {/* Sign Up Email */}
-                  <TextInput
-                    style={styles.input}
-                    placeholder="your email"
-                    placeholderTextColor="#a0aec0"
-                    value={signUpEmail}
-                    onChangeText={setSignUpEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
-
-                  {/* New Password */}
-                  <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="new password"
-                      placeholderTextColor="#a0aec0"
-                      secureTextEntry={!showNewPassword}
-                      value={newPassword}
-                      onChangeText={setNewPassword}
-                      autoCapitalize="none"
-                    />
-                    <TouchableOpacity 
-                      style={styles.eyeButton} 
-                      onPress={() => setShowNewPassword(!showNewPassword)}
-                      activeOpacity={0.7}
-                    >
-                      <MaterialCommunityIcons 
-                        name={showNewPassword ? "eye-outline" : "eye-off-outline"} 
-                        size={22} 
-                        color="#a0aec0" 
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Re-type Password */}
-                  <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="re-type password"
-                      placeholderTextColor="#a0aec0"
-                      secureTextEntry={!showReTypePassword}
-                      value={reTypePassword}
-                      onChangeText={setReTypePassword}
-                      autoCapitalize="none"
-                    />
-                    <TouchableOpacity 
-                      style={styles.eyeButton} 
-                      onPress={() => setShowReTypePassword(!showReTypePassword)}
-                      activeOpacity={0.7}
-                    >
-                      <MaterialCommunityIcons 
-                        name={showReTypePassword ? "eye-outline" : "eye-off-outline"} 
-                        size={22} 
-                        color="#a0aec0" 
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Terms & Privacy Disclaimer */}
-                  <Text style={styles.disclaimerText}>
-                    By creating an account, you agree to our{' '}
-                    <Text style={styles.disclaimerLink}>Terms of Service</Text> and{' '}
-                    <Text style={styles.disclaimerLink}>Privacy Policy</Text>
-                  </Text>
-
-                  {/* CREATE Action Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleCreateAccount}
-                    activeOpacity={0.9}
-                  >
-                    <View style={styles.buttonIconCircle}>
-                      <MaterialCommunityIcons name="chevron-right" size={26} color="#fff" />
-                    </View>
-                    <Text style={styles.actionButtonText}>CREATE</Text>
-                    <View style={{ width: 42 }} />
-                  </TouchableOpacity>
-
-                  {/* Switch to Login Toggle */}
-                  <TouchableOpacity onPress={() => setIsSignUpMode(false)} activeOpacity={0.7}>
-                    <Text style={styles.switchModeText}>Already have an account ? Log in</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
 
               {/* Sub-Footer Faculty Text */}
               <View style={styles.footerContainer}>
@@ -644,28 +659,78 @@ export default function LoginScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '#ECF0F3',
   },
   gradient: {
-    flex: 1
+    flex: 1,
   },
   keyboardView: {
-    flex: 1
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 30,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 30
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 30,
   },
   content: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%'
+    width: '100%',
   },
 
-  // Custom styled waves matching the mockup curves
+  // Soft/Neumorphic Card Container
+  cardContainer: {
+    width: '100%',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 36,
+    paddingVertical: 36,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 8, height: 8 },
+    shadowOpacity: 0.7,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 10,
+  },
+
+  // Neumorphic Top Avatar Circle
+  avatarOutline: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    marginBottom: 20,
+  },
+  avatarInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#1E293B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+
+  // Subtle background shadows / lights
   topWave1: {
     position: 'absolute',
     width: width * 1.8,
@@ -673,7 +738,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.9,
     top: -width * 1.1,
     left: -width * 0.4,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
   topWave2: {
     position: 'absolute',
@@ -682,7 +747,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.75,
     top: -width * 1.05,
     left: -width * 0.1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   bottomWave1: {
     position: 'absolute',
@@ -691,7 +756,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.45,
     bottom: -width * 0.45,
     left: -width * 0.25,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(163, 177, 198, 0.15)',
   },
   bottomWave2: {
     position: 'absolute',
@@ -700,41 +765,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.6,
     bottom: -width * 0.6,
     right: -width * 0.35,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  },
-
-  // Stylized "MO" Logo
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  logoMContainer: {
-    alignItems: 'center',
-  },
-  logoBar: {
-    width: 28,
-    height: 4,
-    backgroundColor: '#fff',
-    borderRadius: 2,
-    marginBottom: 1,
-  },
-  logoTextM: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 48,
-    fontFamily: Platform.OS === 'ios' ? 'HelveticaNeue-Bold' : 'sans-serif-condensed',
-  },
-  logoTextO: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 48,
-    marginLeft: 1,
-    fontFamily: Platform.OS === 'ios' ? 'HelveticaNeue-Bold' : 'sans-serif-condensed',
+    backgroundColor: 'rgba(163, 177, 198, 0.1)',
   },
 
   formContainer: {
@@ -742,135 +773,181 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   welcomeText: {
-    fontSize: 22,
-    color: '#fff',
+    fontSize: 20,
+    color: '#2C3A4E',
     textAlign: 'center',
-    fontWeight: '500',
-    marginBottom: 24,
-  },
-  subtitleText: {
-    fontSize: 18,
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '400',
-    marginBottom: 20,
+    fontFamily: 'Outfit-Bold',
+    marginBottom: 22,
+    letterSpacing: 0.5,
   },
 
-  // Social Row
-  socialRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  socialCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-
-  dividerText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 15,
-    textAlign: 'center',
-    marginVertical: 14,
-    fontWeight: '400',
-  },
-
-  // Pill-shaped TextInput
-  input: {
+  // Sunken Neumorphic Input Container
+  inputContainer: {
     width: '100%',
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#fff',
-    paddingHorizontal: 24,
+    backgroundColor: '#ECF0F3',
+    paddingLeft: 20,
+    paddingRight: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+    // Sunken border simulation
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#D1D9E6',
+    borderLeftColor: '#D1D9E6',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#FFFFFF',
+    borderRightColor: '#FFFFFF',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
     fontSize: 16,
-    color: '#2d3748',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
-    elevation: 3,
+    color: '#2C3A4E',
+    fontFamily: 'Outfit-Medium',
+  },
+  eyeButton: {
+    padding: 8,
   },
 
-  // Terms and conditions disclaimer
+  // Convex/Raised Neumorphic Button for LOG IN
+  loginButtonShadowContainer: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    marginVertical: 14,
+    backgroundColor: '#ECF0F3', // Matches canvas to render rounded shadow correctly and animate opacity cleanly
+    shadowColor: '#288BA3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  loginButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 27,
+    backgroundColor: '#35A7C4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    fontSize: 17,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+
+  // Convex/Raised Neumorphic Button for FACE ID
+  faceIdButton: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#ECF0F3',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 8,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#FFFFFF',
+    borderLeftColor: '#FFFFFF',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#D1D9E6',
+    borderRightColor: '#D1D9E6',
+  },
+  faceIdButtonText: {
+    fontSize: 16,
+    fontFamily: 'Outfit-Bold',
+    color: '#35A7C4',
+    letterSpacing: 0.5,
+  },
+
+  // Footer navigation links
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 6,
+  },
+  footerLinkText: {
+    fontSize: 14,
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-Medium',
+  },
+  footerDivider: {
+    fontSize: 14,
+    color: '#7C8BA1',
+    marginHorizontal: 4,
+    fontFamily: 'Outfit-Regular',
+  },
+  footerLinkTextBold: {
+    fontSize: 14,
+    color: '#35A7C4',
+    fontFamily: 'Outfit-Bold',
+  },
+
+  // Disclaimer text in sign up
   disclaimerText: {
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: '#7C8BA1',
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
     marginHorizontal: 10,
     marginBottom: 20,
-    fontWeight: '400',
+    fontFamily: 'Outfit-Regular',
   },
   disclaimerLink: {
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
+    color: '#35A7C4',
     textDecorationLine: 'underline',
   },
 
-  // Capsule Action Button (LOG IN / CREATE)
-  actionButton: {
-    width: '100%',
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
-    marginVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  buttonIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#009688',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#00796B',
-    letterSpacing: 1.5,
-  },
-
-  switchModeText: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '500',
-    marginTop: 10,
-    textDecorationLine: 'underline',
-  },
-
-  // Face Verification Panel
+  // Face Verification Screen Mode Styles
   faceVerificationContainer: {
     width: '100%',
     alignItems: 'center',
     paddingVertical: 10,
   },
   faceStatusText: {
-    color: '#ccffed',
+    color: '#35A7C4',
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  cameraContainer: {
+    width: 240,
+    height: 240,
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  cameraShadowCircle: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#ECF0F3', // Matches canvas to render rounded shadow and prevent square backing artifacts
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 6,
   },
   cameraWrapper: {
     width: 240,
@@ -878,16 +955,10 @@ const styles = StyleSheet.create({
     borderRadius: 120,
     overflow: 'hidden',
     borderWidth: 4,
-    borderColor: '#00BFA5',
+    borderColor: '#35A7C4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
     backgroundColor: '#000',
-    shadowColor: '#00BFA5',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
   },
   cameraView: {
     width: '100%',
@@ -903,57 +974,59 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
 
-  // Cancel Button styling consistent with mockup language
-  cancelActionButton: {
+  // Cancel Button styling consistent with neumorphic design
+  cancelButton: {
     width: '100%',
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
-    marginVertical: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  cancelButtonIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#e11d48',
     justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 14,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopColor: '#FFFFFF',
+    borderLeftColor: '#FFFFFF',
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomColor: '#D1D9E6',
+    borderRightColor: '#D1D9E6',
   },
-  cancelActionButtonText: {
+  cancelButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#e11d48',
-    letterSpacing: 1.5,
+    fontFamily: 'Outfit-Bold',
+    color: '#E11D48',
+    letterSpacing: 0.5,
   },
 
+  // Footer Faculty layout
   footerContainer: {
-    marginTop: 40,
+    marginTop: 30,
     alignItems: 'center',
   },
   footerText: {
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.55)',
+    color: '#7C8BA1',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     letterSpacing: 0.5,
   },
   footerSubText: {
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.55)',
+    color: '#7C8BA1',
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     letterSpacing: 0.5,
     marginTop: 2,
   },
+
+  // Loading Screen Styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -973,63 +1046,64 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     borderWidth: 2,
-    borderColor: '#5eead4',
-    backgroundColor: 'rgba(94, 234, 212, 0.12)',
+    borderColor: '#35A7C4',
+    backgroundColor: 'rgba(53, 167, 196, 0.12)',
   },
   logoCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#00BFA5',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.7,
     shadowRadius: 10,
     elevation: 8,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
     zIndex: 2,
   },
   creativeLogoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 26,
   },
   focText: {
     fontSize: 32,
-    fontWeight: '900',
-    color: '#fff',
-    letterSpacing: 1.5,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    letterSpacing: 1,
   },
   checkText: {
     fontSize: 32,
-    fontWeight: '300',
-    color: '#fff',
-    marginLeft: 6,
+    fontFamily: 'Outfit-Regular',
+    color: '#2C3A4E',
+    marginLeft: 4,
   },
   inBadge: {
-    backgroundColor: '#5eead4',
+    backgroundColor: '#35A7C4',
     paddingHorizontal: 12,
-    paddingVertical: 3,
+    paddingVertical: 2,
     borderRadius: 8,
     marginLeft: 6,
-    shadowColor: '#5eead4',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
   },
   inText: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#004D40',
+    fontSize: 20,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
   },
   subtitleTextLoading: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: '600',
+    color: '#7C8BA1',
+    fontFamily: 'Outfit-SemiBold',
     marginTop: 8,
     letterSpacing: 3,
     textTransform: 'uppercase',
@@ -1038,22 +1112,19 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   loadingText: {
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#2C3A4E',
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     marginTop: 15,
     letterSpacing: 1,
   },
+
+  // Notification Toast Styles
   notificationBox: {
     position: 'absolute',
     left: 20,
     right: 20,
     zIndex: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 8,
   },
   notificationContent: {
     flexDirection: 'row',
@@ -1061,15 +1132,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderWidth: 1,
+    borderWidth: 2,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 5,
   },
   notificationError: {
-    backgroundColor: 'rgba(225, 29, 72, 0.95)',
-    borderColor: 'rgba(244, 63, 94, 0.4)',
+    borderColor: '#E11D48',
   },
   notificationSuccess: {
-    backgroundColor: 'rgba(16, 185, 129, 0.95)',
-    borderColor: 'rgba(52, 211, 153, 0.4)',
+    borderColor: '#10B981',
   },
   notificationIcon: {
     marginRight: 12,
@@ -1078,47 +1153,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationTitle: {
-    color: '#fff',
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: 'Outfit-Bold',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   notificationMessage: {
-    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
     marginTop: 2,
   },
   notificationClose: {
     marginLeft: 12,
     padding: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
-  passwordContainer: {
-    width: '100%',
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#fff',
-    paddingLeft: 24,
-    paddingRight: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
-    elevation: 3,
+  switchModeButton: {
+    marginTop: 20,
+    marginBottom: 6,
   },
-  passwordInput: {
-    flex: 1,
-    height: '100%',
-    fontSize: 16,
-    color: '#2d3748',
+  switchModeText: {
+    color: '#35A7C4',
+    fontSize: 14,
+    textAlign: 'center',
+    fontFamily: 'Outfit-SemiBold',
+    textDecorationLine: 'underline',
   },
-  eyeButton: {
-    padding: 8,
-  }
 });
