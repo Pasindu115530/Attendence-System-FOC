@@ -302,7 +302,33 @@ def get_all_subjects_for_dept(department_id: int) -> list:
         with conn.cursor() as cur:
             cur.execute("SELECT id, subject_code, subject_name FROM subjects WHERE department_id = %s", (department_id,))
             rows = cur.fetchall()
-    return [dict(r) for r in rows]
+    return serialize_list([dict(r) for r in rows])
+
+def get_assigned_subjects_for_batch(batch_year: int, department_id: int = None) -> list:
+    """Get the subjects assigned to a specific batch year, optionally filtered by department."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            query = """
+                SELECT 
+                    bs.id as assignment_id,
+                    bs.batch_year, 
+                    d.name as department_name, 
+                    s.subject_code, 
+                    s.subject_name
+                FROM batch_subjects bs
+                JOIN subjects s ON bs.subject_id = s.id
+                JOIN departments d ON bs.department_id = d.id
+                WHERE bs.batch_year = %s
+            """
+            args = [batch_year]
+            if department_id:
+                query += " AND bs.department_id = %s"
+                args.append(department_id)
+            query += " ORDER BY s.subject_name ASC"
+            
+            cur.execute(query, tuple(args))
+            rows = cur.fetchall()
+    return serialize_list([dict(r) for r in rows])
 
 def remove_subject_assignment(assignment_id: int) -> dict:
     """Remove a subject assignment from a batch by assignment ID."""
@@ -399,6 +425,7 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 add_student_tool,
                 assign_subject_to_batch,
                 get_all_subjects_for_dept,
+                get_assigned_subjects_for_batch,
                 remove_subject_assignment,
                 schedule_timetable,
                 get_all_departments,
