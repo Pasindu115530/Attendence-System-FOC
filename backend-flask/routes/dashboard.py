@@ -16,7 +16,7 @@ _LECTURE_QUERY = """
 @dashboard_bp.post("/get_dashboard")
 def get_dashboard():
     data = request.get_json(force=True, silent=True) or {}
-    student_id = data.get("index_number", "")
+    student_id = data.get("index_number", "") or data.get("user_id", "")
     day = current_day_name()
     time_now = current_time_str()
     today = today_str()
@@ -35,26 +35,38 @@ def get_dashboard():
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                # Get batch_year for filtering
+                # Get batch_year and department_id for filtering
                 batch_year = None
+                department_id = None
                 if student_id:
-                    cur.execute("SELECT batch_year FROM users WHERE index_number = %s", (student_id,))
+                    cur.execute("SELECT batch_year, department_id FROM users WHERE index_number = %s", (student_id,))
                     user_row = cur.fetchone()
-                    if user_row and user_row["batch_year"]:
-                        batch_year = user_row["batch_year"]
+                    if user_row:
+                        batch_year = user_row.get("batch_year")
+                        department_id = user_row.get("department_id")
 
                 # Base query
                 query = _LECTURE_QUERY
+                params = []
 
-                if batch_year:
-                    query += f" JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = {int(batch_year)} "
+                if batch_year and department_id:
+                    query += " JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = %s AND bs.department_id = %s "
+                    params.extend([int(batch_year), department_id])
+                elif batch_year:
+                    query += " JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = %s "
+                    params.append(int(batch_year))
+                elif department_id:
+                    query += " JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.department_id = %s "
+                    params.append(department_id)
+
+                query += " WHERE 1=1 "
 
                 # Fetch only the current week's lectures using IN clause (indexed)
                 placeholders = ",".join(["%s"] * len(ordered_days))
-                cur.execute(
-                    query + f"WHERE t.day_of_week IN ({placeholders}) ORDER BY t.day_of_week, t.start_time ASC",
-                    tuple(ordered_days),
-                )
+                query += f" AND t.day_of_week IN ({placeholders}) ORDER BY t.day_of_week, t.start_time ASC"
+                params.extend(ordered_days)
+
+                cur.execute(query, tuple(params))
                 all_rows = cur.fetchall()
 
                 valid_lectures = []
@@ -110,10 +122,11 @@ def get_dashboard():
 @dashboard_bp.post("/get_admin_dashboard")
 def get_admin_dashboard():
     day = current_day_name()
+    time_now = current_time_str()
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                _LECTURE_QUERY + "WHERE t.day_of_week = %s ORDER BY t.start_time ASC",
+                _LECTURE_QUERY + " WHERE t.day_of_week = %s ORDER BY t.start_time ASC",
                 (day,),
             )
             lectures = []
@@ -122,6 +135,12 @@ def get_admin_dashboard():
                 if lec.get("start_time"): lec["start_time"] = str(lec["start_time"])
                 if lec.get("end_time"): lec["end_time"] = str(lec["end_time"])
                 lec["course_name"] = lec.get("subject_name")
+                
+                if lec.get("start_time") and lec.get("end_time"):
+                    lec["isLive"] = lec["start_time"] <= time_now <= lec["end_time"]
+                else:
+                    lec["isLive"] = False
+                    
                 lectures.append(lec)
     return success({"lectures": lectures})
 
