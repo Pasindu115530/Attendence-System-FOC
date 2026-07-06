@@ -162,8 +162,10 @@ export default function LoginScreen({ route, navigation }) {
 
       if (result.status === "success") {
         const user = result.data;
-        if (user.role === "Admin" || user.role === "Lecturer") {
+        if (user.role === "Admin") {
           navigation.replace('AdminDashboard', { user_id: user.user_id });
+        } else if (user.role === "Lecturer") {
+          navigation.replace('LecturerDashboard', { user_id: user.user_id, user });
         } else if (user.role === "Student") {
           navigation.replace('UserDashboard', { user_id: user.user_id, user });
         } else {
@@ -263,16 +265,20 @@ export default function LoginScreen({ route, navigation }) {
         setIsFaceLoginMode(false);
         if (userRes.status === "success") {
           const user = userRes.data;
-          if (user.role === "Admin" || user.role === "Lecturer") {
+          if (user.role === "Admin") {
             navigation.replace('AdminDashboard', { user_id: user.user_id });
+          } else if (user.role === "Lecturer") {
+            navigation.replace('LecturerDashboard', { user_id: user.user_id, user });
           } else {
             navigation.replace('UserDashboard', { user_id: user.user_id, user });
           }
         } else {
           console.log("Fallback: Inferring role from user_id prefix...");
           const lowerId = studentId.toLowerCase();
-          if (lowerId.startsWith('admin') || lowerId.startsWith('l')) {
+          if (lowerId.startsWith('admin')) {
             navigation.replace('AdminDashboard', { user_id: studentId });
+          } else if (lowerId.startsWith('l')) {
+            navigation.replace('LecturerDashboard', { user_id: studentId });
           } else {
             navigation.replace('UserDashboard', { user_id: studentId });
           }

@@ -99,3 +99,69 @@ def get_admin_dashboard():
                 lec["course_name"] = lec.get("subject_name")
                 lectures.append(lec)
     return success({"lectures": lectures})
+
+@dashboard_bp.post("/get_lecturer_dashboard")
+def get_lecturer_dashboard():
+    data = request.get_json(force=True, silent=True) or {}
+    lecturer_index = data.get("index_number", "")
+    day = current_day_name()
+    time_now = current_time_str()
+    today = today_str()
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            query = _LECTURE_QUERY + " JOIN lecturer_subjects ls ON t.subject_id = ls.subject_id "
+
+            cur.execute(
+                query + "WHERE ls.lecturer_index = %s AND t.day_of_week = %s AND %s BETWEEN t.start_time AND t.end_time LIMIT 1",
+                (lecturer_index, day, time_now),
+            )
+            lecture = cur.fetchone()
+
+            if lecture:
+                lecture = dict(lecture)
+                lecture["isLive"] = True
+                lecture["course_name"] = lecture["subject_name"] 
+                lecture["course_id"] = lecture["subject_id"]
+                if lecture.get("start_time"): lecture["start_time"] = str(lecture["start_time"])
+                if lecture.get("end_time"): lecture["end_time"] = str(lecture["end_time"])
+
+                cur.execute(
+                    """
+                    SELECT 
+                        COUNT(id) as total_marked,
+                        SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) as total_present,
+                        SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as total_absent
+                    FROM attendance
+                    WHERE timetable_id = %s AND DATE(marked_at) = %s
+                    """,
+                    (lecture["id"], today),
+                )
+                stats = cur.fetchone()
+                if stats:
+                    lecture["attendance_stats"] = {
+                        "total_marked": stats["total_marked"] or 0,
+                        "total_present": stats["total_present"] or 0,
+                        "total_absent": stats["total_absent"] or 0,
+                    }
+                else:
+                    lecture["attendance_stats"] = {"total_marked": 0, "total_present": 0, "total_absent": 0}
+                
+                return success({"lecture": lecture})
+
+            cur.execute(
+                query + "WHERE ls.lecturer_index = %s AND t.day_of_week = %s AND t.start_time > %s ORDER BY t.start_time ASC LIMIT 1",
+                (lecturer_index, day, time_now),
+            )
+            next_lecture = cur.fetchone()
+
+    if next_lecture:
+        next_lecture = dict(next_lecture)
+        next_lecture["isLive"] = False
+        next_lecture["course_name"] = next_lecture["subject_name"]
+        next_lecture["course_id"] = next_lecture["subject_id"]
+        if next_lecture.get("start_time"): next_lecture["start_time"] = str(next_lecture["start_time"])
+        if next_lecture.get("end_time"): next_lecture["end_time"] = str(next_lecture["end_time"])
+        return success({"lecture": next_lecture})
+
+    return success({"lecture": None, "message": "No more lectures today"})
