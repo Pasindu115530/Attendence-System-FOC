@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
   headerRightImage: {
     position: 'absolute',
     right: -48,
-    bottom: -10,
+    bottom: -30,
     top: 20,
     width: '75%',
     height: '100%',
