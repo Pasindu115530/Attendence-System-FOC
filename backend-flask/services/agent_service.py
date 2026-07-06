@@ -347,6 +347,7 @@ def remove_subject_assignment(assignment_id: int) -> dict:
 
 def auto_schedule_timetable_tool() -> dict:
     """Automatically schedules all assigned subjects avoiding clashes. This will clear the existing timetable."""
+    import random
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -356,41 +357,71 @@ def auto_schedule_timetable_tool() -> dict:
                 if not classroom_ids:
                     return {"error": "No classrooms available to schedule."}
 
+                cur.execute("SELECT DISTINCT subject_id FROM batch_subjects")
+                subjects = [r['subject_id'] for r in cur.fetchall()]
+
                 cur.execute("SELECT subject_id, batch_year FROM batch_subjects")
-                assignments = cur.fetchall()
+                batch_assignments = cur.fetchall()
+                subject_batches = {}
+                for r in batch_assignments:
+                    subject_batches.setdefault(r['subject_id'], []).append(r['batch_year'])
+
+                cur.execute("SELECT subject_id, lecturer_index FROM lecturer_subjects")
+                lecturer_assignments = cur.fetchall()
+                subject_lecturers = {}
+                for r in lecturer_assignments:
+                    subject_lecturers.setdefault(r['subject_id'], []).append(r['lecturer_index'])
 
                 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
                 slots = [("08:00:00", "10:00:00"), ("10:00:00", "12:00:00"), ("13:00:00", "15:00:00"), ("15:00:00", "17:00:00")]
 
-                available_classrooms = {}
-                for day in days:
-                    for i, slot in enumerate(slots):
-                        available_classrooms[(day, i)] = list(classroom_ids)
-                
                 batch_busy = {}
+                lecturer_busy = {}
+                classroom_busy = {}
+
                 inserts = []
                 
-                for assign in assignments:
-                    subject_id = assign['subject_id']
-                    batch_year = assign['batch_year']
+                for subject_id in subjects:
+                    batches = subject_batches.get(subject_id, [])
+                    lecturers = subject_lecturers.get(subject_id, [])
                     
                     scheduled = False
-                    for day in days:
+                    
+                    day_indices = list(range(len(days)))
+                    random.shuffle(day_indices)
+                    slot_indices = list(range(len(slots)))
+                    random.shuffle(slot_indices)
+                    
+                    for di in day_indices:
                         if scheduled: break
-                        for i, slot in enumerate(slots):
-                            if not batch_busy.get((batch_year, day, i), False):
-                                rooms = available_classrooms[(day, i)]
-                                if rooms:
-                                    room_id = rooms.pop(0) 
-                                    batch_busy[(batch_year, day, i)] = True
-                                    start_t, end_t = slot
-                                    inserts.append((subject_id, room_id, day, start_t, end_t))
-                                    scheduled = True
-                                    break
+                        day = days[di]
+                        for si in slot_indices:
+                            slot = slots[si]
+                            
+                            if any(batch_busy.get((by, day, si), False) for by in batches):
+                                continue
+                            
+                            if any(lecturer_busy.get((li, day, si), False) for li in lecturers):
+                                continue
+                            
+                            free_rooms = [rid for rid in classroom_ids if not classroom_busy.get((rid, day, si), False)]
+                            if free_rooms:
+                                room_id = random.choice(free_rooms)
+                                
+                                for by in batches:
+                                    batch_busy[(by, day, si)] = True
+                                for li in lecturers:
+                                    lecturer_busy[(li, day, si)] = True
+                                classroom_busy[(room_id, day, si)] = True
+                                
+                                start_t, end_t = slot
+                                inserts.append((subject_id, room_id, day, start_t, end_t))
+                                scheduled = True
+                                break
                     
                     if not scheduled:
                         conn.rollback()
-                        return {"error": f"Not enough slots or classrooms to schedule subject ID {subject_id} for batch {batch_year}."}
+                        return {"error": f"Not enough slots or classrooms to schedule subject ID {subject_id}."}
 
                 if inserts:
                     from psycopg2.extras import execute_values
@@ -406,6 +437,52 @@ def auto_schedule_timetable_tool() -> dict:
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
+
+def get_lecturers_tool() -> list:
+    """Get all users with the Lecturer role."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT index_number AS user_id, registration_number, full_name, department_id FROM users WHERE role = 'Lecturer' ORDER BY index_number ASC")
+            rows = cur.fetchall()
+    return serialize_list([dict(r) for r in rows])
+
+def get_lecturer_subjects_tool(lecturer_index: str) -> list:
+    """Get all subjects assigned to a specific lecturer."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT s.id, s.subject_code, s.subject_name
+                FROM subjects s
+                JOIN lecturer_subjects ls ON s.id = ls.subject_id
+                WHERE ls.lecturer_index = %s
+                ORDER BY s.subject_name ASC
+                """,
+                (lecturer_index,)
+            )
+            rows = cur.fetchall()
+    return serialize_list([dict(r) for r in rows])
+
+def assign_lecturer_subject_tool(lecturer_index: str, subject_ids: list) -> dict:
+    """Assign subjects to a lecturer, clearing previous assignments."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("DELETE FROM lecturer_subjects WHERE lecturer_index = %s", (lecturer_index,))
+                if subject_ids:
+                    unique_sids = list(set(subject_ids))
+                    args = [(lecturer_index, sid) for sid in unique_sids]
+                    args_str = ",".join(["(%s, %s)"] * len(unique_sids))
+                    flat_args = [item for pair in args for item in pair]
+                    cur.execute(
+                        f"INSERT INTO lecturer_subjects (lecturer_index, subject_id) VALUES {args_str}",
+                        flat_args
+                    )
+                conn.commit()
+                return {"success": True, "message": "Subjects assigned successfully."}
+            except Exception as e:
+                conn.rollback()
+                return {"error": str(e)}
 
 def schedule_timetable(subject_id: int, classroom_id: int, day_of_week: str, start_time: str, end_time: str) -> dict:
     """Add a new timetable/lecture slot for a subject in a classroom."""
@@ -467,6 +544,8 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 "Present results as clean, concise markdown tables or lists. "
                 "IMPORTANT: You CAN retrieve the lecture timetable filtered by day of the week, batch year, and department by using the get_timetable_schedule tool. "
                 "You CAN also view subjects assigned to a batch using get_assigned_subjects_for_batch. "
+                "You CAN get lecturers and their assigned subjects using get_lecturers_tool and get_lecturer_subjects_tool. "
+                "You CAN assign subjects to lecturers using assign_lecturer_subject_tool. "
                 "You CAN automatically auto-schedule the timetable by using auto_schedule_timetable_tool. WARNING: this overwrites the current schedule."
             ),
             tools=[
@@ -495,7 +574,10 @@ def run_attendance_agent(user_message: str, chat_history: list = None) -> str:
                 auto_schedule_timetable_tool,
                 schedule_timetable,
                 get_all_departments,
-                get_all_batches
+                get_all_batches,
+                get_lecturers_tool,
+                get_lecturer_subjects_tool,
+                assign_lecturer_subject_tool
             ]
         )
 
