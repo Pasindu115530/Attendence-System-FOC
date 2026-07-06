@@ -38,48 +38,39 @@ def get_dashboard():
             if batch_year:
                 query += f" JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = {int(batch_year)} "
 
-            # Live lecture?
             cur.execute(
-                query + "WHERE t.day_of_week = %s AND %s BETWEEN t.start_time AND t.end_time LIMIT 1",
+                query + "WHERE t.day_of_week = %s AND t.end_time >= %s ORDER BY t.start_time ASC",
                 (day, time_now),
             )
-            lecture = cur.fetchone()
-
-            if lecture:
-                lecture = dict(lecture)
-                lecture["isLive"] = True
-                # Alias subject_name to course_name so UI doesn't completely break before we patch it
-                lecture["course_name"] = lecture["subject_name"] 
-                lecture["course_id"] = lecture["subject_id"]
-                if student_id:
+            lectures = []
+            for r in cur.fetchall():
+                lec = dict(r)
+                if lec.get("start_time"): lec["start_time"] = str(lec["start_time"])
+                if lec.get("end_time"): lec["end_time"] = str(lec["end_time"])
+                lec["course_name"] = lec.get("subject_name")
+                lec["course_id"] = lec["subject_id"]
+                
+                lec_start = lec["start_time"]
+                lec_end = lec["end_time"]
+                is_live = lec_start <= time_now <= lec_end
+                lec["isLive"] = is_live
+                
+                if is_live and student_id:
                     cur.execute(
                         """
                         SELECT id FROM attendance
                         WHERE index_number = %s AND timetable_id = %s AND DATE(marked_at) = %s
                         LIMIT 1
                         """,
-                        (student_id, lecture["id"], today),
+                        (student_id, lec["id"], today),
                     )
-                    lecture["hasMarked"] = cur.fetchone() is not None
+                    lec["hasMarked"] = cur.fetchone() is not None
                 else:
-                    lecture["hasMarked"] = False
-                return success({"lecture": lecture})
+                    lec["hasMarked"] = False
+                    
+                lectures.append(lec)
 
-            # Next upcoming lecture today
-            cur.execute(
-                query + "WHERE t.day_of_week = %s AND t.start_time > %s ORDER BY t.start_time ASC LIMIT 1",
-                (day, time_now),
-            )
-            next_lecture = cur.fetchone()
-
-    if next_lecture:
-        next_lecture = dict(next_lecture)
-        next_lecture["isLive"] = False
-        next_lecture["course_name"] = next_lecture["subject_name"]
-        next_lecture["course_id"] = next_lecture["subject_id"]
-        return success({"lecture": next_lecture})
-
-    return success({"lecture": None, "message": "No more lectures today"})
+            return success({"lectures": lectures})
 
 
 @dashboard_bp.post("/get_admin_dashboard")

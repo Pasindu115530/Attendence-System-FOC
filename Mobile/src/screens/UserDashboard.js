@@ -31,7 +31,7 @@ export default function UserDashboard({ route, navigation }) {
   const [activeTab, setActiveTab] = useState('home'); // 'home', 'settings', 'search', 'menu'
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  const [lecture, setLecture] = useState(null);
+  const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const [userData, setUserData] = useState(user || { user_id, full_name: '', dept_id: 'Computing' });
@@ -118,7 +118,7 @@ export default function UserDashboard({ route, navigation }) {
   const fetchDashboard = async () => {
     try {
       const res = await post('/get_dashboard', { user_id });
-      if (res.status === 'success') setLecture(res.data.lecture);
+      if (res.status === 'success') setLectures(res.data.lectures || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -137,7 +137,7 @@ export default function UserDashboard({ route, navigation }) {
     }
   };
 
-  const handleMarkAttendance = async () => {
+  const handleMarkAttendance = async (currentLecture) => {
     setMarking(true);
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -147,8 +147,8 @@ export default function UserDashboard({ route, navigation }) {
 
       const res = await post('/mark_attendance', {
         user_id,
-        course_id: lecture.course_id,
-        timetable_id: lecture.id,
+        course_id: currentLecture.course_id,
+        timetable_id: currentLecture.id,
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       });
@@ -376,54 +376,56 @@ export default function UserDashboard({ route, navigation }) {
               <View style={styles.homeContentPadding}>
                 <Text style={styles.tabSectionTitle}>Today's Schedule</Text>
 
-                {lecture ? (
-                  <View style={[styles.lectureCard, lecture.isLive && styles.lectureCardLive]}>
-                    <View style={styles.cardHeaderRow}>
-                      <View style={[styles.badge, lecture.isLive ? styles.badgeLive : styles.badgeUpcoming]}>
-                        <View style={[styles.badgeDot, { backgroundColor: lecture.isLive ? '#35A7C4' : '#d97706' }]} />
-                        <Text style={[styles.badgeText, { color: lecture.isLive ? '#35A7C4' : '#92400e' }]}>
-                          {lecture.isLive ? 'LIVE NOW' : 'UPCOMING'}
-                        </Text>
-                      </View>
-                      <Text style={styles.cardTime}>{lecture.start_time?.substring(0, 5)} - {lecture.end_time?.substring(0, 5)}</Text>
-                    </View>
-
-                    <Text style={styles.cardCourseName}>{lecture.course_name}</Text>
-                    
-                    <View style={styles.cardInfoRow}>
-                      <View style={styles.cardPill}>
-                        <MaterialCommunityIcons name="map-marker" size={14} color="#35A7C4" />
-                        <Text style={styles.cardPillText}>{lecture.room_name}</Text>
-                      </View>
-                    </View>
-
-                    {lecture.isLive && (
-                      lecture.hasMarked ? (
-                        <View style={styles.markedBtn}>
-                          <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
-                          <Text style={styles.markedBtnText}>Attendance Marked</Text>
+                {lectures.length > 0 ? (
+                  lectures.map((lectureItem, index) => (
+                    <View key={index} style={[styles.lectureCard, lectureItem.isLive && styles.lectureCardLive, { marginBottom: 16 }]}>
+                      <View style={styles.cardHeaderRow}>
+                        <View style={[styles.badge, lectureItem.isLive ? styles.badgeLive : styles.badgeUpcoming]}>
+                          <View style={[styles.badgeDot, { backgroundColor: lectureItem.isLive ? '#35A7C4' : '#d97706' }]} />
+                          <Text style={[styles.badgeText, { color: lectureItem.isLive ? '#35A7C4' : '#92400e' }]}>
+                            {lectureItem.isLive ? 'LIVE NOW' : 'UPCOMING'}
+                          </Text>
                         </View>
-                      ) : (
-                        <View style={styles.submitButtonShadowContainer}>
-                          <TouchableOpacity 
-                            style={styles.submitButton} 
-                            onPress={handleMarkAttendance}
-                            disabled={marking}
-                            activeOpacity={0.8}
-                          >
-                            {marking ? (
-                              <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <MaterialCommunityIcons name="map-marker-radius" size={20} color="#fff" style={{ marginRight: 6 }} />
-                                <Text style={styles.submitButtonText}>Mark Attendance</Text>
-                              </View>
-                            )}
-                          </TouchableOpacity>
+                        <Text style={styles.cardTime}>{lectureItem.start_time?.substring(0, 5)} - {lectureItem.end_time?.substring(0, 5)}</Text>
+                      </View>
+
+                      <Text style={styles.cardCourseName}>{lectureItem.course_name}</Text>
+                      
+                      <View style={styles.cardInfoRow}>
+                        <View style={styles.cardPill}>
+                          <MaterialCommunityIcons name="map-marker" size={14} color="#35A7C4" />
+                          <Text style={styles.cardPillText}>{lectureItem.room_name}</Text>
                         </View>
-                      )
-                    )}
-                  </View>
+                      </View>
+
+                      {lectureItem.isLive && (
+                        lectureItem.hasMarked ? (
+                          <View style={styles.markedBtn}>
+                            <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
+                            <Text style={styles.markedBtnText}>Attendance Marked</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.submitButtonShadowContainer}>
+                            <TouchableOpacity 
+                              style={styles.submitButton} 
+                              onPress={() => handleMarkAttendance(lectureItem)}
+                              disabled={marking}
+                              activeOpacity={0.8}
+                            >
+                              {marking ? (
+                                <ActivityIndicator color="#fff" size="small" />
+                              ) : (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                  <MaterialCommunityIcons name="map-marker-radius" size={20} color="#fff" style={{ marginRight: 6 }} />
+                                  <Text style={styles.submitButtonText}>Mark Attendance</Text>
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        )
+                      )}
+                    </View>
+                  ))
                 ) : (
                   <View style={styles.emptyStateCard}>
                     <View style={styles.emptyIconCircle}>
