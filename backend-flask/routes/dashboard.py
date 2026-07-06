@@ -38,21 +38,39 @@ def get_dashboard():
             if batch_year:
                 query += f" JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = {int(batch_year)} "
 
-            cur.execute(
-                query + "WHERE t.day_of_week = %s AND t.end_time >= %s ORDER BY t.start_time ASC",
-                (day, time_now),
-            )
-            lectures = []
-            for r in cur.fetchall():
+            cur.execute(query)
+            all_lectures = cur.fetchall()
+            
+            day_map = {
+                "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+                "Friday": 4, "Saturday": 5, "Sunday": 6
+            }
+            current_day_idx = day_map.get(day, 0)
+            
+            valid_lectures = []
+            for r in all_lectures:
                 lec = dict(r)
-                if lec.get("start_time"): lec["start_time"] = str(lec["start_time"])
-                if lec.get("end_time"): lec["end_time"] = str(lec["end_time"])
+                lec_day_idx = day_map.get(lec.get("day_of_week", ""), 0)
+                lec_start = str(lec.get("start_time", ""))
+                lec_end = str(lec.get("end_time", ""))
+                
+                days_until = (lec_day_idx - current_day_idx + 7) % 7
+                if days_until == 0 and lec_end < time_now:
+                    days_until = 7
+                    
+                lec["days_until"] = days_until
+                valid_lectures.append(lec)
+                
+            valid_lectures.sort(key=lambda x: (x["days_until"], str(x["start_time"])))
+            
+            lectures = []
+            for lec in valid_lectures[:10]:  # Limit to next 10 lectures
+                lec["start_time"] = str(lec["start_time"])
+                lec["end_time"] = str(lec["end_time"])
                 lec["course_name"] = lec.get("subject_name")
                 lec["course_id"] = lec["subject_id"]
                 
-                lec_start = lec["start_time"]
-                lec_end = lec["end_time"]
-                is_live = lec_start <= time_now <= lec_end
+                is_live = (lec["days_until"] == 0) and (lec["start_time"] <= time_now <= lec["end_time"])
                 lec["isLive"] = is_live
                 
                 if is_live and student_id:
@@ -68,8 +86,9 @@ def get_dashboard():
                 else:
                     lec["hasMarked"] = False
                     
+                del lec["days_until"]
                 lectures.append(lec)
-
+                
             return success({"lectures": lectures})
 
 

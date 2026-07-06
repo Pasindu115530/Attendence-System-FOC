@@ -374,7 +374,7 @@ export default function UserDashboard({ route, navigation }) {
 
               {/* Today's Schedule Card / Banners */}
               <View style={styles.homeContentPadding}>
-                <Text style={styles.tabSectionTitle}>Today's Schedule</Text>
+                <Text style={styles.tabSectionTitle}>Upcoming Schedule</Text>
 
                 {lectures.length > 0 ? (
                   lectures.map((lectureItem, index) => (
@@ -386,7 +386,10 @@ export default function UserDashboard({ route, navigation }) {
                             {lectureItem.isLive ? 'LIVE NOW' : 'UPCOMING'}
                           </Text>
                         </View>
-                        <Text style={styles.cardTime}>{lectureItem.start_time?.substring(0, 5)} - {lectureItem.end_time?.substring(0, 5)}</Text>
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text style={styles.cardTime}>{lectureItem.start_time?.substring(0, 5)} - {lectureItem.end_time?.substring(0, 5)}</Text>
+                          <Text style={{ fontSize: 12, color: '#7C8BA1', marginTop: 2 }}>{lectureItem.day_of_week}</Text>
+                        </View>
                       </View>
 
                       <Text style={styles.cardCourseName}>{lectureItem.course_name}</Text>
