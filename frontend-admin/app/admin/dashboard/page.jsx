@@ -32,13 +32,7 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  const now = new Date();
-  const liveLectures = lectures.filter(l => {
-    const start = new Date(`2000-01-01T${l.start_time}`);
-    const end   = new Date(`2000-01-01T${l.end_time}`);
-    const cur   = new Date(`2000-01-01T${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`);
-    return cur >= start && cur <= end;
-  });
+  const liveLectures = lectures.filter(l => l.isLive);
 
   const chartData = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
