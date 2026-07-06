@@ -562,6 +562,24 @@ export default function AdminDashboard({ navigation }) {
                 </View>
               </TouchableOpacity>
 
+              {/* Assign Lecturers */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('AssignLecturers')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="teach" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Assign Lecturers</Text>
+                  <Text style={styles.actionDesc}>Assign subjects taught by lecturers</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
               {/* View Assignments */}
               <TouchableOpacity 
                 style={styles.actionCard} 
@@ -592,6 +610,36 @@ export default function AdminDashboard({ navigation }) {
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Text style={styles.actionTitle}>Manage Timetable</Text>
                   <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Generate Timetable */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={async () => {
+                  try {
+                    const res = await post('/auto_schedule_timetable', {});
+                    if (res.status === 'success') {
+                      Alert.alert('Success', res.message);
+                      fetchAdminData();
+                    } else {
+                      Alert.alert('Error', res.message || 'Failed to generate timetable');
+                    }
+                  } catch(e) {
+                    Alert.alert('Error', 'An error occurred while generating timetable');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="magic-staff" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Generate Timetable</Text>
+                  <Text style={styles.actionDesc}>Auto-schedule classes to avoid clashes</Text>
                 </View>
                 <View style={styles.chevronBg}>
                   <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />

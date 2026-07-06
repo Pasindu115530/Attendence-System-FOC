@@ -19,6 +19,7 @@ import AbsentUploader from './src/screens/AbsentUploader';
 import ChatScreen from './src/screens/ChatScreen';
 import ContactAdminScreen from './src/screens/ContactAdminScreen';
 import AssignSubjects from './src/screens/AssignSubjects';
+import AssignLecturers from './src/screens/AssignLecturers';
 import ManageTimetable from './src/screens/ManageTimetable';
 import ViewAssignedSubjects from './src/screens/ViewAssignedSubjects';
 import AdminAIChat from './src/screens/AdminAIChat';
@@ -53,6 +54,7 @@ export default function App() {
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
         <Stack.Screen name="ContactAdmin" component={ContactAdminScreen} />
         <Stack.Screen name="AssignSubjects" component={AssignSubjects} />
+        <Stack.Screen name="AssignLecturers" component={AssignLecturers} />
         <Stack.Screen name="ManageTimetable" component={ManageTimetable} />
         <Stack.Screen name="ViewAssignedSubjects" component={ViewAssignedSubjects} />
         <Stack.Screen name="AdminAIChat" component={AdminAIChat} />

@@ -461,8 +461,69 @@ def unassign_subject():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e), "error": str(e)}), 500
 
+@admin_bp.post("/get_lecturers")
+def get_lecturers():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT index_number AS user_id, registration_number, full_name, department_id
+                FROM users WHERE role = 'Lecturer' ORDER BY index_number ASC
+                """
+            )
+            lecturers = [dict(r) for r in cur.fetchall()]
+    return success({"lecturers": lecturers})
+
+
+@admin_bp.post("/get_lecturer_subjects")
+def get_lecturer_subjects():
+    data = request.get_json(force=True, silent=True) or {}
+    lecturer_index = data.get("lecturer_index")
+    if not lecturer_index:
+        return error("lecturer_index is required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT s.id, s.subject_code, s.subject_name,
+                       EXISTS(SELECT 1 FROM lecturer_subjects ls WHERE ls.subject_id = s.id AND ls.lecturer_index = %s) as assigned
+                FROM subjects s
+                ORDER BY s.subject_name ASC
+                """,
+                (lecturer_index,)
+            )
+            subjects = [dict(r) for r in cur.fetchall()]
+    return success({"subjects": subjects})
+
+
+@admin_bp.post("/assign_lecturer_subject")
+def assign_lecturer_subject():
+    data = request.get_json(force=True, silent=True) or {}
+    lecturer_index = data.get("lecturer_index")
+    subject_ids = data.get("subject_ids", [])
+
+    if not lecturer_index:
+        return error("lecturer_index is required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM lecturer_subjects WHERE lecturer_index = %s", (lecturer_index,))
+            if subject_ids:
+                unique_sids = list(set(subject_ids))
+                args = [(lecturer_index, sid) for sid in unique_sids]
+                args_str = ",".join(["(%s, %s)"] * len(unique_sids))
+                flat_args = [item for pair in args for item in pair]
+                cur.execute(
+                    f"INSERT INTO lecturer_subjects (lecturer_index, subject_id) VALUES {args_str}",
+                    flat_args
+                )
+        conn.commit()
+    return success({"message": "Subjects assigned successfully"})
+
 @admin_bp.post("/auto_schedule_timetable")
 def auto_schedule_timetable():
+    import random
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -475,46 +536,80 @@ def auto_schedule_timetable():
                 if not classroom_ids:
                     return error("No classrooms available to schedule.")
 
-                # 3. Get batch assignments
+                # 3. Get all unique subjects that need scheduling
+                cur.execute("SELECT DISTINCT subject_id FROM batch_subjects")
+                subjects = [r['subject_id'] for r in cur.fetchall()]
+
+                # 4. Get batches for each subject
                 cur.execute("SELECT subject_id, batch_year FROM batch_subjects")
-                assignments = cur.fetchall()
+                batch_assignments = cur.fetchall()
+                subject_batches = {}
+                for r in batch_assignments:
+                    subject_batches.setdefault(r['subject_id'], []).append(r['batch_year'])
+
+                # 5. Get lecturers for each subject
+                cur.execute("SELECT subject_id, lecturer_index FROM lecturer_subjects")
+                lecturer_assignments = cur.fetchall()
+                subject_lecturers = {}
+                for r in lecturer_assignments:
+                    subject_lecturers.setdefault(r['subject_id'], []).append(r['lecturer_index'])
 
                 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-                # Start and End time strings
                 slots = [("08:00:00", "10:00:00"), ("10:00:00", "12:00:00"), ("13:00:00", "15:00:00"), ("15:00:00", "17:00:00")]
 
-                # (day, slot_index) -> list of available classroom ids
-                available_classrooms = {}
-                for day in days:
-                    for i, slot in enumerate(slots):
-                        available_classrooms[(day, i)] = list(classroom_ids)
-                
-                # (batch_year, day, slot_index) -> True if busy
+                # Track busy states
                 batch_busy = {}
+                lecturer_busy = {}
+                classroom_busy = {} # (room_id, day, slot_index) -> True
 
                 inserts = []
                 
-                for assign in assignments:
-                    subject_id = assign['subject_id']
-                    batch_year = assign['batch_year']
+                for subject_id in subjects:
+                    batches = subject_batches.get(subject_id, [])
+                    lecturers = subject_lecturers.get(subject_id, [])
                     
                     scheduled = False
-                    for day in days:
+                    
+                    # Randomize days and slots
+                    day_indices = list(range(len(days)))
+                    random.shuffle(day_indices)
+                    slot_indices = list(range(len(slots)))
+                    random.shuffle(slot_indices)
+                    
+                    for di in day_indices:
                         if scheduled: break
-                        for i, slot in enumerate(slots):
-                            if not batch_busy.get((batch_year, day, i), False):
-                                rooms = available_classrooms[(day, i)]
-                                if rooms:
-                                    room_id = rooms.pop(0) 
-                                    batch_busy[(batch_year, day, i)] = True
-                                    start_t, end_t = slot
-                                    inserts.append((subject_id, room_id, day, start_t, end_t))
-                                    scheduled = True
-                                    break
+                        day = days[di]
+                        for si in slot_indices:
+                            slot = slots[si]
+                            
+                            # Check if batches are free
+                            if any(batch_busy.get((by, day, si), False) for by in batches):
+                                continue
+                            
+                            # Check if lecturers are free
+                            if any(lecturer_busy.get((li, day, si), False) for li in lecturers):
+                                continue
+                            
+                            # Find a free classroom (randomly pick one)
+                            free_rooms = [rid for rid in classroom_ids if not classroom_busy.get((rid, day, si), False)]
+                            if free_rooms:
+                                room_id = random.choice(free_rooms)
+                                
+                                # Mark busy
+                                for by in batches:
+                                    batch_busy[(by, day, si)] = True
+                                for li in lecturers:
+                                    lecturer_busy[(li, day, si)] = True
+                                classroom_busy[(room_id, day, si)] = True
+                                
+                                start_t, end_t = slot
+                                inserts.append((subject_id, room_id, day, start_t, end_t))
+                                scheduled = True
+                                break
                     
                     if not scheduled:
                         conn.rollback()
-                        return error(f"Not enough slots or classrooms to schedule subject ID {subject_id} for batch {batch_year}.")
+                        return error(f"Not enough slots or classrooms to schedule subject ID {subject_id}.")
 
                 if inserts:
                     from psycopg2.extras import execute_values
