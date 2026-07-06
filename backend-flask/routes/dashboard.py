@@ -49,14 +49,17 @@ def get_dashboard():
                 query = _LECTURE_QUERY
                 params = []
 
-                if batch_year:
+                if batch_year and department_id:
+                    query += " JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = %s AND bs.department_id = %s "
+                    params.extend([int(batch_year), department_id])
+                elif batch_year:
                     query += " JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = %s "
                     params.append(int(batch_year))
+                elif department_id:
+                    query += " JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.department_id = %s "
+                    params.append(department_id)
 
                 query += " WHERE 1=1 "
-                if department_id:
-                    query += " AND s.department_id = %s "
-                    params.append(department_id)
 
                 # Fetch only the current week's lectures using IN clause (indexed)
                 placeholders = ",".join(["%s"] * len(ordered_days))
