@@ -204,6 +204,19 @@ export default function LecturerDashboard({ route, navigation }) {
     return 'Good Evening';
   };
 
+  const getSplitName = () => {
+    const fullName = userData.full_name || user_id;
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length <= 1) {
+      return { line1: fullName, line2: '' };
+    }
+    const line2 = parts[parts.length - 1];
+    const line1 = parts.slice(0, parts.length - 1).join(' ');
+    return { line1, line2 };
+  };
+
+  const { line1, line2 } = getSplitName();
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -328,7 +341,10 @@ export default function LecturerDashboard({ route, navigation }) {
                   {/* Greeting & Name */}
                   <View style={styles.headerWelcomeSection}>
                     <Text style={styles.headerGreetingText}>{getGreeting()}</Text>
-                    <Text style={styles.headerStudentNameText}>{userData.full_name || user_id}</Text>
+                    <Text style={styles.headerStudentNameText}>{line1}</Text>
+                    {line2 ? (
+                      <Text style={styles.headerLastNameText}>{line2}</Text>
+                    ) : null}
                   </View>
 
                   {/* Digital Clock */}
@@ -832,7 +848,7 @@ const styles = StyleSheet.create({
   },
   headerRightImage: {
     position: 'absolute',
-    right: -68,
+    right: -48,
     bottom: -10,
     top: 20,
     width: '75%',
@@ -909,6 +925,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Bold',
     color: '#2C3A4E',
     marginTop: 4,
+    letterSpacing: -0.5,
+  },
+  headerLastNameText: {
+    fontSize: 25,
+    fontFamily: 'Outfit-Medium',
+    color: '#2C3A4E',
+    marginTop: -12,
     letterSpacing: -0.5,
   },
   headerClockSection: {
