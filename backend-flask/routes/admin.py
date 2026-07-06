@@ -167,6 +167,21 @@ def get_all_students():
     return success({"students": students})
 
 
+@admin_bp.post("/get_all_users")
+def get_all_users():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT index_number AS user_id, registration_number, full_name, nic, role, department_id, batch_year
+                FROM users ORDER BY role ASC, index_number ASC
+                """
+            )
+            users = [dict(r) for r in cur.fetchall()]
+    return success({"users": users})
+
+
+
 @admin_bp.post("/get_all_classrooms")
 def get_all_classrooms():
     with get_connection() as conn:

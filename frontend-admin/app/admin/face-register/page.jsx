@@ -4,8 +4,8 @@ import AdminLayout from '@/components/AdminLayout';
 import { apiPost, apiMultipart } from '@/lib/api';
 
 export default function FaceRegisterPage() {
-  const [students, setStudents] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Mode: 'upload' or 'camera'
@@ -26,18 +26,18 @@ export default function FaceRegisterPage() {
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    // Fetch students list
-    apiPost('get_all_students').then(res => {
+    // Fetch users list
+    apiPost('get_all_users').then(res => {
       if (res.status === 'success') {
-        const list = res.data?.students ?? [];
-        setStudents(list);
+        const list = res.data?.users ?? [];
+        setUsers(list);
 
-        // Check if student_id is passed in the URL query string
+        // Check if user_id is passed in the URL query string
         if (typeof window !== 'undefined') {
           const params = new URLSearchParams(window.location.search);
-          const studentId = params.get('student_id');
-          if (studentId && list.some(s => s.user_id === studentId)) {
-            setSelectedStudentId(studentId);
+          const userId = params.get('user_id');
+          if (userId && list.some(s => s.user_id === userId)) {
+            setSelectedUserId(userId);
           }
         }
       }
@@ -51,12 +51,12 @@ export default function FaceRegisterPage() {
 
   // Watch for mode changes to handle camera stream
   useEffect(() => {
-    if (mode === 'camera' && selectedStudentId) {
+    if (mode === 'camera' && selectedUserId) {
       startCamera();
     } else {
       stopCamera();
     }
-  }, [mode, selectedStudentId]);
+  }, [mode, selectedUserId]);
 
   const startCamera = async () => {
     stopCamera();
@@ -127,8 +127,8 @@ export default function FaceRegisterPage() {
     setError('');
     setSuccessMsg('');
 
-    if (!selectedStudentId) {
-      setError('Please select a student.');
+    if (!selectedUserId) {
+      setError('Please select a user.');
       return;
     }
 
@@ -149,14 +149,14 @@ export default function FaceRegisterPage() {
 
     setSubmitting(true);
     const formData = new FormData();
-    formData.append('user_id', selectedStudentId);
+    formData.append('user_id', selectedUserId);
     formData.append('image', fileToSend);
 
     const res = await apiMultipart('register-face', formData);
     setSubmitting(false);
 
     if (res.status === 'success') {
-      setSuccessMsg(`Face registered successfully for student ${selectedStudentId}!`);
+      setSuccessMsg(`Face registered successfully for user ${selectedUserId}!`);
       // Reset
       setImageFile(null);
       setCapturedBlob(null);
@@ -169,59 +169,59 @@ export default function FaceRegisterPage() {
     }
   };
 
-  const selectedStudent = students.find(s => s.user_id === selectedStudentId);
+  const selectedUser = users.find(s => s.user_id === selectedUserId);
 
   return (
     <AdminLayout>
       <div className="page-header">
         <div>
           <h1 className="page-title">Face Registration</h1>
-          <p className="page-subtitle">Register student face signatures into the AWS Rekognition collection</p>
+          <p className="page-subtitle">Register user face signatures into the AWS Rekognition collection</p>
         </div>
       </div>
 
       <div className="card-grid card-grid-2" style={{ gap: '1.5rem', alignItems: 'start' }}>
-        {/* Left Card: Select Student & Method */}
+        {/* Left Card: Select User & Method */}
         <div className="card">
-          <div className="card-title">👤 Select Student & Input Method</div>
+          <div className="card-title">👤 Select User & Input Method</div>
           
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label>Student</label>
+            <label>User</label>
             {loading ? (
-              <select disabled><option>Loading students list...</option></select>
+              <select disabled><option>Loading users list...</option></select>
             ) : (
               <select 
-                value={selectedStudentId} 
+                value={selectedUserId} 
                 onChange={e => {
-                  setSelectedStudentId(e.target.value);
+                  setSelectedUserId(e.target.value);
                   setPreviewUrl(null);
                   setCapturedBlob(null);
                   setImageFile(null);
                 }}
               >
-                <option value="">Select a student...</option>
-                {students.map(s => (
+                <option value="">Select a user...</option>
+                {users.map(s => (
                   <option key={s.user_id} value={s.user_id}>
-                    {s.full_name} ({s.user_id}) - {s.department_id}
+                    {s.full_name} ({s.user_id}) - {s.role} - {s.department_id}
                   </option>
                 ))}
               </select>
             )}
           </div>
 
-          {selectedStudentId && selectedStudent && (
+          {selectedUserId && selectedUser && (
             <div className="card" style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', padding: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Full Name</span>
-                <span style={{ fontWeight: 600 }}>{selectedStudent.full_name}</span>
+                <span style={{ fontWeight: 600 }}>{selectedUser.full_name}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>NIC</span>
-                <span style={{ fontFamily: 'monospace' }}>{selectedStudent.nic}</span>
+                <span style={{ fontFamily: 'monospace' }}>{selectedUser.nic}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Department</span>
-                <span className="badge badge-live">{selectedStudent.department_id}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Role</span>
+                <span className="badge badge-live">{selectedUser.role}</span>
               </div>
             </div>
           )}
@@ -234,7 +234,7 @@ export default function FaceRegisterPage() {
                 className={`btn btn-block ${mode === 'camera' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ flex: 1 }}
                 onClick={() => { setMode('camera'); setPreviewUrl(null); setCapturedBlob(null); }}
-                disabled={!selectedStudentId}
+                disabled={!selectedUserId}
               >
                 📷 Live Webcam
               </button>
@@ -243,14 +243,14 @@ export default function FaceRegisterPage() {
                 className={`btn btn-block ${mode === 'upload' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ flex: 1 }}
                 onClick={() => { setMode('upload'); setPreviewUrl(null); setCapturedBlob(null); }}
-                disabled={!selectedStudentId}
+                disabled={!selectedUserId}
               >
                 📁 Upload Photo
               </button>
             </div>
           </div>
 
-          {selectedStudentId && (
+          {selectedUserId && (
             <button 
               onClick={handleSubmit} 
               className="btn btn-primary btn-block" 
@@ -269,11 +269,11 @@ export default function FaceRegisterPage() {
           {error && <div className="alert alert-error" style={{ width: '100%', marginBottom: '1rem' }}>{error}</div>}
           {successMsg && <div className="alert alert-success" style={{ width: '100%', marginBottom: '1rem' }}>{successMsg}</div>}
 
-          {!selectedStudentId ? (
+          {!selectedUserId ? (
             <div className="empty-state">
               <div className="empty-state-icon">🛡️</div>
-              <h3>Select a student</h3>
-              <p>Please select a student on the left to start face registration</p>
+              <h3>Select a user</h3>
+              <p>Please select a user on the left to start face registration</p>
             </div>
           ) : (
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>

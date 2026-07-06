@@ -7,6 +7,7 @@ import { getUser, logout, isAdmin } from '@/lib/auth';
 const navItems = [
   { href: '/admin/dashboard',     icon: '⊞',  label: 'Dashboard' },
   { href: '/admin/students',      icon: '🎓',  label: 'Students' },
+  { href: '/admin/users',         icon: '👥',  label: 'Users' },
   { href: '/admin/courses',       icon: '📚',  label: 'Courses' },
   { href: '/admin/timetable',     icon: '📅',  label: 'Timetable' },
   { href: '/admin/face-register', icon: '🛡️',  label: 'Face Registration' },
