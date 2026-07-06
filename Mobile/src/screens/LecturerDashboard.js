@@ -253,12 +253,12 @@ export default function LecturerDashboard({ route, navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-      
+
       {/* Top Header Bar for non-home tabs */}
       {activeTab !== 'home' && (
         <View style={styles.topHeaderBar}>
-          <TouchableOpacity 
-            style={styles.topAvatarCircle} 
+          <TouchableOpacity
+            style={styles.topAvatarCircle}
             onPress={() => setActiveTab('settings')}
             activeOpacity={0.8}
           >
@@ -266,9 +266,9 @@ export default function LecturerDashboard({ route, navigation }) {
               <MaterialCommunityIcons name="account" size={24} color="#7C8BA1" />
             </View>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.topCloseSquare} 
+
+          <TouchableOpacity
+            style={styles.topCloseSquare}
             onPress={handleLogout}
             activeOpacity={0.8}
           >
@@ -277,7 +277,7 @@ export default function LecturerDashboard({ route, navigation }) {
         </View>
       )}
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           activeTab === 'home' && { paddingTop: 0 } // span edge-to-edge
@@ -286,17 +286,17 @@ export default function LecturerDashboard({ route, navigation }) {
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], width: '100%' }}>
-          
+
           {activeTab === 'home' && (
             <View style={{ width: '100%' }}>
               {/* Home Curved Header Block with Solid Green Field and Full-Opacity Right Image */}
               <View style={styles.headerContainer}>
                 {/* Right side cover image at full opacity */}
-                <Image 
-                  source={require('../../assets/lec-cover.png')} 
-                  style={styles.headerRightImage} 
+                <Image
+                  source={require('../../assets/lec-cover.png')}
+                  style={styles.headerRightImage}
                 />
-                
+
                 {/* Horizontal Gradient Overlay (Fades out to reveal image on the right) */}
                 <LinearGradient
                   colors={['#F3F7FD', 'rgba(243, 247, 253, 0.95)', 'rgba(243, 247, 253, 0.3)', 'transparent']}
@@ -306,8 +306,8 @@ export default function LecturerDashboard({ route, navigation }) {
                 >
                   {/* Embedded Top Row for Avatar & Logout */}
                   <View style={styles.headerTopBar}>
-                    <TouchableOpacity 
-                      style={styles.headerAvatarCircle} 
+                    <TouchableOpacity
+                      style={styles.headerAvatarCircle}
                       onPress={() => setActiveTab('settings')}
                       activeOpacity={0.8}
                     >
@@ -315,9 +315,9 @@ export default function LecturerDashboard({ route, navigation }) {
                         <MaterialCommunityIcons name="account" size={22} color="#35A7C4" />
                       </View>
                     </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={styles.headerCloseSquare} 
+
+                    <TouchableOpacity
+                      style={styles.headerCloseSquare}
                       onPress={handleLogout}
                       activeOpacity={0.8}
                     >
@@ -360,7 +360,7 @@ export default function LecturerDashboard({ route, navigation }) {
                     </View>
 
                     <Text style={styles.cardCourseName}>{lecture.course_name}</Text>
-                    
+
                     <View style={styles.cardInfoRow}>
                       <View style={styles.cardPill}>
                         <MaterialCommunityIcons name="map-marker" size={14} color="#35A7C4" />
@@ -397,8 +397,8 @@ export default function LecturerDashboard({ route, navigation }) {
 
                 {/* Quick Actions moved to Home */}
                 <Text style={[styles.tabSectionTitle, { marginTop: 24 }]}>Quick Actions</Text>
-                <TouchableOpacity 
-                  style={styles.quickActionCard} 
+                <TouchableOpacity
+                  style={styles.quickActionCard}
                   onPress={() => navigation.navigate('LecturerTimetable', { user_id })}
                   activeOpacity={0.7}
                 >
@@ -414,8 +414,8 @@ export default function LecturerDashboard({ route, navigation }) {
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                  style={styles.quickActionCard} 
+                <TouchableOpacity
+                  style={styles.quickActionCard}
                   onPress={() => navigation.navigate('LecturerReport', { user_id })}
                   activeOpacity={0.7}
                 >
@@ -468,18 +468,18 @@ export default function LecturerDashboard({ route, navigation }) {
               </View>
 
               {/* Buttons matching mockup */}
-              <TouchableOpacity 
-                style={styles.logoutBtn} 
-                onPress={handleOpenFaceRegister} 
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={handleOpenFaceRegister}
                 activeOpacity={0.8}
               >
                 <MaterialCommunityIcons name="face-recognition" size={20} color="#35A7C4" style={{ marginRight: 8 }} />
                 <Text style={[styles.logoutBtnText, { color: '#35A7C4' }]}>Register Face ID</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.logoutBtn} 
-                onPress={() => setIsPasswordModalOpen(true)} 
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={() => setIsPasswordModalOpen(true)}
                 activeOpacity={0.8}
               >
                 <MaterialCommunityIcons name="lock-reset" size={20} color="#35A7C4" style={{ marginRight: 8 }} />
@@ -524,8 +524,8 @@ export default function LecturerDashboard({ route, navigation }) {
               Position your face clearly within the frame
             </Text>
 
-            <TouchableOpacity 
-              style={styles.captureBtn} 
+            <TouchableOpacity
+              style={styles.captureBtn}
               onPress={captureAndRegisterFace}
               disabled={registeringFace}
             >
@@ -547,8 +547,8 @@ export default function LecturerDashboard({ route, navigation }) {
         onRequestClose={() => setIsPasswordModalOpen(false)}
       >
         <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.modalKeyboardContainer}
           >
             <View style={styles.modalContent}>
@@ -559,7 +559,7 @@ export default function LecturerDashboard({ route, navigation }) {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
+              <ScrollView
                 contentContainerStyle={styles.modalScroll}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
@@ -643,22 +643,22 @@ export default function LecturerDashboard({ route, navigation }) {
                 </View>
               </View>
             </View>
-            
+
             <Text style={styles.logoutModalTitle}>Confirm Logout</Text>
             <Text style={styles.logoutModalMessage}>Do you want to log out of your session?</Text>
-            
+
             <View style={styles.logoutActionRow}>
-              <TouchableOpacity 
-                style={styles.logoutCancelBtn} 
+              <TouchableOpacity
+                style={styles.logoutCancelBtn}
                 onPress={() => setIsLogoutModalOpen(false)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.logoutCancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <View style={styles.logoutConfirmBtnShadow}>
-                <TouchableOpacity 
-                  style={styles.logoutConfirmBtn} 
+                <TouchableOpacity
+                  style={styles.logoutConfirmBtn}
                   onPress={() => {
                     setIsLogoutModalOpen(false);
                     navigation.replace('Login', { autoFaceLogin: false });
@@ -674,7 +674,7 @@ export default function LecturerDashboard({ route, navigation }) {
       </Modal>
 
       {/* AI Chatbot FAB */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.fabButton}
         onPress={() => navigation.navigate('ChatScreen')}
         activeOpacity={0.9}
@@ -690,7 +690,7 @@ export default function LecturerDashboard({ route, navigation }) {
       {/* Custom Bottom Curved Tab Bar matching attached mockup */}
       <View style={styles.navBarContainer}>
         <View style={styles.navBar}>
-          
+
           {/* Absolute Sliding Active Indicator */}
           <Animated.View
             style={[
@@ -709,8 +709,8 @@ export default function LecturerDashboard({ route, navigation }) {
               <MaterialCommunityIcons
                 name={
                   activeTab === 'home' ? 'home' :
-                  activeTab === 'settings' ? 'cog' :
-                  activeTab === 'search' ? 'magnify' : 'apps'
+                    activeTab === 'settings' ? 'cog' :
+                      activeTab === 'search' ? 'magnify' : 'apps'
                 }
                 size={26}
                 color="#fff"
@@ -719,8 +719,8 @@ export default function LecturerDashboard({ route, navigation }) {
           </Animated.View>
 
           {/* Tab 1: Home */}
-          <TouchableOpacity 
-            style={styles.navItem} 
+          <TouchableOpacity
+            style={styles.navItem}
             onPress={() => setActiveTab('home')}
             activeOpacity={0.8}
           >
@@ -730,8 +730,8 @@ export default function LecturerDashboard({ route, navigation }) {
           </TouchableOpacity>
 
           {/* Tab 2: Settings */}
-          <TouchableOpacity 
-            style={styles.navItem} 
+          <TouchableOpacity
+            style={styles.navItem}
             onPress={() => setActiveTab('settings')}
             activeOpacity={0.8}
           >
@@ -747,17 +747,17 @@ export default function LecturerDashboard({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#ECF0F3',
   },
-  center: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#ECF0F3',
   },
-  
+
   // Top Header Row for non-home tabs
   topHeaderBar: {
     flexDirection: 'row',
@@ -807,7 +807,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
 
-  scrollContent: { 
+  scrollContent: {
     flexGrow: 1,
     paddingBottom: 120, // Extra padding to scroll past the absolute bottom nav bar
     alignItems: 'center',
@@ -1332,7 +1332,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FFFFFF',
   },
-  
+
   // AI Chatbot FAB
   fabButton: {
     position: 'absolute',
