@@ -55,17 +55,25 @@ export default function LecturerDashboard({ route, navigation }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   // Logout Confirmation Modal State
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleChangePassword = async () => {
     if (!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      Alert.alert("Error", "All fields are required");
+      showAlert("Error", "All fields are required", 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "New passwords do not match");
+      showAlert("Error", "New passwords do not match", 'error');
       return;
     }
     setChangingPassword(true);
@@ -76,17 +84,20 @@ export default function LecturerDashboard({ route, navigation }) {
         new_password: newPassword.trim(),
       });
       if (res.status === 'success') {
-        Alert.alert("Success", "Password changed successfully!");
         setIsPasswordModalOpen(false);
         setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        setShowOldPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+        showAlert("Success", "Password changed successfully!", 'success');
       } else {
-        Alert.alert("Error", res.message || "Failed to change password");
+        showAlert("Error", res.message || "Failed to change password", 'error');
       }
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "Could not connect to the server.");
+      showAlert("Error", "Could not connect to the server.", 'error');
     } finally {
       setChangingPassword(false);
     }
@@ -570,7 +581,18 @@ export default function LecturerDashboard({ route, navigation }) {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
-                <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)} style={styles.modalCloseBtn}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setIsPasswordModalOpen(false);
+                    setOldPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setShowOldPassword(false);
+                    setShowNewPassword(false);
+                    setShowConfirmPassword(false);
+                  }} 
+                  style={styles.modalCloseBtn}
+                >
                   <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
                 </TouchableOpacity>
               </View>
@@ -590,9 +612,20 @@ export default function LecturerDashboard({ route, navigation }) {
                       placeholderTextColor="#7C8BA1"
                       value={oldPassword}
                       onChangeText={setOldPassword}
-                      secureTextEntry={true}
+                      secureTextEntry={!showOldPassword}
                       autoCapitalize="none"
                     />
+                    <TouchableOpacity
+                      style={styles.eyeButton}
+                      onPress={() => setShowOldPassword(!showOldPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons
+                        name={showOldPassword ? "eye-outline" : "eye-off-outline"}
+                        size={22}
+                        color="#7C8BA1"
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
 
@@ -606,9 +639,20 @@ export default function LecturerDashboard({ route, navigation }) {
                       placeholderTextColor="#7C8BA1"
                       value={newPassword}
                       onChangeText={setNewPassword}
-                      secureTextEntry={true}
+                      secureTextEntry={!showNewPassword}
                       autoCapitalize="none"
                     />
+                    <TouchableOpacity
+                      style={styles.eyeButton}
+                      onPress={() => setShowNewPassword(!showNewPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons
+                        name={showNewPassword ? "eye-outline" : "eye-off-outline"}
+                        size={22}
+                        color="#7C8BA1"
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
 
@@ -622,9 +666,20 @@ export default function LecturerDashboard({ route, navigation }) {
                       placeholderTextColor="#7C8BA1"
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
-                      secureTextEntry={true}
+                      secureTextEntry={!showConfirmPassword}
                       autoCapitalize="none"
                     />
+                    <TouchableOpacity
+                      style={styles.eyeButton}
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons
+                        name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
+                        size={22}
+                        color="#7C8BA1"
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
 
@@ -685,6 +740,41 @@ export default function LecturerDashboard({ route, navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Styled Alert Modal Popup */}
+      <Modal
+        visible={alertConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, alertConfig.type === 'error' ? styles.alertIconOutlineError : styles.alertIconOutlineSuccess]}>
+                <View style={[styles.alertIconInner, alertConfig.type === 'error' ? styles.alertIconInnerError : styles.alertIconInnerSuccess]}>
+                  <MaterialCommunityIcons 
+                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"} 
+                    size={36} 
+                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"} 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{alertConfig.message}</Text>
+            
+            <TouchableOpacity 
+              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]} 
+              onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.alertOkBtnText}>OK</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -930,7 +1020,7 @@ const styles = StyleSheet.create({
   headerLastNameText: {
     fontSize: 25,
     fontFamily: 'Outfit-Medium',
-    color: '#2C3A4E',
+    color: '#566a86ff',
     marginTop: -12,
     letterSpacing: -0.5,
   },
@@ -1518,6 +1608,27 @@ const styles = StyleSheet.create({
   modalScroll: {
     paddingBottom: 10,
   },
+  modalMessageBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  modalMessageError: {
+    backgroundColor: '#FFEBEF',
+    borderColor: '#FFAEBF',
+  },
+  modalMessageSuccess: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  modalMessageText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    flex: 1,
+  },
   formGroup: {
     marginBottom: 16,
     width: '100%',
@@ -1558,6 +1669,11 @@ const styles = StyleSheet.create({
     color: '#2C3A4E',
     fontFamily: 'Outfit-Medium',
   },
+  eyeButton: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   // Primary Button wrappers
   submitButtonShadowContainer: {
@@ -1585,6 +1701,85 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Bold',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+
+  // Custom Alert Modal Styles
+  customAlertContent: {
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 300,
+    borderRadius: 24,
+  },
+  alertIconWrapper: {
+    marginBottom: 16,
+  },
+  alertIconOutline: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  alertIconOutlineError: {
+    borderColor: '#FFEBEF',
+    backgroundColor: '#FFEBEF',
+  },
+  alertIconOutlineSuccess: {
+    borderColor: '#ECFDF5',
+    backgroundColor: '#ECFDF5',
+  },
+  alertIconInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  alertModalTitle: {
+    fontSize: 18,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  alertOkBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  alertOkBtnError: {
+    backgroundColor: '#E11D48',
+    shadowColor: '#E11D48',
+  },
+  alertOkBtnSuccess: {
+    backgroundColor: '#35A7C4',
+    shadowColor: '#35A7C4',
+  },
+  alertOkBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
   },
 
   // Custom Logout Modal Styles
