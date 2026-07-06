@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,6 +43,16 @@ export default function ManageTimetable({ navigation }) {
   const [formStartTime, setFormStartTime] = useState('08:00');
   const [formEndTime, setFormEndTime] = useState('10:00');
   const [formClassroomId, setFormClassroomId] = useState('');
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+  const [confirmConfig, setConfirmConfig] = useState({ visible: false, title: '', message: '', onConfirm: () => {} });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
+
+  const showConfirm = (title, message, onConfirm) => {
+    setConfirmConfig({ visible: true, title, message, onConfirm });
+  };
 
   // Dropdown Generation
   const TIME_OPTIONS = [];
@@ -77,7 +88,7 @@ export default function ManageTimetable({ navigation }) {
       
     } catch (e) {
       console.log(e);
-      Alert.alert("Error", "Failed to load data.");
+      showAlert("Error", "Failed to load data.", 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -137,11 +148,11 @@ export default function ManageTimetable({ navigation }) {
 
   const handleAddTimetable = async () => {
     if (!formCourseId || !formClassroomId || !formDay || !formStartTime || !formEndTime) {
-      Alert.alert("Error", "Please fill all fields.");
+      showAlert("Error", "Please fill all fields.", 'error');
       return;
     }
     if (formStartTime >= formEndTime) {
-      Alert.alert("Error", "Start time must be before end time.");
+      showAlert("Error", "Start time must be before end time.", 'error');
       return;
     }
 
@@ -155,70 +166,61 @@ export default function ManageTimetable({ navigation }) {
         end_time: formEndTime
       });
       if (res.status === 'success') {
-        Alert.alert("Success", "Timetable entry added!");
         setFormCourseId('');
         setFormClassroomId('');
         fetchData();
+        showAlert("Success", "Timetable entry added!", 'success');
       } else {
-        Alert.alert("Error", res.message || "Failed to add.");
+        showAlert("Error", res.message || "Failed to add.", 'error');
       }
     } catch (e) {
-      Alert.alert("Error", "Connection error.");
+      showAlert("Error", "Connection error.", 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteTimetable = (id) => {
-    Alert.alert("Confirm Delete", "Are you sure you want to remove this timetable entry?", [
-      { text: "Cancel", style: "cancel" },
-      { 
-        text: "Delete", 
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const res = await post('/delete_timetable', { slot_id: id });
-            if (res.status === 'success') {
-              fetchData();
-            } else {
-              Alert.alert("Error", res.message || "Failed to delete.");
-            }
-          } catch (e) {
-            Alert.alert("Error", "Connection error.");
+    showConfirm(
+      "Confirm Delete",
+      "Are you sure you want to remove this timetable entry?",
+      async () => {
+        try {
+          const res = await post('/delete_timetable', { slot_id: id });
+          if (res.status === 'success') {
+            fetchData();
+            showAlert("Success", "Timetable entry removed successfully!", 'success');
+          } else {
+            showAlert("Error", res.message || "Failed to delete.", 'error');
           }
+        } catch (e) {
+          showAlert("Error", "Connection error.", 'error');
         }
       }
-    ]);
+    );
   };
 
   const handleAutoSchedule = () => {
-    Alert.alert(
+    showConfirm(
       "Confirm Auto-Schedule",
       "This will DELETE the current timetable and automatically schedule all assigned subjects for the semester. Are you sure?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Yes, Auto-Schedule", 
-          style: "destructive",
-          onPress: async () => {
-            setSubmitting(true);
-            try {
-              const res = await post('/auto_schedule_timetable', {});
-              if (res.status === 'success') {
-                Alert.alert("Success", res.data.message);
-                fetchData();
-              } else {
-                Alert.alert("Error", res.message || "Failed to auto-schedule.");
-              }
-            } catch (err) {
-              console.error(err);
-              Alert.alert("Error", "An unexpected error occurred.");
-            } finally {
-              setSubmitting(false);
-            }
+      async () => {
+        setSubmitting(true);
+        try {
+          const res = await post('/auto_schedule_timetable', {});
+          if (res.status === 'success') {
+            fetchData();
+            showAlert("Success", res.data?.message || "Auto-scheduled successfully!", 'success');
+          } else {
+            showAlert("Error", res.message || "Failed to auto-schedule.", 'error');
           }
+        } catch (err) {
+          console.error(err);
+          showAlert("Error", "An unexpected error occurred.", 'error');
+        } finally {
+          setSubmitting(false);
         }
-      ]
+      }
     );
   };
 
@@ -468,6 +470,90 @@ export default function ManageTimetable({ navigation }) {
 
         </ScrollView>
       </KeyboardAvoidingView>
+      {/* Custom Styled Confirmation Modal Popup */}
+      <Modal
+        visible={confirmConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, styles.alertIconOutlineError]}>
+                <View style={styles.alertIconInner}>
+                  <MaterialCommunityIcons 
+                    name="alert-circle" 
+                    size={36} 
+                    color="#E11D48" 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{confirmConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{confirmConfig.message}</Text>
+            
+            <View style={styles.confirmActionRow}>
+              <TouchableOpacity 
+                style={styles.confirmCancelBtn} 
+                onPress={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.confirmCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.confirmBtnShadow}>
+                <TouchableOpacity 
+                  style={styles.confirmBtn} 
+                  onPress={() => {
+                    setConfirmConfig(prev => ({ ...prev, visible: false }));
+                    confirmConfig.onConfirm();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmBtnText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Styled Alert Modal Popup */}
+      <Modal
+        visible={alertConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, alertConfig.type === 'error' ? styles.alertIconOutlineError : styles.alertIconOutlineSuccess]}>
+                <View style={[styles.alertIconInner, alertConfig.type === 'error' ? styles.alertIconInnerError : styles.alertIconInnerSuccess]}>
+                  <MaterialCommunityIcons 
+                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"} 
+                    size={36} 
+                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"} 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{alertConfig.message}</Text>
+            
+            <TouchableOpacity 
+              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]} 
+              onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.alertOkBtnText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -761,5 +847,160 @@ const styles = StyleSheet.create({
     color: '#7C8BA1',
     marginTop: 8,
     fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 28,
+    padding: 24,
+    maxHeight: '90%',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  customAlertContent: {
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 300,
+    borderRadius: 24,
+  },
+  alertIconWrapper: {
+    marginBottom: 16,
+  },
+  alertIconOutline: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  alertIconOutlineError: {
+    borderColor: '#FFEBEF',
+    backgroundColor: '#FFEBEF',
+  },
+  alertIconOutlineSuccess: {
+    borderColor: '#ECFDF5',
+    backgroundColor: '#ECFDF5',
+  },
+  alertIconInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  alertIconInnerError: {
+    backgroundColor: 'rgba(225, 29, 72, 0.08)',
+  },
+  alertIconInnerSuccess: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  alertModalTitle: {
+    fontSize: 18,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  alertOkBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  alertOkBtnError: {
+    backgroundColor: '#E11D48',
+    shadowColor: '#E11D48',
+  },
+  alertOkBtnSuccess: {
+    backgroundColor: '#35A7C4',
+    shadowColor: '#35A7C4',
+  },
+  alertOkBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
+  },
+  confirmActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  confirmCancelBtnText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
+  },
+  confirmBtnShadow: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#FFEBEF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  confirmBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#35A7C4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
   },
 });

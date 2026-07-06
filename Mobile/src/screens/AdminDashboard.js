@@ -47,9 +47,14 @@ export default function AdminDashboard({ navigation }) {
   const [departments, setDepartments] = useState([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+  const [confirmConfig, setConfirmConfig] = useState({ visible: false, title: '', message: '', onConfirm: () => {} });
 
   const showAlert = (title, message, type = 'error') => {
     setAlertConfig({ visible: true, title, message, type });
+  };
+
+  const showConfirm = (title, message, onConfirm) => {
+    setConfirmConfig({ visible: true, title, message, onConfirm });
   };
 
   // Custom Logout Confirmation Modal State
@@ -83,7 +88,7 @@ export default function AdminDashboard({ navigation }) {
       setOverlayMode('register');
       setIsFaceOverlayOpen(true);
     } else {
-      Alert.alert("Permission Denied", "Camera permission is required.");
+      showAlert("Permission Denied", "Camera permission is required.", 'error');
     }
   };
 
@@ -93,7 +98,7 @@ export default function AdminDashboard({ navigation }) {
       setOverlayMode('reset');
       setIsFaceOverlayOpen(true);
     } else {
-      Alert.alert("Permission Denied", "Camera permission is required.");
+      showAlert("Permission Denied", "Camera permission is required.", 'error');
     }
   };
 
@@ -122,46 +127,39 @@ export default function AdminDashboard({ navigation }) {
       if (overlayMode === 'register') {
         const res = await upload('/register-face', formData);
         if (res.status === 'success') {
-          Alert.alert("Success", "Admin Face registered successfully!");
           setIsFaceOverlayOpen(false);
+          showAlert("Success", "Admin Face registered successfully!", 'success');
         } else {
-          Alert.alert("Failed", res.message || "Failed to register face.");
+          showAlert("Failed", res.message || "Failed to register face.", 'error');
         }
       } else if (overlayMode === 'reset') {
         const faceRes = await upload('/verify-face', formData);
         if (faceRes.status === "success" && faceRes.data?.role === 'Admin') {
           setIsFaceOverlayOpen(false);
-          Alert.alert(
+          showConfirm(
             "Reset Semester Data",
             "Identity verified! Are you absolutely sure you want to permanently delete ALL batch subject assignments, timetables, and student attendance records?",
-            [
-              { text: "Cancel", style: "cancel" },
-              { 
-                text: "Yes, Reset Everything", 
-                style: "destructive",
-                onPress: async () => {
-                  try {
-                    const res = await post('/reset_semester', {});
-                    if (res.status === 'success') {
-                      Alert.alert("Success", "Semester data has been wiped.");
-                      fetchAdminData();
-                    } else {
-                      Alert.alert("Error", res.message || "Failed to reset");
-                    }
-                  } catch (err) {
-                    Alert.alert("Error", "Could not connect to the server.");
-                  }
+            async () => {
+              try {
+                const res = await post('/reset_semester', {});
+                if (res.status === 'success') {
+                  fetchAdminData();
+                  showAlert("Success", "Semester data has been wiped.", 'success');
+                } else {
+                  showAlert("Error", res.message || "Failed to reset", 'error');
                 }
+              } catch (err) {
+                showAlert("Error", "Could not connect to the server.", 'error');
               }
-            ]
+            }
           );
         } else {
-          Alert.alert("Verification Failed", "Could not verify your identity as an Admin.");
+          showAlert("Verification Failed", "Could not verify your identity as an Admin.", 'error');
         }
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "An error occurred with the camera.");
+      showAlert("Error", "An error occurred with the camera.", 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -205,7 +203,7 @@ export default function AdminDashboard({ navigation }) {
 
   const fetchFilteredReport = async () => {
     if (!reportFilters.dept_id || !reportFilters.course_id || !reportFilters.batch) {
-      Alert.alert("Error", "Please select Department, Batch and Course");
+      showAlert("Error", "Please select Department, Batch and Course", 'error');
       return;
     }
     setReportLoading(true);
@@ -215,13 +213,13 @@ export default function AdminDashboard({ navigation }) {
       if (res.status === 'success') {
         setReportResults(res.data.report || []);
         if (res.data.report?.length === 0) {
-          Alert.alert("Notice", "No records found for the selected filters.");
+          showAlert("Notice", "No records found for the selected filters.", 'error');
         }
       } else {
-        Alert.alert("Notice", res.message || "No records found");
+        showAlert("Notice", res.message || "No records found", 'error');
       }
     } catch (e) {
-      Alert.alert("Error", "Failed to fetch report.");
+      showAlert("Error", "Failed to fetch report.", 'error');
     } finally {
       setReportLoading(false);
     }
@@ -246,15 +244,15 @@ export default function AdminDashboard({ navigation }) {
       
       const uploadRes = await upload('/upload_students', formData);
       if (uploadRes.status === 'success') {
-        Alert.alert("Success", uploadRes.message);
         setIsModalOpen(false);
         fetchAdminData();
+        showAlert("Success", uploadRes.message, 'success');
       } else {
-        Alert.alert("Error", uploadRes.message || "Failed to upload file");
+        showAlert("Error", uploadRes.message || "Failed to upload file", 'error');
       }
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "An error occurred during file upload");
+      showAlert("Error", "An error occurred during file upload", 'error');
     } finally {
       setUploadingExcel(false);
     }
@@ -321,7 +319,7 @@ export default function AdminDashboard({ navigation }) {
       }
     } catch (error) {
       console.error("Fetch Error: ", error);
-      Alert.alert("Error", "Could not connect to the server.");
+      showAlert("Error", "Could not connect to the server.", 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -619,18 +617,24 @@ export default function AdminDashboard({ navigation }) {
               {/* Generate Timetable */}
               <TouchableOpacity 
                 style={styles.actionCard} 
-                onPress={async () => {
-                  try {
-                    const res = await post('/auto_schedule_timetable', {});
-                    if (res.status === 'success') {
-                      Alert.alert('Success', res.message);
-                      fetchAdminData();
-                    } else {
-                      Alert.alert('Error', res.message || 'Failed to generate timetable');
+                onPress={() => {
+                  showConfirm(
+                    "Generate Timetable",
+                    "This will DELETE the current timetable and automatically schedule all assigned subjects for the semester. Are you sure?",
+                    async () => {
+                      try {
+                        const res = await post('/auto_schedule_timetable', {});
+                        if (res.status === 'success') {
+                          fetchAdminData();
+                          showAlert('Success', res.message || 'Timetable generated successfully!', 'success');
+                        } else {
+                          showAlert('Error', res.message || 'Failed to generate timetable', 'error');
+                        }
+                      } catch(e) {
+                        showAlert('Error', 'An error occurred while generating timetable', 'error');
+                      }
                     }
-                  } catch(e) {
-                    Alert.alert('Error', 'An error occurred while generating timetable');
-                  }
+                  );
                 }}
                 activeOpacity={0.7}
               >
@@ -1246,6 +1250,56 @@ export default function AdminDashboard({ navigation }) {
             >
               <Text style={styles.alertOkBtnText}>OK</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Styled Confirmation Modal Popup */}
+      <Modal
+        visible={confirmConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, styles.alertIconOutlineError]}>
+                <View style={styles.alertIconInner}>
+                  <MaterialCommunityIcons 
+                    name="alert-circle" 
+                    size={36} 
+                    color="#E11D48" 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{confirmConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{confirmConfig.message}</Text>
+            
+            <View style={styles.confirmActionRow}>
+              <TouchableOpacity 
+                style={styles.confirmCancelBtn} 
+                onPress={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.confirmCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.confirmBtnShadow}>
+                <TouchableOpacity 
+                  style={styles.confirmBtn} 
+                  onPress={() => {
+                    setConfirmConfig(prev => ({ ...prev, visible: false }));
+                    confirmConfig.onConfirm();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmBtnText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
@@ -2381,5 +2435,56 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 15,
     fontFamily: 'Outfit-Bold',
+  },
+  confirmActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  confirmCancelBtnText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
+  },
+  confirmBtnShadow: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#FFEBEF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  confirmBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#35A7C4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
   },
 });
