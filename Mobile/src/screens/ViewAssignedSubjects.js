@@ -10,7 +10,8 @@ import {
   Alert,
   Platform,
   RefreshControl,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +23,16 @@ export default function ViewAssignedSubjects({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [groupedAssignments, setGroupedAssignments] = useState({});
+  const [confirmConfig, setConfirmConfig] = useState({ visible: false, title: '', message: '', onConfirm: () => {} });
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showConfirm = (title, message, onConfirm) => {
+    setConfirmConfig({ visible: true, title, message, onConfirm });
+  };
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const fetchData = async () => {
     try {
@@ -42,11 +53,11 @@ export default function ViewAssignedSubjects({ navigation }) {
 
         setGroupedAssignments(grouped);
       } else {
-        Alert.alert("Error", res.message || "Failed to load assigned subjects.");
+        showAlert("Error", res.message || "Failed to load assigned subjects.", 'error');
       }
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Network or server error.");
+      showAlert("Error", "Network or server error.", 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -63,17 +74,10 @@ export default function ViewAssignedSubjects({ navigation }) {
   };
 
   const confirmDelete = (assignment_id, subject_name) => {
-    Alert.alert(
+    showConfirm(
       "Remove Assignment",
       `Are you sure you want to remove ${subject_name} from this batch?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Remove", 
-          style: "destructive",
-          onPress: () => handleDelete(assignment_id)
-        }
-      ]
+      () => handleDelete(assignment_id)
     );
   };
 
@@ -82,12 +86,13 @@ export default function ViewAssignedSubjects({ navigation }) {
       const res = await post('/unassign_subject', { assignment_id });
       if (res.status === 'success') {
         fetchData();
+        showAlert("Success", "Assignment removed successfully!", 'success');
       } else {
-        Alert.alert("Error", res.message || "Failed to remove assignment.");
+        showAlert("Error", res.message || "Failed to remove assignment.", 'error');
       }
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Network or server error.");
+      showAlert("Error", "Network or server error.", 'error');
     }
   };
 
@@ -185,6 +190,90 @@ export default function ViewAssignedSubjects({ navigation }) {
           ))
         )}
       </ScrollView>
+      {/* Custom Styled Confirmation Modal Popup */}
+      <Modal
+        visible={confirmConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, styles.alertIconOutlineError]}>
+                <View style={styles.alertIconInner}>
+                  <MaterialCommunityIcons 
+                    name="alert-circle" 
+                    size={36} 
+                    color="#E11D48" 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{confirmConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{confirmConfig.message}</Text>
+            
+            <View style={styles.confirmActionRow}>
+              <TouchableOpacity 
+                style={styles.confirmCancelBtn} 
+                onPress={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.confirmCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.confirmBtnShadow}>
+                <TouchableOpacity 
+                  style={styles.confirmBtn} 
+                  onPress={() => {
+                    setConfirmConfig(prev => ({ ...prev, visible: false }));
+                    confirmConfig.onConfirm();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmBtnText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Styled Alert Modal Popup */}
+      <Modal
+        visible={alertConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, alertConfig.type === 'error' ? styles.alertIconOutlineError : alertConfig.type === 'success' ? styles.alertIconOutlineSuccess : styles.alertIconOutlineSuccess]}>
+                <View style={[styles.alertIconInner, alertConfig.type === 'error' ? styles.alertIconInnerError : styles.alertIconInnerSuccess]}>
+                  <MaterialCommunityIcons 
+                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"} 
+                    size={36} 
+                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"} 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{alertConfig.message}</Text>
+            
+            <TouchableOpacity 
+              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]} 
+              onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.alertOkBtnText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -400,5 +489,160 @@ const styles = StyleSheet.create({
     color: '#7C8BA1',
     marginTop: 12,
     fontSize: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 28,
+    padding: 24,
+    maxHeight: '90%',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  customAlertContent: {
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 300,
+    borderRadius: 24,
+  },
+  alertIconWrapper: {
+    marginBottom: 16,
+  },
+  alertIconOutline: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  alertIconOutlineError: {
+    borderColor: '#FFEBEF',
+    backgroundColor: '#FFEBEF',
+  },
+  alertIconOutlineSuccess: {
+    borderColor: '#ECFDF5',
+    backgroundColor: '#ECFDF5',
+  },
+  alertIconInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  alertIconInnerError: {
+    backgroundColor: 'rgba(225, 29, 72, 0.08)',
+  },
+  alertIconInnerSuccess: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  alertModalTitle: {
+    fontSize: 18,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  alertOkBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  alertOkBtnError: {
+    backgroundColor: '#E11D48',
+    shadowColor: '#E11D48',
+  },
+  alertOkBtnSuccess: {
+    backgroundColor: '#35A7C4',
+    shadowColor: '#35A7C4',
+  },
+  alertOkBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
+  },
+  confirmActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  confirmCancelBtnText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#7C8BA1',
+  },
+  confirmBtnShadow: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#FFEBEF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  confirmBtn: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    backgroundColor: '#E11D48',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
   },
 });

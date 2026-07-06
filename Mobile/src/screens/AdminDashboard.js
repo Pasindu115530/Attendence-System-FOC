@@ -46,6 +46,11 @@ export default function AdminDashboard({ navigation }) {
   const [submitting, setSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   // Custom Logout Confirmation Modal State
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -271,7 +276,7 @@ export default function AdminDashboard({ navigation }) {
 
   const handleAddStudent = async () => {
     if (!formStudentId.trim() || !formFullName.trim() || !formNic.trim() || !formRegNo.trim() || !formDeptId.trim() || !formBatchYear.trim()) {
-      Alert.alert("Error", "All fields (Student ID, Full Name, Registration Number, NIC, Department, and Batch Year) are required");
+      showAlert("Error", "All fields (Student ID, Full Name, Registration Number, NIC, Department, and Batch Year) are required", 'error');
       return;
     }
     setSubmitting(true);
@@ -286,7 +291,6 @@ export default function AdminDashboard({ navigation }) {
       });
 
       if (res.status === 'success') {
-        Alert.alert("Success", "Student added successfully!");
         setIsModalOpen(false);
         setFormStudentId('');
         setFormFullName('');
@@ -295,12 +299,13 @@ export default function AdminDashboard({ navigation }) {
         setFormDeptId('');
         setFormBatchYear('');
         fetchAdminData();
+        showAlert("Success", "Student added successfully!", 'success');
       } else {
-        Alert.alert("Error", res.message || "Failed to add student");
+        showAlert("Error", res.message || "Failed to add student", 'error');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Could not connect to the server.");
+      showAlert("Error", "Could not connect to the server.", 'error');
     } finally {
       setSubmitting(false);
     }
@@ -1210,6 +1215,40 @@ export default function AdminDashboard({ navigation }) {
         </View>
       </View>
 
+      {/* Custom Styled Alert Modal Popup */}
+      <Modal
+        visible={alertConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, alertConfig.type === 'error' ? styles.alertIconOutlineError : styles.alertIconOutlineSuccess]}>
+                <View style={[styles.alertIconInner, alertConfig.type === 'error' ? styles.alertIconInnerError : styles.alertIconInnerSuccess]}>
+                  <MaterialCommunityIcons 
+                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"} 
+                    size={36} 
+                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"} 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{alertConfig.message}</Text>
+            
+            <TouchableOpacity 
+              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]} 
+              onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.alertOkBtnText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -2244,5 +2283,103 @@ const styles = StyleSheet.create({
     color: '#7C8BA1',
     fontStyle: 'italic',
     paddingVertical: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 28,
+    padding: 24,
+    maxHeight: '90%',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  customAlertContent: {
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 300,
+    borderRadius: 24,
+  },
+  alertIconWrapper: {
+    marginBottom: 16,
+  },
+  alertIconOutline: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  alertIconOutlineError: {
+    borderColor: '#FFEBEF',
+    backgroundColor: '#FFEBEF',
+  },
+  alertIconOutlineSuccess: {
+    borderColor: '#ECFDF5',
+    backgroundColor: '#ECFDF5',
+  },
+  alertIconInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  alertModalTitle: {
+    fontSize: 18,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  alertOkBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  alertOkBtnError: {
+    backgroundColor: '#E11D48',
+    shadowColor: '#E11D48',
+  },
+  alertOkBtnSuccess: {
+    backgroundColor: '#35A7C4',
+    shadowColor: '#35A7C4',
+  },
+  alertOkBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
   },
 });

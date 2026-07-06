@@ -12,7 +12,8 @@ import {
   TextInput,
   FlatList,
   Platform,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,6 +32,11 @@ export default function AssignSubjects({ navigation }) {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -94,23 +100,33 @@ export default function AssignSubjects({ navigation }) {
   };
 
   const handleSave = async () => {
+    if (!selectedDeptId) {
+      showAlert('Error', 'Please select a department.', 'error');
+      return;
+    }
+    const year = parseInt(batchYear);
+    if (!batchYear || isNaN(year)) {
+      showAlert('Error', 'Please enter a valid numeric batch year.', 'error');
+      return;
+    }
+
     const assignedIds = subjects.filter(s => s.assigned).map(s => s.id);
     setSaving(true);
     try {
       const res = await post('/assign_batch_subjects', {
         department_id: selectedDeptId,
-        batch_year: parseInt(batchYear),
+        batch_year: year,
         subject_ids: assignedIds
       });
 
       if (res.status === 'success') {
-        Alert.alert('Success', 'Subjects assigned successfully for the semester!');
+        showAlert('Success', 'Subjects assigned successfully for the semester!', 'success');
       } else {
-        Alert.alert('Error', res.message || 'Failed to assign subjects');
+        showAlert('Error', res.message || 'Failed to assign subjects', 'error');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'An error occurred while saving.');
+      showAlert('Error', 'An error occurred while saving.', 'error');
     } finally {
       setSaving(false);
     }
@@ -262,6 +278,40 @@ export default function AssignSubjects({ navigation }) {
           </View>
         </View>
       )}
+      {/* Custom Styled Alert Modal Popup */}
+      <Modal
+        visible={alertConfig.visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.customAlertContent]}>
+            <View style={styles.alertIconWrapper}>
+              <View style={[styles.alertIconOutline, alertConfig.type === 'error' ? styles.alertIconOutlineError : styles.alertIconOutlineSuccess]}>
+                <View style={[styles.alertIconInner, alertConfig.type === 'error' ? styles.alertIconInnerError : styles.alertIconInnerSuccess]}>
+                  <MaterialCommunityIcons 
+                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"} 
+                    size={36} 
+                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"} 
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.alertModalTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertModalMessage}>{alertConfig.message}</Text>
+            
+            <TouchableOpacity 
+              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]} 
+              onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.alertOkBtnText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -552,5 +602,103 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Bold',
     color: '#fff',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#ECF0F3',
+    borderRadius: 28,
+    padding: 24,
+    maxHeight: '90%',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  customAlertContent: {
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 300,
+    borderRadius: 24,
+  },
+  alertIconWrapper: {
+    marginBottom: 16,
+  },
+  alertIconOutline: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  alertIconOutlineError: {
+    borderColor: '#FFEBEF',
+    backgroundColor: '#FFEBEF',
+  },
+  alertIconOutlineSuccess: {
+    borderColor: '#ECFDF5',
+    backgroundColor: '#ECFDF5',
+  },
+  alertIconInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  alertModalTitle: {
+    fontSize: 18,
+    fontFamily: 'Outfit-Bold',
+    color: '#2C3A4E',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertModalMessage: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Medium',
+    color: '#7C8BA1',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  alertOkBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  alertOkBtnError: {
+    backgroundColor: '#E11D48',
+    shadowColor: '#E11D48',
+  },
+  alertOkBtnSuccess: {
+    backgroundColor: '#35A7C4',
+    shadowColor: '#35A7C4',
+  },
+  alertOkBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontFamily: 'Outfit-Bold',
   }
 });
