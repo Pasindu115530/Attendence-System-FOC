@@ -28,26 +28,34 @@ export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
  * @param {object} body      - JSON payload
  * @returns {Promise<object>}
  */
-export async function post(endpoint, body = {}) {
-  console.log(`[API] POST => ${endpoint}`);
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    let json;
+export async function post(endpoint, body = {}, retries = 2) {
+  console.log(`[API] POST => ${endpoint} (retries left: ${retries})`);
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      json = await response.json();
-    } catch (e) {
-      json = null;
-    }
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (!response.ok) {
-      const errMsg = json && json.message ? json.message : (json && json.error ? json.error : `Server returned HTTP ${response.status}`);
-      console.error(`[API ERROR] POST ${endpoint} => ${errMsg}`);
-      return { status: 'error', message: errMsg };
-    }
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      clearTimeout(id);
+
+      let json;
+      try {
+        json = await response.json();
+      } catch (e) {
+        json = null;
+      }
+
+      if (!response.ok) {
+        const errMsg = json && json.message ? json.message : (json && json.error ? json.error : `Server returned HTTP ${response.status}`);
+        console.error(`[API ERROR] POST ${endpoint} => ${errMsg}`);
+        return { status: 'error', message: errMsg };
+      }
 
     if (json.status === 'error' || json.status === 'failed') {
       console.error(`[API BACKEND ERROR] POST ${endpoint} =>`, json.message || json);
@@ -55,13 +63,18 @@ export async function post(endpoint, body = {}) {
       console.log(`[API SUCCESS] POST ${endpoint} =>`, json);
     }
 
-    if (json.status === 'success' && !json.hasOwnProperty('data')) {
-      return { status: 'success', data: json };
+      if (json.status === 'success' && !json.hasOwnProperty('data')) {
+        return { status: 'success', data: json };
+      }
+      return json;
+    } catch (error) {
+      console.error(`[API NETWORK ERROR] POST ${endpoint} attempt ${attempt + 1} error:`, error);
+      if (attempt === retries) {
+        return { status: 'error', message: 'Network request failed or timed out after multiple attempts' };
+      }
+      // Wait before retrying (e.g., 1s, 2s)
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
     }
-    return json;
-  } catch (error) {
-    console.error(`[API NETWORK ERROR] POST ${endpoint} error:`, error);
-    return { status: 'error', message: 'Network request failed' };
   }
 }
 
@@ -74,26 +87,34 @@ export async function post(endpoint, body = {}) {
  * @param {FormData} formData  - FormData object with file and fields
  * @returns {Promise<object>}
  */
-export async function upload(endpoint, formData) {
-  console.log(`[API] UPLOAD => ${endpoint}`);
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: 'POST',
-      body: formData,
-      // Do NOT set Content-Type manually — fetch sets it with boundary for multipart
-    });
-    let json;
+export async function upload(endpoint, formData, retries = 1) {
+  console.log(`[API] UPLOAD => ${endpoint} (retries left: ${retries})`);
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      json = await response.json();
-    } catch (e) {
-      json = null;
-    }
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 30000); // 30 second timeout for uploads
 
-    if (!response.ok) {
-      const errMsg = json && json.message ? json.message : (json && json.error ? json.error : `Server returned HTTP ${response.status}`);
-      console.error(`[API ERROR] UPLOAD ${endpoint} => ${errMsg}`);
-      return { status: 'error', message: errMsg };
-    }
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal
+        // Do NOT set Content-Type manually — fetch sets it with boundary for multipart
+      });
+      clearTimeout(id);
+
+      let json;
+      try {
+        json = await response.json();
+      } catch (e) {
+        json = null;
+      }
+
+      if (!response.ok) {
+        const errMsg = json && json.message ? json.message : (json && json.error ? json.error : `Server returned HTTP ${response.status}`);
+        console.error(`[API ERROR] UPLOAD ${endpoint} => ${errMsg}`);
+        return { status: 'error', message: errMsg };
+      }
 
     if (json.status === 'error' || json.status === 'failed') {
       console.error(`[API BACKEND ERROR] UPLOAD ${endpoint} =>`, json.message || json);
@@ -101,13 +122,17 @@ export async function upload(endpoint, formData) {
       console.log(`[API SUCCESS] UPLOAD ${endpoint} =>`, json);
     }
 
-    if (json.status === 'success' && !json.hasOwnProperty('data')) {
-      return { status: 'success', data: json };
+      if (json.status === 'success' && !json.hasOwnProperty('data')) {
+        return { status: 'success', data: json };
+      }
+      return json;
+    } catch (error) {
+      console.error(`[API NETWORK ERROR] UPLOAD ${endpoint} attempt ${attempt + 1} error:`, error);
+      if (attempt === retries) {
+        return { status: 'error', message: 'File upload failed or timed out' };
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    return json;
-  } catch (error) {
-    console.error(`[API NETWORK ERROR] UPLOAD ${endpoint} error:`, error);
-    return { status: 'error', message: 'File upload failed' };
   }
 }
 

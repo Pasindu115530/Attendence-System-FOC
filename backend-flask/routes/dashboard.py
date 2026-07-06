@@ -21,75 +21,90 @@ def get_dashboard():
     time_now = current_time_str()
     today = today_str()
 
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            # If student_id is provided, get their batch_year to filter subjects
-            batch_year = None
-            if student_id:
-                cur.execute("SELECT batch_year FROM users WHERE index_number = %s", (student_id,))
-                user_row = cur.fetchone()
-                if user_row and user_row["batch_year"]:
-                    batch_year = user_row["batch_year"]
+    day_map = {
+        "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+        "Friday": 4, "Saturday": 5, "Sunday": 6
+    }
+    current_day_idx = day_map.get(day, 0)
+    # Build ordered list of days starting from today, max 7 days ahead
+    ordered_days = [
+        list(day_map.keys())[(current_day_idx + i) % 7]
+        for i in range(7)
+    ]
 
-            # Base query
-            query = _LECTURE_QUERY
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # Get batch_year for filtering
+                batch_year = None
+                if student_id:
+                    cur.execute("SELECT batch_year FROM users WHERE index_number = %s", (student_id,))
+                    user_row = cur.fetchone()
+                    if user_row and user_row["batch_year"]:
+                        batch_year = user_row["batch_year"]
 
-            # If we have a batch_year, we only want subjects assigned to this batch
-            if batch_year:
-                query += f" JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = {int(batch_year)} "
+                # Base query
+                query = _LECTURE_QUERY
 
-            cur.execute(query)
-            all_lectures = cur.fetchall()
-            
-            day_map = {
-                "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
-                "Friday": 4, "Saturday": 5, "Sunday": 6
-            }
-            current_day_idx = day_map.get(day, 0)
-            
-            valid_lectures = []
-            for r in all_lectures:
-                lec = dict(r)
-                lec_day_idx = day_map.get(lec.get("day_of_week", ""), 0)
-                lec_start = str(lec.get("start_time", ""))
-                lec_end = str(lec.get("end_time", ""))
-                
-                days_until = (lec_day_idx - current_day_idx + 7) % 7
-                if days_until == 0 and lec_end < time_now:
-                    days_until = 7
-                    
-                lec["days_until"] = days_until
-                valid_lectures.append(lec)
-                
-            valid_lectures.sort(key=lambda x: (x["days_until"], str(x["start_time"])))
-            
-            lectures = []
-            for lec in valid_lectures[:10]:  # Limit to next 10 lectures
-                lec["start_time"] = str(lec["start_time"])
-                lec["end_time"] = str(lec["end_time"])
-                lec["course_name"] = lec.get("subject_name")
-                lec["course_id"] = lec["subject_id"]
-                
-                is_live = (lec["days_until"] == 0) and (lec["start_time"] <= time_now <= lec["end_time"])
-                lec["isLive"] = is_live
-                
-                if is_live and student_id:
-                    cur.execute(
-                        """
-                        SELECT id FROM attendance
-                        WHERE index_number = %s AND timetable_id = %s AND DATE(marked_at) = %s
-                        LIMIT 1
-                        """,
-                        (student_id, lec["id"], today),
-                    )
-                    lec["hasMarked"] = cur.fetchone() is not None
-                else:
-                    lec["hasMarked"] = False
-                    
-                del lec["days_until"]
-                lectures.append(lec)
-                
-            return success({"lectures": lectures})
+                if batch_year:
+                    query += f" JOIN batch_subjects bs ON t.subject_id = bs.subject_id AND bs.batch_year = {int(batch_year)} "
+
+                # Fetch only the current week's lectures using IN clause (indexed)
+                placeholders = ",".join(["%s"] * len(ordered_days))
+                cur.execute(
+                    query + f"WHERE t.day_of_week IN ({placeholders}) ORDER BY t.day_of_week, t.start_time ASC",
+                    tuple(ordered_days),
+                )
+                all_rows = cur.fetchall()
+
+                valid_lectures = []
+                for r in all_rows:
+                    lec = dict(r)
+                    lec_day_idx = day_map.get(lec.get("day_of_week", ""), 0)
+                    lec_start = str(lec.get("start_time", ""))
+                    lec_end = str(lec.get("end_time", ""))
+
+                    days_until = (lec_day_idx - current_day_idx + 7) % 7
+                    # If it's today but already over, push to next week
+                    if days_until == 0 and lec_end < time_now:
+                        days_until = 7
+
+                    lec["days_until"] = days_until
+                    valid_lectures.append(lec)
+
+                valid_lectures.sort(key=lambda x: (x["days_until"], str(x["start_time"])))
+
+                lectures = []
+                for lec in valid_lectures[:10]:  # Cap at 10 upcoming lectures
+                    lec["start_time"] = str(lec["start_time"])
+                    lec["end_time"] = str(lec["end_time"])
+                    lec["course_name"] = lec.get("subject_name")
+                    lec["course_id"] = lec["subject_id"]
+
+                    is_live = (lec["days_until"] == 0) and (lec["start_time"] <= time_now <= lec["end_time"])
+                    lec["isLive"] = is_live
+
+                    if is_live and student_id:
+                        cur.execute(
+                            """
+                            SELECT id FROM attendance
+                            WHERE index_number = %s AND timetable_id = %s AND DATE(marked_at) = %s
+                            LIMIT 1
+                            """,
+                            (student_id, lec["id"], today),
+                        )
+                        lec["hasMarked"] = cur.fetchone() is not None
+                    else:
+                        lec["hasMarked"] = False
+
+                    del lec["days_until"]
+                    lectures.append(lec)
+
+        return success({"lectures": lectures})
+
+    except Exception as e:
+        # Return empty list gracefully so the app doesn't crash
+        return success({"lectures": [], "warning": "Could not load schedule. Please try again."})
 
 
 @dashboard_bp.post("/get_admin_dashboard")
