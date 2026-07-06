@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Medium',
     flex: 1,
     fontSize: 15,
-    color: '#2C3A4E',
+    color: '#000000', // Changed to pure black for proper Dark Mode inversion
     paddingTop: 10,
     paddingBottom: 10,
   },
