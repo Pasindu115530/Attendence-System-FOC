@@ -293,7 +293,7 @@ export default function LecturerDashboard({ route, navigation }) {
               <View style={styles.headerContainer}>
                 {/* Right side cover image at full opacity */}
                 <Image 
-                  source={require('../../assets/cover-img.png')} 
+                  source={require('../../assets/lec-cover.png')} 
                   style={styles.headerRightImage} 
                 />
                 
@@ -832,10 +832,10 @@ const styles = StyleSheet.create({
   },
   headerRightImage: {
     position: 'absolute',
-    right: -10,
+    right: -68,
     bottom: -10,
-    top: 30,
-    width: '55%',
+    top: 20,
+    width: '75%',
     height: '100%',
     resizeMode: 'contain',
     opacity: 1.0, // Full opacity as requested!
