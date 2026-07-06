@@ -91,5 +91,11 @@ def get_admin_dashboard():
                 _LECTURE_QUERY + "WHERE t.day_of_week = %s ORDER BY t.start_time ASC",
                 (day,),
             )
-            lectures = [dict(r) for r in cur.fetchall()]
+            lectures = []
+            for r in cur.fetchall():
+                lec = dict(r)
+                if lec.get("start_time"): lec["start_time"] = str(lec["start_time"])
+                if lec.get("end_time"): lec["end_time"] = str(lec["end_time"])
+                lec["course_name"] = lec.get("subject_name")
+                lectures.append(lec)
     return success({"lectures": lectures})

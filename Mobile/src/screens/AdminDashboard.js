@@ -569,7 +569,7 @@ export default function AdminDashboard({ navigation }) {
                 activeOpacity={0.7}
               >
                 <View style={styles.iconCircle}>
-                  <MaterialCommunityIcons name="teach" size={26} color="#35A7C4" />
+                  <MaterialCommunityIcons name="human-male-board" size={26} color="#35A7C4" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Text style={styles.actionTitle}>Assign Lecturers</Text>
