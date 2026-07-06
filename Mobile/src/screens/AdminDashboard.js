@@ -362,12 +362,7 @@ export default function AdminDashboard({ navigation }) {
     );
   }
 
-  const liveLectures = lectures.filter(l => {
-    const now = new Date();
-    const start = new Date(`2000-01-01T${l.start_time}`);
-    const end = new Date(`2000-01-01T${l.end_time}`);
-    return now >= start && now <= end;
-  });
+  const liveLectures = lectures.filter(l => l.isLive);
 
   const filteredCourses = reportCourses.filter(c => 
     c.course_name.toLowerCase().includes(reportCourseSearchQuery.toLowerCase())
