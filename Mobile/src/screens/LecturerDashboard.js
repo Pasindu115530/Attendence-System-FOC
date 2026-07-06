@@ -45,7 +45,7 @@ export default function LecturerDashboard({ route, navigation }) {
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   // Animated Tab values & functions
-  const tabNames = ['home', 'settings', 'search', 'menu'];
+  const tabNames = ['home', 'settings'];
   const getIndexFromTab = (tab) => tabNames.indexOf(tab);
   const animatedTabValue = useRef(new Animated.Value(getIndexFromTab(tabNames.includes(route.params?.activeTab) ? route.params.activeTab : 'home'))).current;
 
@@ -214,25 +214,23 @@ export default function LecturerDashboard({ route, navigation }) {
   }
 
   const navBarWidth = Dimensions.get('window').width - 40;
-  const stepWidth = navBarWidth / 4;
+  const stepWidth = navBarWidth / 2;
   const translateX = animatedTabValue.interpolate({
-    inputRange: [0, 1, 2, 3],
+    inputRange: [0, 1],
     outputRange: [
       0 * stepWidth + (stepWidth - 68) / 2,
       1 * stepWidth + (stepWidth - 68) / 2,
-      2 * stepWidth + (stepWidth - 68) / 2,
-      3 * stepWidth + (stepWidth - 68) / 2,
     ],
   });
 
   const circleScale = animatedTabValue.interpolate({
-    inputRange: [0, 0.5, 1, 1.5, 2, 2.5, 3],
-    outputRange: [1, 0.82, 1, 0.82, 1, 0.82, 1],
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.82, 1],
   });
 
   const circleTranslateY = animatedTabValue.interpolate({
-    inputRange: [0, 0.5, 1, 1.5, 2, 2.5, 3],
-    outputRange: [0, 12, 0, 12, 0, 12, 0],
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 12, 0],
   });
 
   const makeIconStyle = (index) => {
@@ -396,6 +394,42 @@ export default function LecturerDashboard({ route, navigation }) {
                     <Text style={styles.emptySubtitle}>You're all caught up for today.</Text>
                   </View>
                 )}
+
+                {/* Quick Actions moved to Home */}
+                <Text style={[styles.tabSectionTitle, { marginTop: 24 }]}>Quick Actions</Text>
+                <TouchableOpacity 
+                  style={styles.quickActionCard} 
+                  onPress={() => navigation.navigate('LecturerTimetable', { user_id })}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconCircle, { backgroundColor: '#E6F4F2' }]}>
+                    <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 16 }}>
+                    <Text style={styles.menuCardTitle}>My Timetable</Text>
+                    <Text style={styles.menuCardDesc}>View your weekly lecture schedule</Text>
+                  </View>
+                  <View style={styles.menuChevron}>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.quickActionCard} 
+                  onPress={() => navigation.navigate('LecturerReport', { user_id })}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconCircle, { backgroundColor: '#FFF8E1' }]}>
+                    <MaterialCommunityIcons name="file-chart" size={26} color="#FFB300" />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 16 }}>
+                    <Text style={styles.menuCardTitle}>Attendance Reports</Text>
+                    <Text style={styles.menuCardDesc}>View student attendance for your subjects</Text>
+                  </View>
+                  <View style={styles.menuChevron}>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color="#FFB300" />
+                  </View>
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -459,69 +493,7 @@ export default function LecturerDashboard({ route, navigation }) {
             </View>
           )}
 
-          {activeTab === 'search' && (
-            <View style={{ width: '100%', paddingHorizontal: 20 }}>
-              <Text style={styles.tabSectionTitle}>Search & Reports</Text>
-              
-              <View style={styles.searchInputWrapper}>
-                <MaterialCommunityIcons name="magnify" size={22} color="#7C8BA1" style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchBar}
-                  placeholder="Search classes or dates..."
-                  placeholderTextColor="#7C8BA1"
-                />
-              </View>
 
-              {/* Stub for reports/attendance log */}
-              <View style={styles.emptyStateCard}>
-                <View style={styles.emptyIconCircle}>
-                  <MaterialCommunityIcons name="file-chart-outline" size={36} color="#7C8BA1" />
-                </View>
-                <Text style={styles.emptyTitle}>No search results</Text>
-                <Text style={styles.emptySubtitle}>Start typing to search your attendance logs.</Text>
-              </View>
-            </View>
-          )}
-
-          {activeTab === 'menu' && (
-            <View style={{ width: '100%', paddingHorizontal: 20 }}>
-              <Text style={styles.tabSectionTitle}>Today's Actions</Text>
-
-              <TouchableOpacity 
-                style={styles.quickActionCard} 
-                onPress={() => navigation.navigate('LecturerTimetable', { user_id })}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuIconCircle, { backgroundColor: '#E6F4F2' }]}>
-                  <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
-                </View>
-                <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Text style={styles.menuCardTitle}>My Timetable</Text>
-                  <Text style={styles.menuCardDesc}>View your weekly lecture schedule</Text>
-                </View>
-                <View style={styles.menuChevron}>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.quickActionCard} 
-                onPress={() => navigation.navigate('LecturerReport', { user_id })}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuIconCircle, { backgroundColor: '#FFF8E1' }]}>
-                  <MaterialCommunityIcons name="file-chart" size={26} color="#FFB300" />
-                </View>
-                <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Text style={styles.menuCardTitle}>Attendance Reports</Text>
-                  <Text style={styles.menuCardDesc}>View student attendance for your subjects</Text>
-                </View>
-                <View style={styles.menuChevron}>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#FFB300" />
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
 
         </Animated.View>
       </ScrollView>
@@ -765,28 +737,6 @@ export default function LecturerDashboard({ route, navigation }) {
           >
             <Animated.View style={makeIconStyle(1)}>
               <MaterialCommunityIcons name="cog-outline" size={24} color="#7C8BA1" />
-            </Animated.View>
-          </TouchableOpacity>
-
-          {/* Tab 3: Search */}
-          <TouchableOpacity 
-            style={styles.navItem} 
-            onPress={() => setActiveTab('search')}
-            activeOpacity={0.8}
-          >
-            <Animated.View style={makeIconStyle(2)}>
-              <MaterialCommunityIcons name="magnify" size={24} color="#7C8BA1" />
-            </Animated.View>
-          </TouchableOpacity>
-
-          {/* Tab 4: Menu */}
-          <TouchableOpacity 
-            style={styles.navItem} 
-            onPress={() => setActiveTab('menu')}
-            activeOpacity={0.8}
-          >
-            <Animated.View style={makeIconStyle(3)}>
-              <MaterialCommunityIcons name="apps" size={24} color="#7C8BA1" />
             </Animated.View>
           </TouchableOpacity>
 
