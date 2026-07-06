@@ -487,38 +487,37 @@ export default function LecturerDashboard({ route, navigation }) {
             <View style={{ width: '100%', paddingHorizontal: 20 }}>
               <Text style={styles.tabSectionTitle}>Today's Actions</Text>
 
-              {/* Upload Medical Report quick action card */}
               <TouchableOpacity 
                 style={styles.quickActionCard} 
-                onPress={() => navigation.navigate('AbsentUploader', { studentId: user_id })}
+                onPress={() => navigation.navigate('LecturerTimetable', { user_id })}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuIconCircle, { backgroundColor: '#FFF8E1' }]}>
-                  <MaterialCommunityIcons name="medical-bag" size={26} color="#FFB300" />
+                <View style={[styles.menuIconCircle, { backgroundColor: '#E6F4F2' }]}>
+                  <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Text style={styles.menuCardTitle}>Upload Medical Report</Text>
-                  <Text style={styles.menuCardDesc}>Submit medical certificates for absences</Text>
+                  <Text style={styles.menuCardTitle}>My Timetable</Text>
+                  <Text style={styles.menuCardDesc}>View your weekly lecture schedule</Text>
                 </View>
                 <View style={styles.menuChevron}>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#FFB300" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
                 </View>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.quickActionCard} 
-                onPress={() => Alert.alert("Support", "FOC Attendance System v1.0. Contact office for support.")}
+                onPress={() => navigation.navigate('LecturerReport', { user_id })}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuIconCircle, { backgroundColor: '#E6F4F2' }]}>
-                  <MaterialCommunityIcons name="help-circle-outline" size={26} color="#35A7C4" />
+                <View style={[styles.menuIconCircle, { backgroundColor: '#FFF8E1' }]}>
+                  <MaterialCommunityIcons name="file-chart" size={26} color="#FFB300" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Text style={styles.menuCardTitle}>Help & Support</Text>
-                  <Text style={styles.menuCardDesc}>FOC system guidelines and contact details</Text>
+                  <Text style={styles.menuCardTitle}>Attendance Reports</Text>
+                  <Text style={styles.menuCardDesc}>View student attendance for your subjects</Text>
                 </View>
                 <View style={styles.menuChevron}>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#FFB300" />
                 </View>
               </TouchableOpacity>
             </View>

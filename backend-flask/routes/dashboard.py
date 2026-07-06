@@ -165,3 +165,69 @@ def get_lecturer_dashboard():
         return success({"lecture": next_lecture})
 
     return success({"lecture": None, "message": "No more lectures today"})
+
+@dashboard_bp.post("/get_lecturer_timetable")
+def get_lecturer_timetable():
+    data = request.get_json(force=True, silent=True) or {}
+    lecturer_index = data.get("index_number", "")
+    
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            query = _LECTURE_QUERY + " JOIN lecturer_subjects ls ON t.subject_id = ls.subject_id "
+            cur.execute(
+                query + "WHERE ls.lecturer_index = %s ORDER BY CASE t.day_of_week WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 ELSE 6 END, t.start_time ASC",
+                (lecturer_index,)
+            )
+            lectures = []
+            for r in cur.fetchall():
+                lec = dict(r)
+                if lec.get("start_time"): lec["start_time"] = str(lec["start_time"])
+                if lec.get("end_time"): lec["end_time"] = str(lec["end_time"])
+                lec["course_name"] = lec.get("subject_name")
+                lectures.append(lec)
+    return success({"lectures": lectures})
+
+@dashboard_bp.post("/get_lecturer_report")
+def get_lecturer_report():
+    data = request.get_json(force=True, silent=True) or {}
+    lecturer_index = data.get("index_number", "")
+    
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT s.id as subject_id, s.subject_code, s.subject_name
+                FROM subjects s
+                JOIN lecturer_subjects ls ON s.id = ls.subject_id
+                WHERE ls.lecturer_index = %s
+                """,
+                (lecturer_index,)
+            )
+            subjects = [dict(r) for r in cur.fetchall()]
+            
+            for sub in subjects:
+                cur.execute(
+                    """
+                    SELECT 
+                        COUNT(id) as total_marked,
+                        SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) as total_present,
+                        SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as total_absent
+                    FROM attendance
+                    WHERE subject_id = %s
+                    """,
+                    (sub["subject_id"],)
+                )
+                stats = cur.fetchone()
+                if stats:
+                    sub["total_marked"] = stats["total_marked"] or 0
+                    sub["total_present"] = stats["total_present"] or 0
+                    sub["total_absent"] = stats["total_absent"] or 0
+                else:
+                    sub["total_marked"] = 0
+                    sub["total_present"] = 0
+                    sub["total_absent"] = 0
+                    
+                total = sub["total_present"] + sub["total_absent"]
+                sub["attendance_percentage"] = f"{round((sub['total_present'] / total) * 100, 1)}%" if total > 0 else "0%"
+                
+    return success({"reports": subjects})

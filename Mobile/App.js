@@ -21,6 +21,8 @@ import ContactAdminScreen from './src/screens/ContactAdminScreen';
 import AssignSubjects from './src/screens/AssignSubjects';
 import AssignLecturers from './src/screens/AssignLecturers';
 import LecturerDashboard from './src/screens/LecturerDashboard';
+import LecturerTimetable from './src/screens/LecturerTimetable';
+import LecturerReport from './src/screens/LecturerReport';
 import ManageTimetable from './src/screens/ManageTimetable';
 import ViewAssignedSubjects from './src/screens/ViewAssignedSubjects';
 import AdminAIChat from './src/screens/AdminAIChat';
@@ -57,6 +59,8 @@ export default function App() {
         <Stack.Screen name="AssignSubjects" component={AssignSubjects} />
         <Stack.Screen name="AssignLecturers" component={AssignLecturers} />
         <Stack.Screen name="LecturerDashboard" component={LecturerDashboard} />
+        <Stack.Screen name="LecturerTimetable" component={LecturerTimetable} />
+        <Stack.Screen name="LecturerReport" component={LecturerReport} />
         <Stack.Screen name="ManageTimetable" component={ManageTimetable} />
         <Stack.Screen name="ViewAssignedSubjects" component={ViewAssignedSubjects} />
         <Stack.Screen name="AdminAIChat" component={AdminAIChat} />
