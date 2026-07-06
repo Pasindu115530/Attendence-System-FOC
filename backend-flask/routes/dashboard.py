@@ -16,7 +16,7 @@ _LECTURE_QUERY = """
 @dashboard_bp.post("/get_dashboard")
 def get_dashboard():
     data = request.get_json(force=True, silent=True) or {}
-    student_id = data.get("index_number", "")
+    student_id = data.get("index_number", "") or data.get("user_id", "")
     day = current_day_name()
     time_now = current_time_str()
     today = today_str()
