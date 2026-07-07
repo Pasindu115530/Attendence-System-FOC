@@ -3,7 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-def send_account_creation_email(to_email, name, username, password):
+def send_account_creation_email(to_email, name, username, password, role="Student"):
     smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     try:
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
@@ -12,14 +12,15 @@ def send_account_creation_email(to_email, name, username, password):
     smtp_user = os.getenv("SMTP_USER", "")
     smtp_password = os.getenv("SMTP_PASSWORD", "")
 
-    subject = "Your Student Account has been Created!"
+    role_label = "Lecturer" if role.lower() == "lecturer" else "Student"
+    subject = f"Your {role_label} Account has been Created!"
     
     # HTML formatted message
     html_content = f"""
     <html>
       <body style="font-family: Arial, sans-serif; color: #2C3A4E; line-height: 1.6;">
         <h2 style="color: #35A7C4;">Hello {name},</h2>
-        <p>Your student account has been successfully created by the Administrator of the **Faculty of Computing, University of Sri Jayewardenepura**.</p>
+        <p>Your {role_label.lower()} account has been successfully created by the Administrator of the **Faculty of Computing, University of Sri Jayewardenepura**.</p>
         <p>You can now log in to the Attendance System using the following credentials:</p>
         <div style="background-color: #ECF0F3; border-radius: 12px; padding: 15px; margin: 15px 0; border: 1px solid #D1D9E6; display: inline-block;">
           <p style="margin: 4px 0;"><strong>Username / Index No:</strong> <span style="font-family: monospace; color: #35A7C4; font-size: 16px;">{username}</span></p>
@@ -35,7 +36,7 @@ def send_account_creation_email(to_email, name, username, password):
     text_content = f"""
     Hello {name},
 
-    Your student account has been successfully created by the Administrator.
+    Your {role_label.lower()} account has been successfully created by the Administrator.
 
     Username / Index No: {username}
     Password / NIC: {password}

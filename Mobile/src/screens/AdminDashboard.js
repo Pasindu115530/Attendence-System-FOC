@@ -55,6 +55,13 @@ export default function AdminDashboard({ navigation }) {
   const [formRegNo, setFormRegNo] = useState('');
   const [formDeptId, setFormDeptId] = useState('');
   const [formBatchYear, setFormBatchYear] = useState('');
+
+  // Add Lecturer states
+  const [isLecturerModalOpen, setIsLecturerModalOpen] = useState(false);
+  const [formLecturerId, setFormLecturerId] = useState('');
+  const [formLecturerName, setFormLecturerName] = useState('');
+  const [formLecturerEmail, setFormLecturerEmail] = useState('');
+  const [formLecturerNic, setFormLecturerNic] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
@@ -294,6 +301,56 @@ export default function AdminDashboard({ navigation }) {
     setFormDeptId('');
     setFormBatchYear('');
     setPendingApprovalRequestId(null);
+  };
+
+  const closeAddLecturerModal = () => {
+    setIsLecturerModalOpen(false);
+    setFormLecturerId('');
+    setFormLecturerName('');
+    setFormLecturerEmail('');
+    setFormLecturerNic('');
+    setPendingApprovalRequestId(null);
+  };
+
+  const handleAddLecturer = async () => {
+    if (!formLecturerId.trim() || !formLecturerName.trim() || !formLecturerEmail.trim() || !formLecturerNic.trim()) {
+      showAlert("Error", "All fields (Lecturer ID, Name, Email, and NIC) are required", 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await post('/add_lecturer', {
+        user_id: formLecturerId.trim(),
+        full_name: formLecturerName.trim(),
+        email: formLecturerEmail.trim(),
+        nic: formLecturerNic.trim()
+      });
+
+      if (res.status === 'success') {
+        const approvedReqId = pendingApprovalRequestId;
+        
+        setIsLecturerModalOpen(false);
+        setFormLecturerId('');
+        setFormLecturerName('');
+        setFormLecturerEmail('');
+        setFormLecturerNic('');
+        setPendingApprovalRequestId(null);
+        
+        if (approvedReqId) {
+          await handleRespondRequest(approvedReqId, 'Approved');
+        } else {
+          showAlert("Success", "Lecturer added successfully!", 'success');
+        }
+        fetchAdminData();
+      } else {
+        showAlert("Error", res.message || "Failed to add lecturer", 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      showAlert("Error", "Could not connect to the server.", 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAddStudent = async () => {
@@ -654,6 +711,24 @@ export default function AdminDashboard({ navigation }) {
                     </View>
                   </TouchableOpacity>
 
+                  {/* Create Lecturer */}
+                  <TouchableOpacity 
+                    style={styles.actionCard} 
+                    onPress={() => setIsLecturerModalOpen(true)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.iconCircle}>
+                      <MaterialCommunityIcons name="account-tie-outline" size={26} color="#35A7C4" />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 16 }}>
+                      <Text style={styles.actionTitle}>Create Lecturer</Text>
+                      <Text style={styles.actionDesc}>Register a new lecturer with email credentials</Text>
+                    </View>
+                    <View style={styles.chevronBg}>
+                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                    </View>
+                  </TouchableOpacity>
+
                   {/* Assign Subjects */}
                   <TouchableOpacity 
                     style={styles.actionCard} 
@@ -702,6 +777,24 @@ export default function AdminDashboard({ navigation }) {
                     <View style={{ flex: 1, marginLeft: 16 }}>
                       <Text style={styles.actionTitle}>View Assignments</Text>
                       <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
+                    </View>
+                    <View style={styles.chevronBg}>
+                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Create Lecture */}
+                  <TouchableOpacity 
+                    style={styles.actionCard} 
+                    onPress={() => navigation.navigate('ManageTimetable')}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.iconCircle}>
+                      <MaterialCommunityIcons name="calendar-plus" size={26} color="#35A7C4" />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 16 }}>
+                      <Text style={styles.actionTitle}>Create Lecture</Text>
+                      <Text style={styles.actionDesc}>Schedule a new class session or lecture time</Text>
                     </View>
                     <View style={styles.chevronBg}>
                       <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
@@ -912,7 +1005,12 @@ export default function AdminDashboard({ navigation }) {
                                     setPendingApprovalRequestId(item.id);
                                     setIsModalOpen(true);
                                   } else {
-                                    handleRespondRequest(item.id, 'Approved');
+                                    setFormLecturerName(item.name);
+                                    setFormLecturerEmail(item.email || '');
+                                    if (item.index_number) setFormLecturerId(item.index_number);
+                                    if (item.nic) setFormLecturerNic(item.nic);
+                                    setPendingApprovalRequestId(item.id);
+                                    setIsLecturerModalOpen(true);
                                   }
                                 }
                               }}
@@ -1343,7 +1441,7 @@ export default function AdminDashboard({ navigation }) {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.inputLabel}>Batch Year</Text>
+                  <Text style={styles.inputLabel}>Batch Year *</Text>
                   <View style={styles.inputContainer}>
                     <MaterialCommunityIcons name="calendar-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
                     <TextInput
@@ -1379,6 +1477,104 @@ export default function AdminDashboard({ navigation }) {
                     </View>
                   </>
                 )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* Create Lecturer Modal */}
+      <Modal
+        visible={isLecturerModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeAddLecturerModal}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+            style={styles.modalKeyboardContainer}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add New Lecturer</Text>
+                <TouchableOpacity onPress={closeAddLecturerModal} style={styles.modalCloseBtn}>
+                  <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView 
+                contentContainerStyle={styles.modalScroll}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Lecturer ID *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="account-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. LEC001"
+                      placeholderTextColor="#7C8BA1"
+                      value={formLecturerId}
+                      onChangeText={setFormLecturerId}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Full Name *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="account-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. Dr. John Doe"
+                      placeholderTextColor="#7C8BA1"
+                      value={formLecturerName}
+                      onChangeText={setFormLecturerName}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Lecturer Email Address *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="email-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. lecturer@gmail.com"
+                      placeholderTextColor="#7C8BA1"
+                      value={formLecturerEmail}
+                      onChangeText={setFormLecturerEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>NIC (Password for Login) *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="lock-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. 198012345678"
+                      placeholderTextColor="#7C8BA1"
+                      value={formLecturerNic}
+                      onChangeText={setFormLecturerNic}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity style={styles.submitBtn} onPress={handleAddLecturer}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Create Lecturer Account</Text>
+                  )}
+                </TouchableOpacity>
               </ScrollView>
             </View>
           </KeyboardAvoidingView>

@@ -93,6 +93,42 @@ def add_student():
     return success({"message": "Student added successfully"})
 
 
+@admin_bp.post("/add_lecturer")
+def add_lecturer():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = data.get("user_id") or data.get("index_number")
+    full_name = data.get("full_name")
+    nic = data.get("nic")
+    email = data.get("email")
+
+    if not all([user_id, full_name, nic, email]):
+        return error("user_id, full_name, nic, and email are required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO users (index_number, full_name, nic, password, role, email)
+                    VALUES (%s, %s, %s, %s, 'Lecturer', %s)
+                    """,
+                    (user_id, full_name, nic, nic, email),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                return error(str(e))
+                
+    if email:
+        try:
+            from utils.email_service import send_account_creation_email
+            send_account_creation_email(email, full_name, user_id, nic, role='Lecturer')
+        except Exception as mail_err:
+            print(f"[EMAIL ERROR] Failed to send email: {mail_err}")
+            
+    return success({"message": "Lecturer added successfully"})
+
+
 @admin_bp.post("/upload_students")
 def upload_students():
     if "file" not in request.files:
