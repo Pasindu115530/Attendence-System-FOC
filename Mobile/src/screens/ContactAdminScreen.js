@@ -12,7 +12,8 @@ import {
   StatusBar,
   ScrollView,
   ActivityIndicator,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -27,6 +28,19 @@ export default function ContactAdminScreen({ navigation }) {
   const [userId, setUserId] = useState('');
   const [role, setRole] = useState('Student'); // 'Student' or 'Lecturer'
   const [message, setMessage] = useState('');
+  const [indexNumber, setIndexNumber] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [nic, setNic] = useState('');
+  const [selectedDeptId, setSelectedDeptId] = useState('');
+  const [selectedBatchYear, setSelectedBatchYear] = useState('');
+
+  // Loaded metadata
+  const [departments, setDepartments] = useState([]);
+  const [batches, setBatches] = useState([]);
+
+  // Modal pickers
+  const [isDeptPickerOpen, setIsDeptPickerOpen] = useState(false);
+  const [isBatchPickerOpen, setIsBatchPickerOpen] = useState(false);
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +59,27 @@ export default function ContactAdminScreen({ navigation }) {
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
     ]).start();
+
+    // Fetch departments and batches
+    const loadMetadata = async () => {
+      try {
+        const [deptRes, batchRes] = await Promise.all([
+          post('/get_departments', {}),
+          post('/get_batches', {})
+        ]);
+        if (deptRes.status === 'success') {
+          const depts = deptRes.data?.departments || deptRes.departments || [];
+          setDepartments(depts);
+        }
+        if (batchRes.status === 'success') {
+          const bList = batchRes.data?.batches || batchRes.batches || [];
+          setBatches(bList);
+        }
+      } catch (err) {
+        console.error('Error fetching metadata:', err);
+      }
+    };
+    loadMetadata();
   }, []);
 
   const showNotification = (msg, type = 'error') => {
@@ -92,6 +127,16 @@ export default function ContactAdminScreen({ navigation }) {
     }
   };
 
+  const getSelectedDeptName = () => {
+    const dept = departments.find(d => d.id.toString() === selectedDeptId.toString());
+    return dept ? dept.name : 'Select Department';
+  };
+
+  const getSelectedBatchName = () => {
+    const batch = batches.find(b => b.batch_year.toString() === selectedBatchYear.toString());
+    return batch ? `Batch ${batch.batch_year}` : 'Select Batch';
+  };
+
   const handleSubmitRequest = async () => {
     if (!name.trim()) {
       showNotification('Please enter your full name.');
@@ -99,6 +144,28 @@ export default function ContactAdminScreen({ navigation }) {
     }
     if (!email.trim() || !email.includes('@')) {
       showNotification('Please enter a valid email address.');
+      return;
+    }
+    if (!indexNumber.trim()) {
+      showNotification('Please enter your index number.');
+      return;
+    }
+    if (role === 'Student') {
+      if (!registrationNumber.trim()) {
+        showNotification('Please enter your registration number.');
+        return;
+      }
+      if (!selectedDeptId) {
+        showNotification('Please select your department.');
+        return;
+      }
+      if (!selectedBatchYear) {
+        showNotification('Please select your batch year.');
+        return;
+      }
+    }
+    if (!nic.trim()) {
+      showNotification('Please enter your NIC number.');
       return;
     }
     if (!message.trim()) {
@@ -112,15 +179,23 @@ export default function ContactAdminScreen({ navigation }) {
       const res = await post('/submit_login_request', {
         name: name.trim(),
         email: email.trim(),
-        user_id: userId.trim(),
         role: role,
+        index_number: indexNumber.trim(),
+        registration_number: role === 'Student' ? registrationNumber.trim() : null,
+        nic: nic.trim(),
+        department_id: role === 'Student' ? parseInt(selectedDeptId) : null,
+        batch_year: role === 'Student' ? parseInt(selectedBatchYear) : null,
         message: message.trim()
       });
 
       if (res.status === 'success') {
         setName('');
         setEmail('');
-        setUserId('');
+        setIndexNumber('');
+        setRegistrationNumber('');
+        setNic('');
+        setSelectedDeptId('');
+        setSelectedBatchYear('');
         setMessage('');
         showNotification('Your request has been sent to the administrator. We will review and contact you shortly.', 'success');
       } else {
@@ -311,17 +386,75 @@ export default function ContactAdminScreen({ navigation }) {
                   />
                 </View>
 
+                {/* Index Number */}
                 <View style={styles.inputContainer}>
                   <MaterialCommunityIcons name="card-account-details-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Student / Lecturer ID (Optional)"
+                    placeholder={role === 'Student' ? "Index Number (e.g. FC22XXXX)" : "Lecturer Index Number"}
                     placeholderTextColor="#7C8BA1"
-                    value={userId}
-                    onChangeText={setUserId}
+                    value={indexNumber}
+                    onChangeText={setIndexNumber}
                     autoCapitalize="characters"
                   />
                 </View>
+
+                {/* Registration Number (Student Only) */}
+                {role === 'Student' && (
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="badge-account-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Registration Number "
+                      placeholderTextColor="#7C8BA1"
+                      value={registrationNumber}
+                      onChangeText={setRegistrationNumber}
+                      autoCapitalize="characters"
+                    />
+                  </View>
+                )}
+
+                {/* NIC */}
+                <View style={styles.inputContainer}>
+                  <MaterialCommunityIcons name="card-bulleted-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="NIC (National Identity Card)"
+                    placeholderTextColor="#7C8BA1"
+                    value={nic}
+                    onChangeText={setNic}
+                    autoCapitalize="characters"
+                  />
+                </View>
+
+                {/* Department Selector */}
+                {role === 'Student' && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.selectButton}
+                      onPress={() => setIsDeptPickerOpen(true)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons name="domain" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <Text style={[styles.selectButtonText, selectedDeptId ? styles.selectValueText : styles.selectPlaceholderText]}>
+                        {getSelectedDeptName()}
+                      </Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color="#7C8BA1" style={{ marginLeft: 'auto' }} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.selectButton}
+                      onPress={() => setIsBatchPickerOpen(true)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons name="account-group" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                      <Text style={[styles.selectButtonText, selectedBatchYear ? styles.selectValueText : styles.selectPlaceholderText]}>
+                        {getSelectedBatchName()}
+                      </Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color="#7C8BA1" style={{ marginLeft: 'auto' }} />
+                    </TouchableOpacity>
+                  </>
+                )}
 
                 {/* Role Selection Toggle */}
                 <View style={styles.roleContainer}>
@@ -389,6 +522,90 @@ export default function ContactAdminScreen({ navigation }) {
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
+
+      {/* Department Picker Modal */}
+      <Modal
+        visible={isDeptPickerOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsDeptPickerOpen(false)}
+      >
+        <View style={styles.pickerModalOverlay}>
+          <View style={styles.pickerModalContent}>
+            <Text style={styles.pickerModalTitle}>Select Department</Text>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {departments.map((dept) => (
+                <TouchableOpacity
+                  key={dept.id}
+                  style={[
+                    styles.pickerOption,
+                    selectedDeptId?.toString() === dept.id?.toString() && styles.pickerOptionActive
+                  ]}
+                  onPress={() => {
+                    setSelectedDeptId(dept.id.toString());
+                    setIsDeptPickerOpen(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.pickerOptionText,
+                    selectedDeptId?.toString() === dept.id?.toString() && styles.pickerOptionTextActive
+                  ]}>
+                    {dept.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.pickerCloseBtn}
+              onPress={() => setIsDeptPickerOpen(false)}
+            >
+              <Text style={styles.pickerCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Batch Picker Modal */}
+      <Modal
+        visible={isBatchPickerOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsBatchPickerOpen(false)}
+      >
+        <View style={styles.pickerModalOverlay}>
+          <View style={styles.pickerModalContent}>
+            <Text style={styles.pickerModalTitle}>Select Batch Year</Text>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {batches.map((b) => (
+                <TouchableOpacity
+                  key={b.batch_year}
+                  style={[
+                    styles.pickerOption,
+                    selectedBatchYear?.toString() === b.batch_year?.toString() && styles.pickerOptionActive
+                  ]}
+                  onPress={() => {
+                    setSelectedBatchYear(b.batch_year.toString());
+                    setIsBatchPickerOpen(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.pickerOptionText,
+                    selectedBatchYear?.toString() === b.batch_year?.toString() && styles.pickerOptionTextActive
+                  ]}>
+                    Batch {b.batch_year}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.pickerCloseBtn}
+              onPress={() => setIsBatchPickerOpen(false)}
+            >
+              <Text style={styles.pickerCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -777,5 +994,98 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  selectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    marginBottom: 16,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  selectButtonText: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 15,
+  },
+  selectPlaceholderText: {
+    color: '#7C8BA1',
+  },
+  selectValueText: {
+    color: '#2C3A4E',
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerModalContent: {
+    width: width - 40,
+    backgroundColor: '#ECF0F3',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  pickerModalTitle: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 18,
+    color: '#2C3A4E',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  pickerOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#ECF0F3',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  pickerOptionActive: {
+    backgroundColor: 'rgba(53, 167, 196, 0.08)',
+    borderColor: 'rgba(53, 167, 196, 0.2)',
+  },
+  pickerOptionText: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 15,
+    color: '#7C8BA1',
+  },
+  pickerOptionTextActive: {
+    color: '#35A7C4',
+    fontFamily: 'Outfit-Bold',
+  },
+  pickerCloseBtn: {
+    marginTop: 16,
+    height: 48,
+    backgroundColor: '#35A7C4',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#35A7C4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  pickerCloseBtnText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    color: '#FFFFFF',
   },
 });

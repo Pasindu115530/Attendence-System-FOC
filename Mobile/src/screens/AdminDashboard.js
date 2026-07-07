@@ -40,6 +40,7 @@ export default function AdminDashboard({ navigation }) {
 
   // Login request states
   const [loginRequests, setLoginRequests] = useState([]);
+  const [isAdminRequestsModalOpen, setIsAdminRequestsModalOpen] = useState(false);
 
   // Tab State: 'home', 'search', 'settings'
   const [activeTab, setActiveTab] = useState('home');
@@ -617,11 +618,49 @@ export default function AdminDashboard({ navigation }) {
                       </View>
                       <Text style={styles.requestDate}>{item.created_at?.substring(0, 10)}</Text>
                     </View>
-                    <Text style={styles.requestEmail}>{item.email}</Text>
-                    {item.user_id ? <Text style={styles.requestUserId}>ID: {item.user_id}</Text> : null}
+
+                    {/* Structured Details Grid */}
+                    <View style={styles.requestDetailsGrid}>
+                      <View style={styles.reqDetailItem}>
+                        <Text style={styles.reqDetailLabel}>Email:</Text>
+                        <Text style={styles.reqDetailValue}>{item.email}</Text>
+                      </View>
+                      {item.index_number ? (
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>Index Number:</Text>
+                          <Text style={styles.reqDetailValue}>{item.index_number}</Text>
+                        </View>
+                      ) : null}
+                      {item.registration_number ? (
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>Registration No:</Text>
+                          <Text style={styles.reqDetailValue}>{item.registration_number}</Text>
+                        </View>
+                      ) : null}
+                      {item.nic ? (
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>NIC Number:</Text>
+                          <Text style={styles.reqDetailValue}>{item.nic}</Text>
+                        </View>
+                      ) : null}
+                      {item.role === 'Student' && item.department_name ? (
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>Department:</Text>
+                          <Text style={styles.reqDetailValue}>{item.department_name}</Text>
+                        </View>
+                      ) : null}
+                      {item.role === 'Student' && item.batch_year ? (
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>Batch Year:</Text>
+                          <Text style={styles.reqDetailValue}>Batch {item.batch_year}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+
                     <View style={styles.requestMessageContainer}>
                       <Text style={styles.requestMessage}>{item.message}</Text>
                     </View>
+                    
                     <View style={styles.requestActionsRow}>
                       <TouchableOpacity 
                         style={[styles.requestBtn, styles.requestBtnDismiss]}
@@ -636,7 +675,11 @@ export default function AdminDashboard({ navigation }) {
                         onPress={() => {
                           if (item.role === 'Student') {
                             setFormFullName(item.name);
-                            if (item.user_id) setFormStudentId(item.user_id);
+                            if (item.index_number) setFormStudentId(item.index_number);
+                            if (item.registration_number) setFormRegNo(item.registration_number);
+                            if (item.nic) setFormNic(item.nic);
+                            if (item.department_id) setFormDeptId(item.department_id.toString());
+                            if (item.batch_year) setFormBatchYear(item.batch_year.toString());
                             setIsModalOpen(true);
                           }
                           handleRespondRequest(item.id, 'Approved');
@@ -803,6 +846,24 @@ export default function AdminDashboard({ navigation }) {
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Text style={styles.actionTitle}>Set Class Location</Text>
                   <Text style={styles.actionDesc}>Define boundary points for geofencing</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Admin Requests */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => setIsAdminRequestsModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="clipboard-text-play-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Admin Requests</Text>
+                  <Text style={styles.actionDesc}>Manage login & account requests (Done/Pending)</Text>
                 </View>
                 <View style={styles.chevronBg}>
                   <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
@@ -1526,27 +1587,18 @@ export default function AdminDashboard({ navigation }) {
                   showsVerticalScrollIndicator={false}
                 >
                   {detailStudents.length > 0 ? (
-                    detailStudents.map((student, idx) => {
-                      const isPresent = student.attendance_status === 'Present';
+                    detailStudents.map((item, index) => {
+                      const isPresent = item.attendance_status === 'Present';
                       return (
-                        <View key={idx} style={styles.studentDetailRow}>
+                        <View key={index} style={styles.studentDetailRow}>
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.studentDetailName}>{student.full_name}</Text>
-                            <Text style={styles.studentDetailId}>{student.user_id} • {student.registration_number}</Text>
+                            <Text style={styles.studentDetailName}>{item.student_name}</Text>
+                            <Text style={styles.studentDetailId}>{item.index_number} • {item.registration_number}</Text>
                           </View>
-                          <View style={[
-                            styles.statusBadge, 
-                            { 
-                              backgroundColor: isPresent ? 'rgba(16, 185, 129, 0.12)' : 'rgba(225, 29, 72, 0.12)'
-                            }
-                          ]}>
-                            <Text style={[
-                              styles.statusText, 
-                              { 
-                                color: isPresent ? '#10B981' : '#E11D48'
-                              }
-                            ]}>
-                              {student.attendance_status.toUpperCase()}
+                          <View style={[styles.badge, { backgroundColor: isPresent ? 'rgba(16, 185, 129, 0.12)' : 'rgba(225, 29, 72, 0.12)' }]}>
+                            <View style={[styles.dot, { backgroundColor: isPresent ? '#10B981' : '#E11D48' }]} />
+                            <Text style={[styles.badgeText, { color: isPresent ? '#10B981' : '#E11D48' }]}>
+                              {item.attendance_status.toUpperCase()}
                             </Text>
                           </View>
                         </View>
@@ -1563,6 +1615,131 @@ export default function AdminDashboard({ navigation }) {
                 </ScrollView>
               </>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Admin Requests Modal */}
+      <Modal
+        visible={isAdminRequestsModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsAdminRequestsModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={styles.modalTitle}>Admin Requests</Text>
+                <Text style={{ fontFamily: 'Outfit-Medium', color: '#7C8BA1', fontSize: 13, marginTop: 2 }}>
+                  Verify and mark login/account requests as Done or Pending
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsAdminRequestsModalOpen(false)} style={styles.modalCloseBtn}>
+                <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView 
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {loginRequests.length > 0 ? (
+                loginRequests.map((item, index) => {
+                  const isDone = item.status === 'Done' || item.status === 'Approved' || item.status === 'Dismissed';
+                  return (
+                    <View key={`modal_req_${item.id}`} style={[styles.requestCard, isDone && { opacity: 0.75, backgroundColor: '#E5EDF9' }]}>
+                      <View style={styles.requestHeader}>
+                        <View style={styles.requestUserGroup}>
+                          <View style={[styles.requestRoleBadge, isDone && { backgroundColor: 'rgba(124, 139, 161, 0.12)' }]}>
+                            <Text style={[styles.requestRoleText, isDone && { color: '#7C8BA1' }]}>{item.role.toUpperCase()}</Text>
+                          </View>
+                          <Text style={[styles.requestName, isDone && { textDecorationLine: 'line-through', color: '#7C8BA1' }]} numberOfLines={1}>{item.name}</Text>
+                        </View>
+                        <Text style={styles.requestDate}>{item.created_at?.substring(0, 10)}</Text>
+                      </View>
+                      
+                      {/* Structured Details Grid */}
+                      <View style={styles.requestDetailsGrid}>
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>Email:</Text>
+                          <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.email}</Text>
+                        </View>
+                        {item.index_number ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Index Number:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.index_number}</Text>
+                          </View>
+                        ) : null}
+                        {item.registration_number ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Registration No:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.registration_number}</Text>
+                          </View>
+                        ) : null}
+                        {item.nic ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>NIC Number:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.nic}</Text>
+                          </View>
+                        ) : null}
+                        {item.role === 'Student' && item.department_name ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Department:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.department_name}</Text>
+                          </View>
+                        ) : null}
+                        {item.role === 'Student' && item.batch_year ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Batch Year:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>Batch {item.batch_year}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+
+                      <View style={styles.requestMessageContainer}>
+                        <Text style={styles.requestMessage}>{item.message}</Text>
+                      </View>
+
+                      <View style={styles.requestActionsRow}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 'auto' }}>
+                          <View style={[styles.statusDot, { backgroundColor: isDone ? '#10B981' : '#F59E0B' }]} />
+                          <Text style={{ fontFamily: 'Outfit-Bold', fontSize: 12, color: isDone ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
+                            {item.status}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity 
+                          style={[
+                            styles.requestBtn, 
+                            isDone ? styles.requestBtnPending : styles.requestBtnDone
+                          ]}
+                          onPress={() => handleRespondRequest(item.id, isDone ? 'Pending' : 'Done')}
+                          activeOpacity={0.7}
+                        >
+                          <MaterialCommunityIcons 
+                            name={isDone ? "undo-variant" : "check-circle-outline"} 
+                            size={16} 
+                            color={isDone ? "#7C8BA1" : "#10B981"} 
+                            style={{ marginRight: 4 }} 
+                          />
+                          <Text style={isDone ? styles.requestBtnTextPending : styles.requestBtnTextDone}>
+                            {isDone ? 'Mark Pending' : 'Mark Done'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBg}>
+                    <MaterialCommunityIcons name="check-decagram-outline" size={48} color="#7C8BA1" />
+                  </View>
+                  <Text style={styles.emptyText}>No admin requests found.</Text>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -2937,5 +3114,80 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Bold',
     fontSize: 12,
     color: '#10B981',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  requestBtnPending: {
+    borderColor: 'rgba(124, 139, 161, 0.3)',
+  },
+  requestBtnDone: {
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  requestBtnTextPending: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#7C8BA1',
+  },
+  requestBtnTextDone: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#10B981',
+  },
+  reqMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: 4,
+  },
+  reqMetaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 1.5,
+    elevation: 1,
+  },
+  reqMetaText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 11,
+    color: '#35A7C4',
+  },
+  requestDetailsGrid: {
+    marginVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  reqDetailItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  reqDetailLabel: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 13,
+    color: '#7C8BA1',
+    flex: 1,
+  },
+  reqDetailValue: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 13,
+    color: '#2C3A4E',
+    flex: 2,
+    textAlign: 'right',
   },
 });

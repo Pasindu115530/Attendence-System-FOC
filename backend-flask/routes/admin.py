@@ -650,20 +650,33 @@ def submit_login_request():
     user_id = data.get("user_id", "").strip() or None
     role = data.get("role", "Student").strip()
     message = data.get("message", "").strip()
+    index_number = data.get("index_number", "").strip() or None
+    registration_number = data.get("registration_number", "").strip() or None
+    nic = data.get("nic", "").strip() or None
+    department_id = data.get("department_id")
+    batch_year = data.get("batch_year")
 
+    # If student, index number and registration number are important
     if not name or not email or not message:
         return error("name, email, and message are required fields")
+
+    try:
+        # Cast department_id and batch_year to integers if provided
+        dept_val = int(department_id) if department_id else None
+        batch_val = int(batch_year) if batch_year else None
+    except ValueError:
+        return error("department_id and batch_year must be integers")
 
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO login_requests (name, email, user_id, role, message)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO login_requests (name, email, user_id, role, message, index_number, registration_number, nic, department_id, batch_year)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                     """,
-                    (name, email, user_id, role, message),
+                    (name, email, user_id or index_number, role, message, index_number, registration_number, nic, dept_val, batch_val),
                 )
                 conn.commit()
         return success({"message": "Login request submitted successfully!"})
@@ -678,10 +691,15 @@ def get_login_requests():
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, name, email, user_id, role, message, status, created_at
-                    FROM login_requests
-                    WHERE status = 'Pending'
-                    ORDER BY created_at DESC
+                    SELECT 
+                      lr.id, lr.name, lr.email, lr.user_id, lr.role, lr.message, lr.status, lr.created_at,
+                      lr.index_number, lr.registration_number, lr.nic, lr.department_id, lr.batch_year,
+                      d.name as department_name
+                    FROM login_requests lr
+                    LEFT JOIN departments d ON lr.department_id = d.id
+                    ORDER BY 
+                      CASE WHEN lr.status = 'Pending' THEN 0 ELSE 1 END,
+                      lr.created_at DESC
                     """
                 )
                 requests_list = []
@@ -699,13 +717,10 @@ def get_login_requests():
 def respond_login_request():
     data = request.get_json(force=True, silent=True) or {}
     request_id = data.get("id")
-    action = data.get("action")  # 'Approved' or 'Dismissed'
+    action = data.get("action")  # 'Pending', 'Done', 'Approved', 'Dismissed'
 
     if not request_id or not action:
         return error("id and action are required fields")
-
-    if action not in ["Approved", "Dismissed"]:
-        return error("Invalid action. Must be 'Approved' or 'Dismissed'")
 
     try:
         with get_connection() as conn:
@@ -723,6 +738,6 @@ def respond_login_request():
                 if not row:
                     return error("Login request not found")
                 conn.commit()
-        return success({"message": f"Request has been {action.lower()} successfully."})
+        return success({"message": f"Request status updated to {action} successfully."})
     except Exception as e:
         return error(str(e))
