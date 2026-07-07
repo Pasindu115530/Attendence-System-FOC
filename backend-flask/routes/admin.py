@@ -63,6 +63,7 @@ def add_student():
     nic = data.get("nic")
     dept_id = data.get("dept_id") or data.get("department_id")
     batch_year = data.get("batch_year")
+    email = data.get("email")
 
     if not all([user_id, registration_number, full_name, nic, dept_id, batch_year]):
         return error("user_id, registration_number, full_name, nic, dept_id, and batch_year are required")
@@ -72,15 +73,23 @@ def add_student():
             try:
                 cur.execute(
                     """
-                    INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year)
-                    VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s)
+                    INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year, email)
+                    VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s, %s)
                     """,
-                    (user_id, registration_number, full_name, nic, nic, dept_id, batch_year),
+                    (user_id, registration_number, full_name, nic, nic, dept_id, batch_year, email),
                 )
                 conn.commit()
             except Exception as e:
                 conn.rollback()
                 return error(str(e))
+                
+    if email:
+        try:
+            from utils.email_service import send_account_creation_email
+            send_account_creation_email(email, full_name, user_id, nic)
+        except Exception as mail_err:
+            print(f"[EMAIL ERROR] Failed to send email: {mail_err}")
+            
     return success({"message": "Student added successfully"})
 
 
@@ -110,6 +119,7 @@ def upload_students():
                     
         dept_col = 'department_id' if 'department_id' in df.columns else ('dept_id' if 'dept_id' in df.columns else None)
         batch_col = 'batch_year' if 'batch_year' in df.columns else None
+        email_col = 'email' if 'email' in df.columns else ('email_address' if 'email_address' in df.columns else None)
         
         # Look for a registration number column, otherwise fallback to user_id
         reg_col = None
@@ -128,6 +138,8 @@ def upload_students():
                     dept_id = str(row[dept_col]).strip() if dept_col and pd.notna(row[dept_col]) else None
                     if dept_id and dept_id.lower() == 'nan': dept_id = None
                     batch_year = int(row[batch_col]) if batch_col and pd.notna(row[batch_col]) else None
+                    email = str(row[email_col]).strip() if email_col and pd.notna(row[email_col]) else None
+                    if email and email.lower() == 'nan': email = None
                     
                     registration_number = str(row[reg_col]).strip() if reg_col and pd.notna(row[reg_col]) else user_id
 
@@ -135,13 +147,20 @@ def upload_students():
                         try:
                             cur.execute(
                                 """
-                                INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year)
-                                VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s)
+                                INSERT INTO users (index_number, registration_number, full_name, nic, password, role, department_id, batch_year, email)
+                                VALUES (%s, %s, %s, %s, %s, 'Student', %s, %s, %s)
                                 ON CONFLICT (index_number) DO NOTHING
                                 """,
-                                (user_id, registration_number, full_name, nic, nic, dept_id, batch_year),
+                                (user_id, registration_number, full_name, nic, nic, dept_id, batch_year, email),
                             )
-                            added_count += cur.rowcount
+                            if cur.rowcount > 0:
+                                added_count += 1
+                                if email:
+                                    try:
+                                        from utils.email_service import send_account_creation_email
+                                        send_account_creation_email(email, full_name, user_id, nic)
+                                    except Exception as mail_err:
+                                        print(f"Error sending email to {email}: {mail_err}")
                         except Exception as e:
                             print(f"Error inserting {user_id}: {e}")
                             conn.rollback()

@@ -50,6 +50,7 @@ export default function AdminDashboard({ navigation }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formStudentId, setFormStudentId] = useState('');
   const [formFullName, setFormFullName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
   const [formNic, setFormNic] = useState('');
   const [formRegNo, setFormRegNo] = useState('');
   const [formDeptId, setFormDeptId] = useState('');
@@ -287,6 +288,7 @@ export default function AdminDashboard({ navigation }) {
     setIsModalOpen(false);
     setFormStudentId('');
     setFormFullName('');
+    setFormEmail('');
     setFormNic('');
     setFormRegNo('');
     setFormDeptId('');
@@ -295,8 +297,8 @@ export default function AdminDashboard({ navigation }) {
   };
 
   const handleAddStudent = async () => {
-    if (!formStudentId.trim() || !formFullName.trim() || !formNic.trim() || !formRegNo.trim() || !formDeptId.trim() || !formBatchYear.trim()) {
-      showAlert("Error", "All fields (Student ID, Full Name, Registration Number, NIC, Department, and Batch Year) are required", 'error');
+    if (!formStudentId.trim() || !formFullName.trim() || !formEmail.trim() || !formNic.trim() || !formRegNo.trim() || !formDeptId.trim() || !formBatchYear.trim()) {
+      showAlert("Error", "All fields (Student ID, Full Name, Email, Registration Number, NIC, Department, and Batch Year) are required", 'error');
       return;
     }
     setSubmitting(true);
@@ -304,6 +306,7 @@ export default function AdminDashboard({ navigation }) {
       const res = await post('/add_student', {
         user_id: formStudentId.trim(),
         full_name: formFullName.trim(),
+        email: formEmail.trim(),
         nic: formNic.trim(),
         registration_number: formRegNo.trim(),
         dept_id: formDeptId.trim(),
@@ -316,6 +319,7 @@ export default function AdminDashboard({ navigation }) {
         setIsModalOpen(false);
         setFormStudentId('');
         setFormFullName('');
+        setFormEmail('');
         setFormNic('');
         setFormRegNo('');
         setFormDeptId('');
@@ -899,6 +903,7 @@ export default function AdminDashboard({ navigation }) {
                                 } else {
                                   if (item.role === 'Student') {
                                     setFormFullName(item.name);
+                                    setFormEmail(item.email || '');
                                     if (item.index_number) setFormStudentId(item.index_number);
                                     if (item.registration_number) setFormRegNo(item.registration_number);
                                     if (item.nic) setFormNic(item.nic);
@@ -1270,6 +1275,22 @@ export default function AdminDashboard({ navigation }) {
                       placeholderTextColor="#7C8BA1"
                       value={formFullName}
                       onChangeText={setFormFullName}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Student Email Address *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="email-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. student@gmail.com"
+                      placeholderTextColor="#7C8BA1"
+                      value={formEmail}
+                      onChangeText={setFormEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
                     />
                   </View>
                 </View>
