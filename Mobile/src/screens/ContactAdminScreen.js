@@ -150,11 +150,11 @@ export default function ContactAdminScreen({ navigation }) {
       showNotification('Please enter your index number.');
       return;
     }
+    if (!registrationNumber.trim()) {
+      showNotification('Please enter your registration number.');
+      return;
+    }
     if (role === 'Student') {
-      if (!registrationNumber.trim()) {
-        showNotification('Please enter your registration number.');
-        return;
-      }
       if (!selectedDeptId) {
         showNotification('Please select your department.');
         return;
@@ -181,7 +181,7 @@ export default function ContactAdminScreen({ navigation }) {
         email: email.trim(),
         role: role,
         index_number: indexNumber.trim(),
-        registration_number: role === 'Student' ? registrationNumber.trim() : null,
+        registration_number: registrationNumber.trim(),
         nic: nic.trim(),
         department_id: role === 'Student' ? parseInt(selectedDeptId) : null,
         batch_year: role === 'Student' ? parseInt(selectedBatchYear) : null,
@@ -361,6 +361,27 @@ export default function ContactAdminScreen({ navigation }) {
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Submit Request</Text>
 
+                {/* Role Selection Toggle */}
+                <View style={styles.roleContainer}>
+                  <Text style={styles.roleLabel}>I am a:</Text>
+                  <View style={styles.roleSelector}>
+                    <TouchableOpacity
+                      style={[styles.roleOption, role === 'Student' && styles.roleOptionActive]}
+                      onPress={() => setRole('Student')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.roleText, role === 'Student' && styles.roleTextActive]}>Student</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.roleOption, role === 'Lecturer' && styles.roleOptionActive]}
+                      onPress={() => setRole('Lecturer')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.roleText, role === 'Lecturer' && styles.roleTextActive]}>Lecturer</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
                 <View style={styles.inputContainer}>
                   <MaterialCommunityIcons name="account-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
                   <TextInput
@@ -399,20 +420,18 @@ export default function ContactAdminScreen({ navigation }) {
                   />
                 </View>
 
-                {/* Registration Number (Student Only) */}
-                {role === 'Student' && (
-                  <View style={styles.inputContainer}>
-                    <MaterialCommunityIcons name="badge-account-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="Registration Number "
-                      placeholderTextColor="#7C8BA1"
-                      value={registrationNumber}
-                      onChangeText={setRegistrationNumber}
-                      autoCapitalize="characters"
-                    />
-                  </View>
-                )}
+                {/* Registration Number */}
+                <View style={styles.inputContainer}>
+                  <MaterialCommunityIcons name="badge-account-outline" size={22} color="#7C8BA1" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={role === 'Student' ? "Registration Number" : "Lecturer Registration Number"}
+                    placeholderTextColor="#7C8BA1"
+                    value={registrationNumber}
+                    onChangeText={setRegistrationNumber}
+                    autoCapitalize="characters"
+                  />
+                </View>
 
                 {/* NIC */}
                 <View style={styles.inputContainer}>
@@ -456,26 +475,6 @@ export default function ContactAdminScreen({ navigation }) {
                   </>
                 )}
 
-                {/* Role Selection Toggle */}
-                <View style={styles.roleContainer}>
-                  <Text style={styles.roleLabel}>I am a:</Text>
-                  <View style={styles.roleSelector}>
-                    <TouchableOpacity
-                      style={[styles.roleOption, role === 'Student' && styles.roleOptionActive]}
-                      onPress={() => setRole('Student')}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.roleText, role === 'Student' && styles.roleTextActive]}>Student</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.roleOption, role === 'Lecturer' && styles.roleOptionActive]}
-                      onPress={() => setRole('Lecturer')}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.roleText, role === 'Lecturer' && styles.roleTextActive]}>Lecturer</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
 
                 <View style={[styles.inputContainer, styles.textAreaContainer]}>
                   <MaterialCommunityIcons name="pencil-outline" size={22} color="#7C8BA1" style={[styles.inputIcon, { marginTop: 12 }]} />
