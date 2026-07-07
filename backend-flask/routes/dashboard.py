@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from database.db import get_connection
 from utils.helpers import current_day_name, current_time_str, today_str
-from utils.response import success
+from utils.response import success, error
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -292,3 +292,75 @@ def get_lecturer_report():
                 sub["attendance_percentage"] = f"{round((sub['total_present'] / total) * 100, 1)}%" if total > 0 else "0%"
                 
     return success({"reports": subjects})
+
+
+@dashboard_bp.post("/get_lecture_attendance_detail")
+def get_lecture_attendance_detail():
+    data = request.get_json(force=True, silent=True) or {}
+    timetable_id = data.get("timetable_id")
+    date_val = data.get("date") or today_str()
+
+    if not timetable_id:
+        return error("timetable_id is required")
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # First check if the timetable slot exists and get subject details
+                cur.execute(
+                    """
+                    SELECT t.id, s.subject_name, s.subject_code, r.room_name, t.start_time, t.end_time
+                    FROM timetable t
+                    JOIN subjects s ON t.subject_id = s.id
+                    JOIN classrooms r ON t.classroom_id = r.id
+                    WHERE t.id = %s
+                    """,
+                    (timetable_id,)
+                )
+                lecture_info = cur.fetchone()
+                if not lecture_info:
+                    return error("Timetable slot not found")
+
+                lecture_info = dict(lecture_info)
+                if lecture_info.get("start_time"): lecture_info["start_time"] = str(lecture_info["start_time"])
+                if lecture_info.get("end_time"): lecture_info["end_time"] = str(lecture_info["end_time"])
+
+                # Now fetch the student list and their attendance status
+                cur.execute(
+                    """
+                    SELECT 
+                        u.index_number as user_id, 
+                        u.registration_number, 
+                        u.full_name,
+                        d.name as department_name,
+                        u.batch_year,
+                        a.status as attendance_status,
+                        a.marked_at
+                    FROM users u
+                    JOIN departments d ON u.department_id = d.id
+                    JOIN batch_subjects bs ON u.department_id = bs.department_id AND u.batch_year = bs.batch_year
+                    JOIN timetable t ON bs.subject_id = t.subject_id
+                    LEFT JOIN attendance a ON u.index_number = a.index_number 
+                                          AND t.id = a.timetable_id 
+                                          AND DATE(a.marked_at) = %s
+                    WHERE t.id = %s AND u.role = 'Student'
+                    ORDER BY u.index_number ASC
+                    """,
+                    (date_val, timetable_id),
+                )
+                students = []
+                for r in cur.fetchall():
+                    s = dict(r)
+                    if s.get("marked_at"):
+                        s["marked_at"] = str(s["marked_at"])
+                    # If attendance_status is None, they are "Absent"
+                    if not s.get("attendance_status"):
+                        s["attendance_status"] = "Absent"
+                    students.append(s)
+
+                lecture_info["date"] = date_val
+                return success({"lecture": lecture_info, "students": students})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return error(str(e))

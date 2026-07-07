@@ -32,6 +32,12 @@ export default function AdminDashboard({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Lecture detail modal states
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedLecture, setSelectedLecture] = useState(null);
+  const [detailStudents, setDetailStudents] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+
   // Tab State: 'home', 'search', 'settings'
   const [activeTab, setActiveTab] = useState('home');
 
@@ -72,7 +78,7 @@ export default function AdminDashboard({ navigation }) {
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   // Tab Bar animated value
-  const tabNames = ['home', 'search', 'settings'];
+  const tabNames = ['home', 'actions', 'search', 'settings'];
   const getIndexFromTab = (tab) => tabNames.indexOf(tab);
   const animatedTabValue = useRef(new Animated.Value(getIndexFromTab('home'))).current;
 
@@ -309,6 +315,29 @@ export default function AdminDashboard({ navigation }) {
     }
   };
 
+  const handleOpenLectureDetail = async (timetableId) => {
+    setDetailLoading(true);
+    setIsDetailModalOpen(true);
+    setSelectedLecture(null);
+    setDetailStudents([]);
+    try {
+      const res = await post('/get_lecture_attendance_detail', { timetable_id: timetableId });
+      if (res.status === 'success') {
+        setSelectedLecture(res.data.lecture);
+        setDetailStudents(res.data.students);
+      } else {
+        showAlert("Error", res.message || "Failed to load details", 'error');
+        setIsDetailModalOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert("Error", "Could not connect to the server.", 'error');
+      setIsDetailModalOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const fetchAdminData = useCallback(async () => {
     try {
       const data = await post('/get_admin_dashboard', {});
@@ -373,24 +402,25 @@ export default function AdminDashboard({ navigation }) {
 
   // Interpolation for sliding bottom active indicator
   const navBarWidth = width - 40;
-  const stepWidth = navBarWidth / 3;
+  const stepWidth = navBarWidth / 4;
   const translateX = animatedTabValue.interpolate({
-    inputRange: [0, 1, 2],
+    inputRange: [0, 1, 2, 3],
     outputRange: [
       0 * stepWidth + (stepWidth - 68) / 2,
       1 * stepWidth + (stepWidth - 68) / 2,
       2 * stepWidth + (stepWidth - 68) / 2,
+      3 * stepWidth + (stepWidth - 68) / 2,
     ],
   });
 
   const circleScale = animatedTabValue.interpolate({
-    inputRange: [0, 0.5, 1, 1.5, 2],
-    outputRange: [1, 0.82, 1, 0.82, 1],
+    inputRange: [0, 0.5, 1, 1.5, 2, 2.5, 3],
+    outputRange: [1, 0.82, 1, 0.82, 1, 0.82, 1],
   });
 
   const circleTranslateY = animatedTabValue.interpolate({
-    inputRange: [0, 0.5, 1, 1.5, 2],
-    outputRange: [0, 12, 0, 12, 0],
+    inputRange: [0, 0.5, 1, 1.5, 2, 2.5, 3],
+    outputRange: [0, 12, 0, 12, 0, 12, 0],
   });
 
   const makeIconStyle = (index) => {
@@ -428,6 +458,7 @@ export default function AdminDashboard({ navigation }) {
               <View style={styles.headerTitleRow}>
                 <Text style={styles.headerTitle}>
                   {activeTab === 'home' ? 'Admin Panel' :
+                   activeTab === 'actions' ? 'Quick Actions' :
                    activeTab === 'search' ? 'Academic Reports' : 'Admin Settings'}
                 </Text>
                 <View style={styles.headerBadge}>
@@ -491,7 +522,12 @@ export default function AdminDashboard({ navigation }) {
                 lectures.map((item, index) => {
                   const isLive = liveLectures.includes(item);
                   return (
-                    <View key={index} style={[styles.lecCard, isLive && styles.lecCardLive]}>
+                    <TouchableOpacity 
+                      key={index} 
+                      style={[styles.lecCard, isLive && styles.lecCardLive]}
+                      onPress={() => handleOpenLectureDetail(item.id)}
+                      activeOpacity={0.75}
+                    >
                       <View style={styles.cardHeader}>
                         <View style={[styles.badge, { backgroundColor: isLive ? 'rgba(53, 167, 196, 0.12)' : '#ECF0F3' }]}>
                           <View style={[styles.dot, { backgroundColor: isLive ? '#35A7C4' : '#7C8BA1' }]} />
@@ -522,7 +558,7 @@ export default function AdminDashboard({ navigation }) {
                           </View>
                         ) : null}
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })
               ) : (
@@ -533,8 +569,13 @@ export default function AdminDashboard({ navigation }) {
                   <Text style={styles.emptyText}>No lectures scheduled for today.</Text>
                 </View>
               )}
+            </>
+          )}
 
-              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Quick Actions</Text>
+          {/* ACTIONS TAB VIEW */}
+          {activeTab === 'actions' && (
+            <>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
               
               {/* Create Student */}
               <TouchableOpacity 
@@ -1187,7 +1228,8 @@ export default function AdminDashboard({ navigation }) {
               <MaterialCommunityIcons
                 name={
                   activeTab === 'home' ? 'home' :
-                  activeTab === 'search' ? 'magnify' : 'cog'
+                  activeTab === 'actions' ? 'flash' :
+                  activeTab === 'search' ? 'file-chart' : 'cog'
                 }
                 size={26}
                 color="#fff"
@@ -1206,24 +1248,35 @@ export default function AdminDashboard({ navigation }) {
             </Animated.View>
           </TouchableOpacity>
 
-          {/* Tab 2: Search / Reports */}
+          {/* Tab 2: Actions */}
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => setActiveTab('actions')}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={makeIconStyle(1)}>
+              <MaterialCommunityIcons name="flash-outline" size={24} color="#7C8BA1" />
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Tab 3: Search / Reports */}
           <TouchableOpacity 
             style={styles.navItem} 
             onPress={() => setActiveTab('search')}
             activeOpacity={0.8}
           >
-            <Animated.View style={makeIconStyle(1)}>
+            <Animated.View style={makeIconStyle(2)}>
               <MaterialCommunityIcons name="file-chart-outline" size={24} color="#7C8BA1" />
             </Animated.View>
           </TouchableOpacity>
 
-          {/* Tab 3: Settings */}
+          {/* Tab 4: Settings */}
           <TouchableOpacity 
             style={styles.navItem} 
             onPress={() => setActiveTab('settings')}
             activeOpacity={0.8}
           >
-            <Animated.View style={makeIconStyle(2)}>
+            <Animated.View style={makeIconStyle(3)}>
               <MaterialCommunityIcons name="cog-outline" size={24} color="#7C8BA1" />
             </Animated.View>
           </TouchableOpacity>
@@ -1312,6 +1365,116 @@ export default function AdminDashboard({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Lecture Attendance Detail Modal */}
+      <Modal
+        visible={isDetailModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsDetailModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  {selectedLecture ? selectedLecture.subject_name : 'Loading...'}
+                </Text>
+                <Text style={{ fontFamily: 'Outfit-Medium', color: '#7C8BA1', fontSize: 13, marginTop: 2 }}>
+                  {selectedLecture ? `${selectedLecture.subject_code} • ${selectedLecture.room_name}` : ''}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsDetailModalOpen(false)} style={styles.modalCloseBtn}>
+                <MaterialCommunityIcons name="close" size={24} color="#7C8BA1" />
+              </TouchableOpacity>
+            </View>
+
+            {detailLoading ? (
+              <ActivityIndicator size="large" color="#35A7C4" style={{ marginVertical: 40 }} />
+            ) : (
+              <>
+                {/* Date & Time Header */}
+                <View style={styles.detailTimeHeader}>
+                  <View style={styles.detailTimeItem}>
+                    <MaterialCommunityIcons name="calendar-outline" size={16} color="#35A7C4" style={{ marginRight: 6 }} />
+                    <Text style={styles.detailTimeText}>{selectedLecture?.date}</Text>
+                  </View>
+                  <View style={[styles.detailTimeItem, { marginLeft: 16 }]}>
+                    <MaterialCommunityIcons name="clock-outline" size={16} color="#35A7C4" style={{ marginRight: 6 }} />
+                    <Text style={styles.detailTimeText}>
+                      {selectedLecture ? `${selectedLecture.start_time?.substring(0, 5)} - ${selectedLecture.end_time?.substring(0, 5)}` : ''}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Attendance Summary Stats */}
+                {detailStudents.length > 0 && (
+                  <View style={styles.summaryStatsRow}>
+                    <View style={[styles.summaryStatBox, { borderColor: '#E5EDF9' }]}>
+                      <Text style={[styles.summaryStatVal, { color: '#2C3A4E' }]}>{detailStudents.length}</Text>
+                      <Text style={styles.summaryStatLbl}>Total Enrolled</Text>
+                    </View>
+                    <View style={[styles.summaryStatBox, { borderColor: 'rgba(16, 185, 129, 0.2)' }]}>
+                      <Text style={[styles.summaryStatVal, { color: '#10B981' }]}>
+                        {detailStudents.filter(s => s.attendance_status === 'Present').length}
+                      </Text>
+                      <Text style={styles.summaryStatLbl}>Present</Text>
+                    </View>
+                    <View style={[styles.summaryStatBox, { borderColor: 'rgba(225, 29, 72, 0.2)' }]}>
+                      <Text style={[styles.summaryStatVal, { color: '#E11D48' }]}>
+                        {detailStudents.filter(s => s.attendance_status === 'Absent').length}
+                      </Text>
+                      <Text style={styles.summaryStatLbl}>Absent</Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Students List */}
+                <ScrollView 
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {detailStudents.length > 0 ? (
+                    detailStudents.map((student, idx) => {
+                      const isPresent = student.attendance_status === 'Present';
+                      return (
+                        <View key={idx} style={styles.studentDetailRow}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.studentDetailName}>{student.full_name}</Text>
+                            <Text style={styles.studentDetailId}>{student.user_id} • {student.registration_number}</Text>
+                          </View>
+                          <View style={[
+                            styles.statusBadge, 
+                            { 
+                              backgroundColor: isPresent ? 'rgba(16, 185, 129, 0.12)' : 'rgba(225, 29, 72, 0.12)'
+                            }
+                          ]}>
+                            <Text style={[
+                              styles.statusText, 
+                              { 
+                                color: isPresent ? '#10B981' : '#E11D48'
+                              }
+                            ]}>
+                              {student.attendance_status.toUpperCase()}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })
+                  ) : (
+                    <View style={{ alignItems: 'center', marginVertical: 30 }}>
+                      <MaterialCommunityIcons name="account-off-outline" size={40} color="#7C8BA1" />
+                      <Text style={{ fontFamily: 'Outfit-Medium', color: '#7C8BA1', marginTop: 10, fontSize: 14 }}>
+                        No students enrolled or assigned.
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -2501,5 +2664,81 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Outfit-Bold',
     color: '#FFFFFF',
+  },
+  detailTimeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 16,
+  },
+  detailTimeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailTimeText: {
+    fontFamily: 'Outfit-SemiBold',
+    fontSize: 13,
+    color: '#2C3A4E',
+  },
+  summaryStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  summaryStatBox: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  summaryStatVal: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+  },
+  summaryStatLbl: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 10,
+    color: '#7C8BA1',
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  studentDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  studentDetailName: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 14,
+    color: '#2C3A4E',
+  },
+  studentDetailId: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 11,
+    color: '#7C8BA1',
+    marginTop: 2,
   },
 });
