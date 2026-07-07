@@ -693,358 +693,205 @@ export default function AdminDashboard({ navigation }) {
           {/* ACTIONS TAB VIEW */}
           {activeTab === 'actions' && (
             <>
-              {currentActionsView === 'menu' ? (
-                <>
-                  <Text style={styles.sectionTitle}>Quick Actions</Text>
-                  
-                  {/* Create Student */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => setIsModalOpen(true)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="account-plus-outline" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Create Student</Text>
-                      <Text style={styles.actionDesc}>Register a new student with login credentials</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              
+              {/* Create Student */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => setIsModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="account-plus-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Create Student</Text>
+                  <Text style={styles.actionDesc}>Register a new student with login credentials</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Create Lecturer */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => setIsLecturerModalOpen(true)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="account-tie-outline" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Create Lecturer</Text>
-                      <Text style={styles.actionDesc}>Register a new lecturer with email credentials</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* Create Lecturer */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => setIsLecturerModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="account-tie-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Create Lecturer</Text>
+                  <Text style={styles.actionDesc}>Register a new lecturer with email credentials</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Assign Subjects */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => navigation.navigate('AssignSubjects')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="book-open-page-variant-outline" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Assign Subjects</Text>
-                      <Text style={styles.actionDesc}>Assign subjects to batches per semester</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* Assign Subjects */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('AssignSubjects')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="book-open-page-variant-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Assign Subjects</Text>
+                  <Text style={styles.actionDesc}>Assign subjects to batches per semester</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Assign Lecturers */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => navigation.navigate('AssignLecturers')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="human-male-board" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Assign Lecturers</Text>
-                      <Text style={styles.actionDesc}>Assign subjects taught by lecturers</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* Assign Lecturers */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('AssignLecturers')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="human-male-board" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Assign Lecturers</Text>
+                  <Text style={styles.actionDesc}>Assign subjects taught by lecturers</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* View Assignments */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => navigation.navigate('ViewAssignedSubjects')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>View Assignments</Text>
-                      <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* View Assignments */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('ViewAssignedSubjects')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="format-list-bulleted" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>View Assignments</Text>
+                  <Text style={styles.actionDesc}>See all subjects assigned to batches</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Create Lecture */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => navigation.navigate('ManageTimetable')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="calendar-plus" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Create Lecture</Text>
-                      <Text style={styles.actionDesc}>Schedule a new class session or lecture time</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* Create Lecture */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('ManageTimetable')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="calendar-plus" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Create Lecture</Text>
+                  <Text style={styles.actionDesc}>Schedule a new class session or lecture time</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Manage Timetable */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => navigation.navigate('ManageTimetable')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Manage Timetable</Text>
-                      <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* Manage Timetable */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('ManageTimetable')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="calendar-clock" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Manage Timetable</Text>
+                  <Text style={styles.actionDesc}>Assign classes and set lecture times</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Generate Timetable */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => {
-                      showConfirm(
-                        "Generate Timetable",
-                        "This will DELETE the current timetable and automatically schedule all assigned subjects for the semester. Are you sure?",
-                        async () => {
-                          try {
-                            const res = await post('/auto_schedule_timetable', {});
-                            if (res.status === 'success') {
-                              fetchAdminData();
-                              showAlert('Success', res.message || 'Timetable generated successfully!', 'success');
-                            } else {
-                              showAlert('Error', res.message || 'Failed to generate timetable', 'error');
-                            }
-                          } catch(e) {
-                            showAlert('Error', 'An error occurred while generating timetable', 'error');
-                          }
+              {/* Generate Timetable */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => {
+                  showConfirm(
+                    "Generate Timetable",
+                    "This will DELETE the current timetable and automatically schedule all assigned subjects for the semester. Are you sure?",
+                    async () => {
+                      try {
+                        const res = await post('/auto_schedule_timetable', {});
+                        if (res.status === 'success') {
+                          fetchAdminData();
+                          showAlert('Success', res.message || 'Timetable generated successfully!', 'success');
+                        } else {
+                          showAlert('Error', res.message || 'Failed to generate timetable', 'error');
                         }
-                      );
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="magic-staff" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Generate Timetable</Text>
-                      <Text style={styles.actionDesc}>Auto-schedule classes to avoid clashes</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+                      } catch(e) {
+                        showAlert('Error', 'An error occurred while generating timetable', 'error');
+                      }
+                    }
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="magic-staff" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Generate Timetable</Text>
+                  <Text style={styles.actionDesc}>Auto-schedule classes to avoid clashes</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Set Class Location */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => navigation.navigate('AddClassLocation')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="map-marker-path" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Set Class Location</Text>
-                      <Text style={styles.actionDesc}>Define boundary points for geofencing</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
+              {/* Set Class Location */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => navigation.navigate('AddClassLocation')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="map-marker-path" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Set Class Location</Text>
+                  <Text style={styles.actionDesc}>Define boundary points for geofencing</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
 
-                  {/* Admin Requests */}
-                  <TouchableOpacity 
-                    style={styles.actionCard} 
-                    onPress={() => setCurrentActionsView('requests')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.iconCircle}>
-                      <MaterialCommunityIcons name="clipboard-text-play-outline" size={26} color="#35A7C4" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                      <Text style={styles.actionTitle}>Admin Requests</Text>
-                      <Text style={styles.actionDesc}>Manage login & account requests (Done/Pending)</Text>
-                    </View>
-                    <View style={styles.chevronBg}>
-                      <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
-                    </View>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                /* FULL PAGE ADMIN REQUESTS VIEW */
-                <>
-                  <View style={styles.fullPageHeader}>
-                    <TouchableOpacity 
-                      style={styles.backBtn}
-                      onPress={() => setCurrentActionsView('menu')}
-                      activeOpacity={0.7}
-                    >
-                      <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
-                      <Text style={styles.backBtnText}>Back</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.fullPageTitle}>Admin Requests</Text>
-                    <View style={{ width: 60 }} />
-                  </View>
-
-                  <Text style={[styles.subtitleText, { marginBottom: 16 }]}>
-                    Verify and process student/lecturer registration requests. Approving a student automatically passes their details to the Create Student registration flow.
-                  </Text>
-
-                  {loginRequests.length > 0 ? (
-                    loginRequests.map((item, index) => {
-                      const isDone = item.status === 'Done' || item.status === 'Approved' || item.status === 'Dismissed';
-                      return (
-                        <View key={`full_req_${item.id}`} style={[styles.requestCard, isDone && { opacity: 0.75, backgroundColor: '#E5EDF9' }]}>
-                          <View style={styles.requestHeader}>
-                            <View style={styles.requestUserGroup}>
-                              <View style={[styles.requestRoleBadge, isDone && { backgroundColor: 'rgba(124, 139, 161, 0.12)' }]}>
-                                <Text style={[styles.requestRoleText, isDone && { color: '#7C8BA1' }]}>{item.role.toUpperCase()}</Text>
-                              </View>
-                              <Text style={[styles.requestName, isDone && { textDecorationLine: 'line-through', color: '#7C8BA1' }]} numberOfLines={1}>{item.name}</Text>
-                            </View>
-                            <Text style={styles.requestDate}>{item.created_at?.substring(0, 10)}</Text>
-                          </View>
-                          
-                          {/* Structured Details Grid */}
-                          <View style={styles.requestDetailsGrid}>
-                            <View style={styles.reqDetailItem}>
-                              <Text style={styles.reqDetailLabel}>Email:</Text>
-                              <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.email}</Text>
-                            </View>
-                            {item.index_number ? (
-                              <View style={styles.reqDetailItem}>
-                                <Text style={styles.reqDetailLabel}>Index Number:</Text>
-                                <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.index_number}</Text>
-                              </View>
-                            ) : null}
-                            {item.registration_number ? (
-                              <View style={styles.reqDetailItem}>
-                                <Text style={styles.reqDetailLabel}>Registration No:</Text>
-                                <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.registration_number}</Text>
-                              </View>
-                            ) : null}
-                            {item.nic ? (
-                              <View style={styles.reqDetailItem}>
-                                <Text style={styles.reqDetailLabel}>NIC Number:</Text>
-                                <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.nic}</Text>
-                              </View>
-                            ) : null}
-                            {item.role === 'Student' && item.department_name ? (
-                              <View style={styles.reqDetailItem}>
-                                <Text style={styles.reqDetailLabel}>Department:</Text>
-                                <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.department_name}</Text>
-                              </View>
-                            ) : null}
-                            {item.role === 'Student' && item.batch_year ? (
-                              <View style={styles.reqDetailItem}>
-                                <Text style={styles.reqDetailLabel}>Batch Year:</Text>
-                                <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>Batch {item.batch_year}</Text>
-                              </View>
-                            ) : null}
-                          </View>
-
-                          <View style={styles.requestMessageContainer}>
-                            <Text style={styles.requestMessage}>{item.message}</Text>
-                          </View>
-
-                          <View style={styles.requestActionsRow}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 'auto' }}>
-                              <View style={[styles.statusDot, { backgroundColor: isDone ? '#10B981' : '#F59E0B' }]} />
-                              <Text style={{ fontFamily: 'Outfit-Bold', fontSize: 12, color: isDone ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
-                                {item.status}
-                              </Text>
-                            </View>
-
-                            <TouchableOpacity 
-                              style={[styles.requestBtn, styles.requestBtnDismiss, { marginRight: 8 }]}
-                              onPress={() => handleRespondRequest(item.id, 'Dismissed')}
-                              activeOpacity={0.7}
-                            >
-                              <MaterialCommunityIcons name="close-circle-outline" size={16} color="#E11D48" style={{ marginRight: 4 }} />
-                              <Text style={styles.requestBtnTextDismiss}>Dismiss</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity 
-                              style={[
-                                styles.requestBtn, 
-                                isDone ? styles.requestBtnPending : styles.requestBtnApprove
-                              ]}
-                              onPress={() => {
-                                if (isDone) {
-                                  handleRespondRequest(item.id, 'Pending');
-                                } else {
-                                  if (item.role === 'Student') {
-                                    setFormFullName(item.name);
-                                    setFormEmail(item.email || '');
-                                    if (item.index_number) setFormStudentId(item.index_number);
-                                    if (item.registration_number) setFormRegNo(item.registration_number);
-                                    if (item.nic) setFormNic(item.nic);
-                                    if (item.department_id) setFormDeptId(item.department_id.toString());
-                                    if (item.batch_year) setFormBatchYear(item.batch_year.toString());
-                                    setPendingApprovalRequestId(item.id);
-                                    setIsModalOpen(true);
-                                  } else {
-                                    setFormLecturerName(item.name);
-                                    setFormLecturerEmail(item.email || '');
-                                    if (item.index_number) setFormLecturerId(item.index_number);
-                                    if (item.nic) setFormLecturerNic(item.nic);
-                                    setFormLecturerRegNo(item.registration_number || item.index_number || '');
-                                    setPendingApprovalRequestId(item.id);
-                                    setIsLecturerModalOpen(true);
-                                  }
-                                }
-                              }}
-                              activeOpacity={0.7}
-                            >
-                              <MaterialCommunityIcons 
-                                name={isDone ? "undo-variant" : "check-circle-outline"} 
-                                size={16} 
-                                color={isDone ? "#7C8BA1" : "#10B981"} 
-                                style={{ marginRight: 4 }} 
-                              />
-                              <Text style={isDone ? styles.requestBtnTextPending : styles.requestBtnTextApprove}>
-                                {isDone ? 'Mark Pending' : 'Approve'}
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      );
-                    })
-                  ) : (
-                    <View style={styles.emptyContainer}>
-                      <View style={styles.emptyIconBg}>
-                        <MaterialCommunityIcons name="check-decagram-outline" size={48} color="#7C8BA1" />
-                      </View>
-                      <Text style={styles.emptyText}>No requests found.</Text>
-                    </View>
-                  )}
-                </>
-              )}
+              {/* Admin Requests */}
+              <TouchableOpacity 
+                style={styles.actionCard} 
+                onPress={() => setCurrentActionsView('requests')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons name="clipboard-text-play-outline" size={26} color="#35A7C4" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.actionTitle}>Admin Requests</Text>
+                  <Text style={styles.actionDesc}>Manage login & account requests (Done/Pending)</Text>
+                </View>
+                <View style={styles.chevronBg}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#35A7C4" />
+                </View>
+              </TouchableOpacity>
             </>
           )}
 
@@ -1282,6 +1129,170 @@ export default function AdminDashboard({ navigation }) {
         </Animated.View>
       </ScrollView>
 
+      {/* Admin Requests Modal */}
+      <Modal
+        visible={currentActionsView === 'requests'}
+        animationType="slide"
+        transparent={false}
+        statusBarTranslucent={true}
+        onRequestClose={() => setCurrentActionsView('menu')}
+      >
+        <View style={styles.fullScreenModalOverlay}>
+          <View style={styles.fullScreenModalContent}>
+            <View style={styles.fullPageHeader}>
+              <TouchableOpacity 
+                style={styles.backBtn}
+                onPress={() => setCurrentActionsView('menu')}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="chevron-left" size={28} color="#35A7C4" />
+                <Text style={styles.backBtnText}>Back</Text>
+              </TouchableOpacity>
+              <Text style={styles.fullPageTitle}>Admin Requests</Text>
+              <View style={{ width: 60 }} />
+            </View>
+
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
+              <Text style={[styles.subtitleText, { marginBottom: 16 }]}>
+                Verify and process student/lecturer registration requests. Approving a student automatically passes their details to the Create Student registration flow.
+              </Text>
+
+              {loginRequests.length > 0 ? (
+                loginRequests.map((item, index) => {
+                  const isDone = item.status === 'Done' || item.status === 'Approved' || item.status === 'Dismissed';
+                  return (
+                    <View key={`full_req_${item.id}`} style={[styles.requestCard, isDone && { opacity: 0.75, backgroundColor: '#E5EDF9' }]}>
+                      <View style={styles.requestHeader}>
+                        <View style={styles.requestUserGroup}>
+                          <View style={[styles.requestRoleBadge, isDone && { backgroundColor: 'rgba(124, 139, 161, 0.12)' }]}>
+                            <Text style={[styles.requestRoleText, isDone && { color: '#7C8BA1' }]}>{item.role.toUpperCase()}</Text>
+                          </View>
+                          <Text style={[styles.requestName, isDone && { textDecorationLine: 'line-through', color: '#7C8BA1' }]} numberOfLines={1}>{item.name}</Text>
+                        </View>
+                        <Text style={styles.requestDate}>{item.created_at?.substring(0, 10)}</Text>
+                      </View>
+                      
+                      {/* Structured Details Grid */}
+                      <View style={styles.requestDetailsGrid}>
+                        <View style={styles.reqDetailItem}>
+                          <Text style={styles.reqDetailLabel}>Email:</Text>
+                          <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.email}</Text>
+                        </View>
+                        {item.index_number ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Index Number:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.index_number}</Text>
+                          </View>
+                        ) : null}
+                        {item.registration_number ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Registration No:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.registration_number}</Text>
+                          </View>
+                        ) : null}
+                        {item.nic ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>NIC Number:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.nic}</Text>
+                          </View>
+                        ) : null}
+                        {item.role === 'Student' && item.department_name ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Department:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>{item.department_name}</Text>
+                          </View>
+                        ) : null}
+                        {item.role === 'Student' && item.batch_year ? (
+                          <View style={styles.reqDetailItem}>
+                            <Text style={styles.reqDetailLabel}>Batch Year:</Text>
+                            <Text style={[styles.reqDetailValue, isDone && { color: '#7C8BA1' }]}>Batch {item.batch_year}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+
+                      <View style={styles.requestMessageContainer}>
+                        <Text style={styles.requestMessage}>{item.message}</Text>
+                      </View>
+
+                      <View style={styles.requestActionsRow}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 'auto' }}>
+                          <View style={[styles.statusDot, { backgroundColor: isDone ? '#10B981' : '#F59E0B' }]} />
+                          <Text style={{ fontFamily: 'Outfit-Bold', fontSize: 12, color: isDone ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
+                            {item.status}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity 
+                          style={[styles.requestBtn, styles.requestBtnDismiss, { marginRight: 8 }]}
+                          onPress={() => handleRespondRequest(item.id, 'Dismissed')}
+                          activeOpacity={0.7}
+                        >
+                          <MaterialCommunityIcons name="close-circle-outline" size={16} color="#E11D48" style={{ marginRight: 4 }} />
+                          <Text style={styles.requestBtnTextDismiss}>Dismiss</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                          style={[
+                            styles.requestBtn, 
+                            isDone ? styles.requestBtnPending : styles.requestBtnApprove
+                          ]}
+                          onPress={() => {
+                            if (isDone) {
+                              handleRespondRequest(item.id, 'Pending');
+                            } else {
+                              if (item.role === 'Student') {
+                                setFormFullName(item.name);
+                                setFormEmail(item.email || '');
+                                if (item.index_number) setFormStudentId(item.index_number);
+                                if (item.registration_number) setFormRegNo(item.registration_number);
+                                if (item.nic) setFormNic(item.nic);
+                                if (item.department_id) setFormDeptId(item.department_id.toString());
+                                if (item.batch_year) setFormBatchYear(item.batch_year.toString());
+                                setPendingApprovalRequestId(item.id);
+                                setIsModalOpen(true);
+                              } else {
+                                setFormLecturerName(item.name);
+                                setFormLecturerEmail(item.email || '');
+                                if (item.index_number) setFormLecturerId(item.index_number);
+                                if (item.nic) setFormLecturerNic(item.nic);
+                                setFormLecturerRegNo(item.registration_number || item.index_number || '');
+                                setPendingApprovalRequestId(item.id);
+                                setIsLecturerModalOpen(true);
+                              }
+                            }
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <MaterialCommunityIcons 
+                            name={isDone ? "undo-variant" : "check-circle-outline"} 
+                            size={16} 
+                            color={isDone ? "#7C8BA1" : "#10B981"} 
+                            style={{ marginRight: 4 }} 
+                          />
+                          <Text style={isDone ? styles.requestBtnTextPending : styles.requestBtnTextApprove}>
+                            {isDone ? 'Mark Pending' : 'Approve'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBg}>
+                    <MaterialCommunityIcons name="check-decagram-outline" size={48} color="#7C8BA1" />
+                  </View>
+                  <Text style={styles.emptyText}>No requests found.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Custom Logout Confirmation Modal */}
       <Modal
         visible={isLogoutModalOpen}
@@ -1332,15 +1343,16 @@ export default function AdminDashboard({ navigation }) {
       <Modal
         visible={isModalOpen}
         animationType="slide"
-        transparent={true}
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={closeAddStudentModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.fullScreenModalOverlay}>
           <KeyboardAvoidingView 
             behavior={Platform.OS === "ios" ? "padding" : "height"} 
-            style={styles.modalKeyboardContainer}
+            style={{ flex: 1, width: '100%' }}
           >
-            <View style={styles.modalContent}>
+            <View style={styles.fullScreenModalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New Student</Text>
                 <TouchableOpacity onPress={closeAddStudentModal} style={styles.modalCloseBtn}>
@@ -1492,15 +1504,16 @@ export default function AdminDashboard({ navigation }) {
       <Modal
         visible={isLecturerModalOpen}
         animationType="slide"
-        transparent={true}
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={closeAddLecturerModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.fullScreenModalOverlay}>
           <KeyboardAvoidingView 
             behavior={Platform.OS === "ios" ? "padding" : "height"} 
-            style={styles.modalKeyboardContainer}
+            style={{ flex: 1, width: '100%' }}
           >
-            <View style={styles.modalContent}>
+            <View style={styles.fullScreenModalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New Lecturer</Text>
                 <TouchableOpacity onPress={closeAddLecturerModal} style={styles.modalCloseBtn}>
@@ -1588,13 +1601,15 @@ export default function AdminDashboard({ navigation }) {
                   </View>
                 </View>
 
-                <TouchableOpacity style={styles.submitBtn} onPress={handleAddLecturer}>
-                  {submitting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.submitBtnText}>Create Lecturer Account</Text>
-                  )}
-                </TouchableOpacity>
+                <View style={styles.submitBtnShadowContainer}>
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleAddLecturer} disabled={submitting}>
+                    {submitting ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.submitBtnText}>Create Lecturer Account</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -3402,5 +3417,16 @@ const styles = StyleSheet.create({
     color: '#7C8BA1',
     fontSize: 13,
     lineHeight: 18,
+  },
+  fullScreenModalOverlay: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+  },
+  fullScreenModalContent: {
+    flex: 1,
+    backgroundColor: '#ECF0F3',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 24,
   },
 });
