@@ -126,7 +126,24 @@ def get_admin_dashboard():
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                _LECTURE_QUERY + " WHERE t.day_of_week = %s ORDER BY t.start_time ASC",
+                """
+                SELECT t.id, t.start_time, t.end_time, t.day_of_week, t.subject_id, t.classroom_id,
+                       s.subject_name, s.subject_code, r.room_name,
+                       STRING_AGG(DISTINCT bs.batch_year::text, ', ') as batch_years,
+                       COALESCE(
+                           STRING_AGG(DISTINCT d_bs.name, ', '), 
+                           d_s.name
+                       ) as department_names
+                FROM timetable t
+                JOIN subjects s ON t.subject_id = s.id
+                JOIN classrooms r ON t.classroom_id = r.id
+                LEFT JOIN batch_subjects bs ON t.subject_id = bs.subject_id
+                LEFT JOIN departments d_bs ON bs.department_id = d_bs.id
+                LEFT JOIN departments d_s ON s.department_id = d_s.id
+                WHERE t.day_of_week = %s
+                GROUP BY t.id, s.id, r.id, d_s.id
+                ORDER BY t.start_time ASC
+                """,
                 (day,),
             )
             lectures = []

@@ -14,8 +14,8 @@
 // export const BASE_URL = 'http://10.0.2.2:5000';       // Android Emulator
 // export const BASE_URL = 'http://localhost:5000';        // iOS Simulator
 // export const BASE_URL = 'http://192.168.1.10:5000';    // Physical Device (LAN)
-// export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
-export const BASE_URL = 'http://10.33.111.230:5000';    // ✅ Local Development (LAN IP)
+export const BASE_URL = 'https://attendence.pasinduudana.me'; // ✅ Production
+// export const BASE_URL = 'http://10.33.111.230:5000';    // ✅ Local Development (LAN IP)
 // export const BASE_URL = 'http://10.0.2.2:5000';       // Android Emulator (Local Dev)
 // export const BASE_URL = 'http://localhost:5000';        // iOS Simulator (Local Dev)
 

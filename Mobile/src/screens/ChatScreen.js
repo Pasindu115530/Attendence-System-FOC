@@ -131,7 +131,11 @@ export default function ChatScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <LinearGradient
         colors={['#F3F7FD', '#E5EDF9']}
@@ -172,36 +176,31 @@ export default function ChatScreen({ navigation }) {
           )}
         </View>
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
-          <View style={styles.inputArea}>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Ask me anything..."
-                placeholderTextColor="#7C8BA1"
-                value={inputText}
-                onChangeText={setInputText}
-                multiline
-                maxLength={200}
-              />
-            </View>
-            <View style={[styles.sendButtonShadow, !inputText.trim() && { opacity: 0.5 }]}>
-              <TouchableOpacity 
-                style={styles.sendButton} 
-                onPress={handleSend}
-                disabled={!inputText.trim()}
-                activeOpacity={0.8}
-              >
-                <MaterialCommunityIcons name="send" size={22} color="#fff" />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.inputArea}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Ask me anything..."
+              placeholderTextColor="#7C8BA1"
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={200}
+            />
           </View>
-        </KeyboardAvoidingView>
+          <View style={[styles.sendButtonShadow, !inputText.trim() && { opacity: 0.5 }]}>
+            <TouchableOpacity 
+              style={styles.sendButton} 
+              onPress={handleSend}
+              disabled={!inputText.trim()}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="send" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </LinearGradient>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

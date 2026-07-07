@@ -509,6 +509,18 @@ export default function AdminDashboard({ navigation }) {
                           <MaterialCommunityIcons name="map-marker-radius" size={14} color="#35A7C4" style={{ marginRight: 4 }} />
                           <Text style={styles.infoText}>{item.room_name}</Text>
                         </View>
+                        {item.department_names ? (
+                          <View style={styles.infoPill}>
+                            <MaterialCommunityIcons name="domain" size={14} color="#35A7C4" style={{ marginRight: 4 }} />
+                            <Text style={styles.infoText}>{item.department_names}</Text>
+                          </View>
+                        ) : null}
+                        {item.batch_years ? (
+                          <View style={styles.infoPill}>
+                            <MaterialCommunityIcons name="account-group" size={14} color="#35A7C4" style={{ marginRight: 4 }} />
+                            <Text style={styles.infoText}>Year {item.batch_years}</Text>
+                          </View>
+                        ) : null}
                       </View>
                     </View>
                   );
@@ -1518,6 +1530,7 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   infoPill: { 
     flexDirection: 'row', 
@@ -1533,6 +1546,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 4,
     elevation: 1,
+    marginRight: 8,
+    marginBottom: 6,
   },
   infoText: {
     fontFamily: 'Outfit-Medium',
