@@ -100,6 +100,7 @@ def add_lecturer():
     full_name = data.get("full_name")
     nic = data.get("nic")
     email = data.get("email")
+    registration_number = data.get("registration_number") or user_id
 
     if not all([user_id, full_name, nic, email]):
         return error("user_id, full_name, nic, and email are required")
@@ -109,10 +110,10 @@ def add_lecturer():
             try:
                 cur.execute(
                     """
-                    INSERT INTO users (index_number, full_name, nic, password, role, email)
-                    VALUES (%s, %s, %s, %s, 'Lecturer', %s)
+                    INSERT INTO users (index_number, registration_number, full_name, nic, password, role, email)
+                    VALUES (%s, %s, %s, %s, %s, 'Lecturer', %s)
                     """,
-                    (user_id, full_name, nic, nic, email),
+                    (user_id, registration_number, full_name, nic, nic, email),
                 )
                 conn.commit()
             except Exception as e:

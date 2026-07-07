@@ -62,6 +62,7 @@ export default function AdminDashboard({ navigation }) {
   const [formLecturerName, setFormLecturerName] = useState('');
   const [formLecturerEmail, setFormLecturerEmail] = useState('');
   const [formLecturerNic, setFormLecturerNic] = useState('');
+  const [formLecturerRegNo, setFormLecturerRegNo] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
@@ -309,12 +310,13 @@ export default function AdminDashboard({ navigation }) {
     setFormLecturerName('');
     setFormLecturerEmail('');
     setFormLecturerNic('');
+    setFormLecturerRegNo('');
     setPendingApprovalRequestId(null);
   };
 
   const handleAddLecturer = async () => {
-    if (!formLecturerId.trim() || !formLecturerName.trim() || !formLecturerEmail.trim() || !formLecturerNic.trim()) {
-      showAlert("Error", "All fields (Lecturer ID, Name, Email, and NIC) are required", 'error');
+    if (!formLecturerId.trim() || !formLecturerName.trim() || !formLecturerEmail.trim() || !formLecturerNic.trim() || !formLecturerRegNo.trim()) {
+      showAlert("Error", "All fields (Lecturer ID, Name, Email, NIC, and Registration Number) are required", 'error');
       return;
     }
     setSubmitting(true);
@@ -323,7 +325,8 @@ export default function AdminDashboard({ navigation }) {
         user_id: formLecturerId.trim(),
         full_name: formLecturerName.trim(),
         email: formLecturerEmail.trim(),
-        nic: formLecturerNic.trim()
+        nic: formLecturerNic.trim(),
+        registration_number: formLecturerRegNo.trim()
       });
 
       if (res.status === 'success') {
@@ -334,6 +337,7 @@ export default function AdminDashboard({ navigation }) {
         setFormLecturerName('');
         setFormLecturerEmail('');
         setFormLecturerNic('');
+        setFormLecturerRegNo('');
         setPendingApprovalRequestId(null);
         
         if (approvedReqId) {
@@ -1009,6 +1013,7 @@ export default function AdminDashboard({ navigation }) {
                                     setFormLecturerEmail(item.email || '');
                                     if (item.index_number) setFormLecturerId(item.index_number);
                                     if (item.nic) setFormLecturerNic(item.nic);
+                                    setFormLecturerRegNo(item.registration_number || item.index_number || '');
                                     setPendingApprovalRequestId(item.id);
                                     setIsLecturerModalOpen(true);
                                   }
@@ -1533,6 +1538,21 @@ export default function AdminDashboard({ navigation }) {
                       placeholderTextColor="#7C8BA1"
                       value={formLecturerName}
                       onChangeText={setFormLecturerName}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>Lecturer Registration Number *</Text>
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="card-account-details-outline" size={20} color="#7C8BA1" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g. REG-LEC001"
+                      placeholderTextColor="#7C8BA1"
+                      value={formLecturerRegNo}
+                      onChangeText={setFormLecturerRegNo}
+                      autoCapitalize="none"
                     />
                   </View>
                 </View>
