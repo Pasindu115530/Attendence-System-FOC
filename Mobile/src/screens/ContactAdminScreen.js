@@ -91,7 +91,7 @@ export default function ContactAdminScreen({ navigation }) {
     }
   };
 
-  const handleSubmitRequest = () => {
+  const handleSubmitRequest = async () => {
     if (!name.trim()) {
       showNotification('Please enter your full name.');
       return;
@@ -107,15 +107,30 @@ export default function ContactAdminScreen({ navigation }) {
 
     setIsSubmitting(true);
 
-    // Simulate sending details to FOC administration
-    setTimeout(() => {
+    try {
+      const res = await post('/submit_login_request', {
+        name: name.trim(),
+        email: email.trim(),
+        user_id: userId.trim(),
+        role: role,
+        message: message.trim()
+      });
+
+      if (res.status === 'success') {
+        setName('');
+        setEmail('');
+        setUserId('');
+        setMessage('');
+        showNotification('Your request has been sent to the administrator. We will review and contact you shortly.', 'success');
+      } else {
+        showNotification(res.message || 'Failed to send request. Please try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('Could not connect to the server. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setName('');
-      setEmail('');
-      setUserId('');
-      setMessage('');
-      showNotification('Your request has been sent to the administrator. We will review and contact you shortly.', 'success');
-    }, 2000);
+    }
   };
 
   return (

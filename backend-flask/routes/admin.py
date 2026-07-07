@@ -640,3 +640,89 @@ def auto_schedule_timetable():
         import traceback
         traceback.print_exc()
         return error(str(e))
+
+
+@admin_bp.post("/submit_login_request")
+def submit_login_request():
+    data = request.get_json(force=True, silent=True) or {}
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    user_id = data.get("user_id", "").strip() or None
+    role = data.get("role", "Student").strip()
+    message = data.get("message", "").strip()
+
+    if not name or not email or not message:
+        return error("name, email, and message are required fields")
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO login_requests (name, email, user_id, role, message)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (name, email, user_id, role, message),
+                )
+                conn.commit()
+        return success({"message": "Login request submitted successfully!"})
+    except Exception as e:
+        return error(str(e))
+
+
+@admin_bp.post("/get_login_requests")
+def get_login_requests():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, name, email, user_id, role, message, status, created_at
+                    FROM login_requests
+                    WHERE status = 'Pending'
+                    ORDER BY created_at DESC
+                    """
+                )
+                requests_list = []
+                for r in cur.fetchall():
+                    req = dict(r)
+                    if req.get("created_at"):
+                        req["created_at"] = str(req["created_at"])
+                    requests_list.append(req)
+        return success({"requests": requests_list})
+    except Exception as e:
+        return error(str(e))
+
+
+@admin_bp.post("/respond_login_request")
+def respond_login_request():
+    data = request.get_json(force=True, silent=True) or {}
+    request_id = data.get("id")
+    action = data.get("action")  # 'Approved' or 'Dismissed'
+
+    if not request_id or not action:
+        return error("id and action are required fields")
+
+    if action not in ["Approved", "Dismissed"]:
+        return error("Invalid action. Must be 'Approved' or 'Dismissed'")
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE login_requests
+                    SET status = %s
+                    WHERE id = %s
+                    RETURNING id
+                    """,
+                    (action, request_id),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return error("Login request not found")
+                conn.commit()
+        return success({"message": f"Request has been {action.lower()} successfully."})
+    except Exception as e:
+        return error(str(e))

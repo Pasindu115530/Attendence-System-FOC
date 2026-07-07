@@ -38,6 +38,9 @@ export default function AdminDashboard({ navigation }) {
   const [detailStudents, setDetailStudents] = useState([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  // Login request states
+  const [loginRequests, setLoginRequests] = useState([]);
+
   // Tab State: 'home', 'search', 'settings'
   const [activeTab, setActiveTab] = useState('home');
 
@@ -340,11 +343,21 @@ export default function AdminDashboard({ navigation }) {
 
   const fetchAdminData = useCallback(async () => {
     try {
-      const data = await post('/get_admin_dashboard', {});
-      if (data.status === 'success') {
-        setLectures(data.data.lectures);
+      const [dashboardRes, requestsRes] = await Promise.all([
+        post('/get_admin_dashboard', {}),
+        post('/get_login_requests', {})
+      ]);
+
+      if (dashboardRes.status === 'success') {
+        setLectures(dashboardRes.data.lectures);
       } else {
         setLectures([]);
+      }
+
+      if (requestsRes.status === 'success') {
+        setLoginRequests(requestsRes.data.requests || []);
+      } else {
+        setLoginRequests([]);
       }
     } catch (error) {
       console.error("Fetch Error: ", error);
@@ -354,6 +367,25 @@ export default function AdminDashboard({ navigation }) {
       setRefreshing(false);
     }
   }, []);
+
+  const handleRespondRequest = async (requestId, action) => {
+    try {
+      const res = await post('/respond_login_request', { id: requestId, action: action });
+      if (res.status === 'success') {
+        showAlert("Success", `Request has been ${action.toLowerCase()} successfully!`, 'success');
+        // Refresh requests list
+        const requestsRes = await post('/get_login_requests', {});
+        if (requestsRes.status === 'success') {
+          setLoginRequests(requestsRes.data.requests || []);
+        }
+      } else {
+        showAlert("Error", res.message || "Failed to update request", 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert("Error", "Could not connect to the server.", 'error');
+    }
+  };
 
   useEffect(() => {
     fetchAdminData();
@@ -567,6 +599,62 @@ export default function AdminDashboard({ navigation }) {
                     <MaterialCommunityIcons name="calendar-blank" size={48} color="#7C8BA1" />
                   </View>
                   <Text style={styles.emptyText}>No lectures scheduled for today.</Text>
+                </View>
+              )}
+
+              {/* PENDING LOGIN REQUESTS */}
+              <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Pending Login Requests</Text>
+              
+              {loginRequests.length > 0 ? (
+                loginRequests.map((item, index) => (
+                  <View key={`req_${item.id}`} style={styles.requestCard}>
+                    <View style={styles.requestHeader}>
+                      <View style={styles.requestUserGroup}>
+                        <View style={styles.requestRoleBadge}>
+                          <Text style={styles.requestRoleText}>{item.role.toUpperCase()}</Text>
+                        </View>
+                        <Text style={styles.requestName} numberOfLines={1}>{item.name}</Text>
+                      </View>
+                      <Text style={styles.requestDate}>{item.created_at?.substring(0, 10)}</Text>
+                    </View>
+                    <Text style={styles.requestEmail}>{item.email}</Text>
+                    {item.user_id ? <Text style={styles.requestUserId}>ID: {item.user_id}</Text> : null}
+                    <View style={styles.requestMessageContainer}>
+                      <Text style={styles.requestMessage}>{item.message}</Text>
+                    </View>
+                    <View style={styles.requestActionsRow}>
+                      <TouchableOpacity 
+                        style={[styles.requestBtn, styles.requestBtnDismiss]}
+                        onPress={() => handleRespondRequest(item.id, 'Dismissed')}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons name="close-circle-outline" size={16} color="#E11D48" style={{ marginRight: 4 }} />
+                        <Text style={styles.requestBtnTextDismiss}>Dismiss</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.requestBtn, styles.requestBtnApprove]}
+                        onPress={() => {
+                          if (item.role === 'Student') {
+                            setFormFullName(item.name);
+                            if (item.user_id) setFormStudentId(item.user_id);
+                            setIsModalOpen(true);
+                          }
+                          handleRespondRequest(item.id, 'Approved');
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons name="check-circle-outline" size={16} color="#10B981" style={{ marginRight: 4 }} />
+                        <Text style={styles.requestBtnTextApprove}>Approve</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBg}>
+                    <MaterialCommunityIcons name="check-decagram-outline" size={48} color="#7C8BA1" />
+                  </View>
+                  <Text style={styles.emptyText}>No pending login requests.</Text>
                 </View>
               )}
             </>
@@ -2740,5 +2828,114 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#7C8BA1',
     marginTop: 2,
+  },
+  requestCard: {
+    backgroundColor: '#ECF0F3',
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 2,
+    marginBottom: 12,
+  },
+  requestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  requestUserGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  requestRoleBadge: {
+    backgroundColor: 'rgba(53, 167, 196, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  requestRoleText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 10,
+    color: '#35A7C4',
+  },
+  requestName: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    color: '#2C3A4E',
+    flex: 1,
+  },
+  requestDate: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 11,
+    color: '#7C8BA1',
+  },
+  requestEmail: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 13,
+    color: '#7C8BA1',
+    marginBottom: 2,
+  },
+  requestUserId: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 12,
+    color: '#35A7C4',
+    marginBottom: 6,
+  },
+  requestMessageContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    padding: 10,
+    borderRadius: 12,
+    marginVertical: 6,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  requestMessage: {
+    fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    color: '#4B5563',
+    lineHeight: 18,
+  },
+  requestActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+    gap: 8,
+  },
+  requestBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    backgroundColor: '#ECF0F3',
+    shadowColor: '#A3B1C6',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.5,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  requestBtnDismiss: {
+    borderColor: 'rgba(225, 29, 72, 0.3)',
+  },
+  requestBtnApprove: {
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  requestBtnTextDismiss: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#E11D48',
+  },
+  requestBtnTextApprove: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    color: '#10B981',
   },
 });
