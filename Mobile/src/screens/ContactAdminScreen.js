@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { post } from '../api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -159,7 +160,7 @@ export default function ContactAdminScreen({ navigation }) {
               />
               <View style={styles.notificationTextContainer}>
                 <Text style={[styles.notificationTitle, { color: notification.type === 'error' ? "#E11D48" : "#10B981" }]}>
-                  {notification.type === 'error' ? 'Validation Error' : 'Success'}
+                  {notification.type === 'error' ? 'Error' : 'Success'}
                 </Text>
                 <Text style={[styles.notificationMessage, { color: '#2C3A4E' }]}>{notification.message}</Text>
               </View>
