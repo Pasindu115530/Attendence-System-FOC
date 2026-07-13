@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ScrollView, 
-  StatusBar, 
-  ActivityIndicator, 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+  ActivityIndicator,
   RefreshControl,
   Alert,
   Animated,
@@ -67,7 +67,7 @@ export default function AdminDashboard({ navigation }) {
   const [departments, setDepartments] = useState([]);
   const [uploadingExcel, setUploadingExcel] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
-  const [confirmConfig, setConfirmConfig] = useState({ visible: false, title: '', message: '', onConfirm: () => {} });
+  const [confirmConfig, setConfirmConfig] = useState({ visible: false, title: '', message: '', onConfirm: () => { } });
 
   const showAlert = (title, message, type = 'error') => {
     setAlertConfig({ visible: true, title, message, type });
@@ -145,6 +145,7 @@ export default function AdminDashboard({ navigation }) {
       });
 
       if (overlayMode === 'register') {
+        formData.append('index_number', 'Admin');
         const res = await upload('/register-face', formData);
         if (res.status === 'success') {
           setIsFaceOverlayOpen(false);
@@ -154,7 +155,7 @@ export default function AdminDashboard({ navigation }) {
         }
       } else if (overlayMode === 'reset') {
         const faceRes = await upload('/verify-face', formData);
-        if (faceRes.status === "success" && faceRes.data?.role === 'Admin') {
+        if (faceRes.status === "success" && (faceRes.data?.role === 'Admin' || faceRes.data?.index_number === 'Admin')) {
           setIsFaceOverlayOpen(false);
           showConfirm(
             "Reset Semester Data",
@@ -253,7 +254,7 @@ export default function AdminDashboard({ navigation }) {
       });
       if (res.canceled) return;
       const file = res.assets[0];
-      
+
       setUploadingExcel(true);
       const formData = new FormData();
       formData.append('file', {
@@ -261,7 +262,7 @@ export default function AdminDashboard({ navigation }) {
         name: file.name,
         type: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
-      
+
       const uploadRes = await upload('/upload_students', formData);
       if (uploadRes.status === 'success') {
         setIsModalOpen(false);
@@ -331,7 +332,7 @@ export default function AdminDashboard({ navigation }) {
 
       if (res.status === 'success') {
         const approvedReqId = pendingApprovalRequestId;
-        
+
         setIsLecturerModalOpen(false);
         setFormLecturerId('');
         setFormLecturerName('');
@@ -339,7 +340,7 @@ export default function AdminDashboard({ navigation }) {
         setFormLecturerNic('');
         setFormLecturerRegNo('');
         setPendingApprovalRequestId(null);
-        
+
         if (approvedReqId) {
           await handleRespondRequest(approvedReqId, 'Approved');
         } else {
@@ -376,7 +377,7 @@ export default function AdminDashboard({ navigation }) {
 
       if (res.status === 'success') {
         const approvedReqId = pendingApprovalRequestId;
-        
+
         setIsModalOpen(false);
         setFormStudentId('');
         setFormFullName('');
@@ -386,7 +387,7 @@ export default function AdminDashboard({ navigation }) {
         setFormDeptId('');
         setFormBatchYear('');
         setPendingApprovalRequestId(null);
-        
+
         if (approvedReqId) {
           await handleRespondRequest(approvedReqId, 'Approved');
         } else {
@@ -514,7 +515,7 @@ export default function AdminDashboard({ navigation }) {
 
   const liveLectures = lectures.filter(l => l.isLive);
 
-  const filteredCourses = reportCourses.filter(c => 
+  const filteredCourses = reportCourses.filter(c =>
     c.course_name.toLowerCase().includes(reportCourseSearchQuery.toLowerCase())
   );
 
@@ -561,7 +562,7 @@ export default function AdminDashboard({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-      
+
       {/* Header Container */}
       <View style={styles.headerContainer}>
         <LinearGradient
@@ -576,8 +577,8 @@ export default function AdminDashboard({ navigation }) {
               <View style={styles.headerTitleRow}>
                 <Text style={styles.headerTitle}>
                   {activeTab === 'home' ? 'Admin Panel' :
-                   activeTab === 'actions' ? 'Quick Actions' :
-                   activeTab === 'search' ? 'Academic Reports' : 'Admin Settings'}
+                    activeTab === 'actions' ? 'Quick Actions' :
+                      activeTab === 'search' ? 'Academic Reports' : 'Admin Settings'}
                 </Text>
                 <View style={styles.headerBadge}>
                   <Text style={styles.headerBadgeText}>FOC</Text>
@@ -615,14 +616,14 @@ export default function AdminDashboard({ navigation }) {
         </LinearGradient>
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           activeTab === 'home' ? (
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={onRefresh} 
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
               tintColor="#35A7C4"
               colors={['#35A7C4']}
             />
@@ -630,18 +631,18 @@ export default function AdminDashboard({ navigation }) {
         }
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], width: '100%' }}>
-          
+
           {/* HOME TAB VIEW */}
           {activeTab === 'home' && (
             <>
               <Text style={styles.sectionTitle}>Today's Schedule</Text>
-              
+
               {lectures.length > 0 ? (
                 lectures.map((item, index) => {
                   const isLive = liveLectures.includes(item);
                   return (
-                    <TouchableOpacity 
-                      key={index} 
+                    <TouchableOpacity
+                      key={index}
                       style={[styles.lecCard, isLive && styles.lecCardLive]}
                       onPress={() => handleOpenLectureDetail(item.id)}
                       activeOpacity={0.75}
@@ -694,10 +695,10 @@ export default function AdminDashboard({ navigation }) {
           {activeTab === 'actions' && (
             <>
               <Text style={styles.sectionTitle}>Quick Actions</Text>
-              
+
               {/* Create Student */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => setIsModalOpen(true)}
                 activeOpacity={0.7}
               >
@@ -714,8 +715,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Create Lecturer */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => setIsLecturerModalOpen(true)}
                 activeOpacity={0.7}
               >
@@ -732,8 +733,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Assign Subjects */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => navigation.navigate('AssignSubjects')}
                 activeOpacity={0.7}
               >
@@ -750,8 +751,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Assign Lecturers */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => navigation.navigate('AssignLecturers')}
                 activeOpacity={0.7}
               >
@@ -768,8 +769,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* View Assignments */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => navigation.navigate('ViewAssignedSubjects')}
                 activeOpacity={0.7}
               >
@@ -787,8 +788,8 @@ export default function AdminDashboard({ navigation }) {
 
 
               {/* Manage Timetable */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => navigation.navigate('ManageTimetable')}
                 activeOpacity={0.7}
               >
@@ -805,8 +806,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Generate Timetable */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => {
                   showConfirm(
                     "Generate Timetable",
@@ -820,7 +821,7 @@ export default function AdminDashboard({ navigation }) {
                         } else {
                           showAlert('Error', res.message || 'Failed to generate timetable', 'error');
                         }
-                      } catch(e) {
+                      } catch (e) {
                         showAlert('Error', 'An error occurred while generating timetable', 'error');
                       }
                     }
@@ -841,8 +842,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Set Class Location */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => navigation.navigate('AddClassLocation')}
                 activeOpacity={0.7}
               >
@@ -859,8 +860,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Admin Requests */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={() => setCurrentActionsView('requests')}
                 activeOpacity={0.7}
               >
@@ -893,11 +894,11 @@ export default function AdminDashboard({ navigation }) {
                   <Text style={styles.label}>Department</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
                     {departments.map((item, index) => (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         key={item.id ? item.id.toString() : `dept_${index}`}
                         style={[styles.chip, reportFilters.dept_id === item.id && styles.chipSelected]}
                         onPress={() => {
-                          setReportFilters({...reportFilters, dept_id: item.id, course_id: ''});
+                          setReportFilters({ ...reportFilters, dept_id: item.id, course_id: '' });
                           setReportCourseSearchQuery('');
                           fetchReportCourses(item.id);
                         }}
@@ -910,16 +911,16 @@ export default function AdminDashboard({ navigation }) {
                     ))}
                   </ScrollView>
                 </View>
-                
+
                 {/* Batch Selector */}
                 <View style={{ marginBottom: 16 }}>
                   <Text style={styles.label}>Batch</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
                     {reportBatches.map((item, index) => (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         key={item.batch_year ? item.batch_year.toString() : `batch_${index}`}
                         style={[styles.chip, reportFilters.batch === item.batch_year && styles.chipSelected]}
-                        onPress={() => setReportFilters({...reportFilters, batch: item.batch_year})}
+                        onPress={() => setReportFilters({ ...reportFilters, batch: item.batch_year })}
                         activeOpacity={0.7}
                       >
                         <Text style={[styles.chipText, reportFilters.batch === item.batch_year && styles.chipTextSelected]}>
@@ -944,13 +945,13 @@ export default function AdminDashboard({ navigation }) {
                     />
                   </View>
                 )}
-                
+
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selector}>
                   {filteredCourses.length > 0 ? filteredCourses.map((item, index) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={item.course_id ? item.course_id.toString() : `course_${index}`}
                       style={[styles.chip, reportFilters.course_id === item.course_id && styles.chipSelected]}
-                      onPress={() => setReportFilters({...reportFilters, course_id: item.course_id})}
+                      onPress={() => setReportFilters({ ...reportFilters, course_id: item.course_id })}
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.chipText, reportFilters.course_id === item.course_id && styles.chipTextSelected]}>
@@ -965,8 +966,8 @@ export default function AdminDashboard({ navigation }) {
                 </ScrollView>
 
                 <View style={styles.submitBtnShadowContainer}>
-                  <TouchableOpacity 
-                    style={styles.submitBtn} 
+                  <TouchableOpacity
+                    style={styles.submitBtn}
                     onPress={fetchFilteredReport}
                     disabled={reportLoading}
                     activeOpacity={0.8}
@@ -992,7 +993,7 @@ export default function AdminDashboard({ navigation }) {
                       <Text style={styles.countText}>{reportResults.length} Students</Text>
                     </View>
                   </View>
-                  
+
                   <View style={styles.tableHeader}>
                     <Text style={[styles.headerCell, { flex: 2, textAlign: 'left' }]}>Student Info</Text>
                     <Text style={[styles.headerCell, { flex: 1, textAlign: 'center' }]}>Status</Text>
@@ -1063,8 +1064,8 @@ export default function AdminDashboard({ navigation }) {
               <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Security & Operations</Text>
 
               {/* Register Admin Face */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={handleOpenFaceRegister}
                 activeOpacity={0.7}
               >
@@ -1081,8 +1082,8 @@ export default function AdminDashboard({ navigation }) {
               </TouchableOpacity>
 
               {/* Reset Semester (Warning Action) */}
-              <TouchableOpacity 
-                style={styles.actionCard} 
+              <TouchableOpacity
+                style={styles.actionCard}
                 onPress={handleOpenFaceReset}
                 activeOpacity={0.7}
               >
@@ -1123,7 +1124,7 @@ export default function AdminDashboard({ navigation }) {
         <View style={styles.fullScreenModalOverlay}>
           <View style={styles.fullScreenModalContent}>
             <View style={styles.fullPageHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.backBtn}
                 onPress={() => setCurrentActionsView('menu')}
                 activeOpacity={0.7}
@@ -1135,7 +1136,7 @@ export default function AdminDashboard({ navigation }) {
               <View style={{ width: 60 }} />
             </View>
 
-            <ScrollView 
+            <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
             >
@@ -1157,7 +1158,7 @@ export default function AdminDashboard({ navigation }) {
                         </View>
                         <Text style={styles.requestDate}>{item.created_at?.substring(0, 10)}</Text>
                       </View>
-                      
+
                       {/* Structured Details Grid */}
                       <View style={styles.requestDetailsGrid}>
                         <View style={styles.reqDetailItem}>
@@ -1208,7 +1209,7 @@ export default function AdminDashboard({ navigation }) {
                           </Text>
                         </View>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={[styles.requestBtn, styles.requestBtnDismiss, { marginRight: 8 }]}
                           onPress={() => handleRespondRequest(item.id, 'Dismissed')}
                           activeOpacity={0.7}
@@ -1217,9 +1218,9 @@ export default function AdminDashboard({ navigation }) {
                           <Text style={styles.requestBtnTextDismiss}>Dismiss</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={[
-                            styles.requestBtn, 
+                            styles.requestBtn,
                             isDone ? styles.requestBtnPending : styles.requestBtnApprove
                           ]}
                           onPress={() => {
@@ -1249,11 +1250,11 @@ export default function AdminDashboard({ navigation }) {
                           }}
                           activeOpacity={0.7}
                         >
-                          <MaterialCommunityIcons 
-                            name={isDone ? "undo-variant" : "check-circle-outline"} 
-                            size={16} 
-                            color={isDone ? "#7C8BA1" : "#10B981"} 
-                            style={{ marginRight: 4 }} 
+                          <MaterialCommunityIcons
+                            name={isDone ? "undo-variant" : "check-circle-outline"}
+                            size={16}
+                            color={isDone ? "#7C8BA1" : "#10B981"}
+                            style={{ marginRight: 4 }}
                           />
                           <Text style={isDone ? styles.requestBtnTextPending : styles.requestBtnTextApprove}>
                             {isDone ? 'Mark Pending' : 'Approve'}
@@ -1292,22 +1293,22 @@ export default function AdminDashboard({ navigation }) {
                 </View>
               </View>
             </View>
-            
+
             <Text style={styles.logoutModalTitle}>Confirm Logout</Text>
             <Text style={styles.logoutModalMessage}>Do you want to log out of the Admin panel?</Text>
-            
+
             <View style={styles.logoutActionRow}>
-              <TouchableOpacity 
-                style={styles.logoutCancelBtn} 
+              <TouchableOpacity
+                style={styles.logoutCancelBtn}
                 onPress={() => setIsLogoutModalOpen(false)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.logoutCancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <View style={styles.logoutConfirmBtnShadow}>
-                <TouchableOpacity 
-                  style={styles.logoutConfirmBtn} 
+                <TouchableOpacity
+                  style={styles.logoutConfirmBtn}
                   onPress={() => {
                     setIsLogoutModalOpen(false);
                     navigation.replace('Login', { autoFaceLogin: false });
@@ -1331,8 +1332,8 @@ export default function AdminDashboard({ navigation }) {
         onRequestClose={closeAddStudentModal}
       >
         <View style={styles.fullScreenModalOverlay}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ flex: 1, width: '100%' }}
           >
             <View style={styles.fullScreenModalContent}>
@@ -1343,7 +1344,7 @@ export default function AdminDashboard({ navigation }) {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
+              <ScrollView
                 contentContainerStyle={styles.modalScroll}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
@@ -1466,8 +1467,8 @@ export default function AdminDashboard({ navigation }) {
                     </View>
 
                     <View style={styles.excelBtnShadowContainer}>
-                      <TouchableOpacity 
-                        style={styles.excelBtn} 
+                      <TouchableOpacity
+                        style={styles.excelBtn}
                         onPress={handleUploadExcel}
                         activeOpacity={0.8}
                       >
@@ -1492,8 +1493,8 @@ export default function AdminDashboard({ navigation }) {
         onRequestClose={closeAddLecturerModal}
       >
         <View style={styles.fullScreenModalOverlay}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ flex: 1, width: '100%' }}
           >
             <View style={styles.fullScreenModalContent}>
@@ -1504,7 +1505,7 @@ export default function AdminDashboard({ navigation }) {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
+              <ScrollView
                 contentContainerStyle={styles.modalScroll}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
@@ -1612,12 +1613,12 @@ export default function AdminDashboard({ navigation }) {
           </View>
 
           <View style={styles.faceCameraContainer}>
-            <CameraView 
+            <CameraView
               ref={cameraRef}
               style={{ flex: 1 }}
               facing="front"
             />
-            
+
             <View style={styles.faceInstructionBox}>
               <MaterialCommunityIcons name="face-recognition" size={32} color="#35A7C4" />
               <Text style={styles.faceInstructionText}>
@@ -1626,8 +1627,8 @@ export default function AdminDashboard({ navigation }) {
             </View>
 
             <View style={styles.captureBtnContainer}>
-              <TouchableOpacity 
-                style={[styles.captureBtn, isProcessing && styles.captureBtnDisabled]} 
+              <TouchableOpacity
+                style={[styles.captureBtn, isProcessing && styles.captureBtnDisabled]}
                 onPress={captureFace}
                 disabled={isProcessing}
               >
@@ -1643,8 +1644,8 @@ export default function AdminDashboard({ navigation }) {
       )}
 
       {/* AI Assistant FAB */}
-      <TouchableOpacity 
-        style={styles.fab} 
+      <TouchableOpacity
+        style={styles.fab}
         onPress={() => navigation.navigate('AdminAIChat')}
         activeOpacity={0.8}
       >
@@ -1661,7 +1662,7 @@ export default function AdminDashboard({ navigation }) {
       {/* Bottom Sliding Navigation Bar matching UserDashboard */}
       <View style={styles.navBarContainer}>
         <View style={styles.navBar}>
-          
+
           {/* Sliding Circle Indicator */}
           <Animated.View
             style={[
@@ -1680,8 +1681,8 @@ export default function AdminDashboard({ navigation }) {
               <MaterialCommunityIcons
                 name={
                   activeTab === 'home' ? 'home' :
-                  activeTab === 'actions' ? 'flash' :
-                  activeTab === 'search' ? 'file-chart' : 'cog'
+                    activeTab === 'actions' ? 'flash' :
+                      activeTab === 'search' ? 'file-chart' : 'cog'
                 }
                 size={26}
                 color="#fff"
@@ -1690,8 +1691,8 @@ export default function AdminDashboard({ navigation }) {
           </Animated.View>
 
           {/* Tab 1: Home */}
-          <TouchableOpacity 
-            style={styles.navItem} 
+          <TouchableOpacity
+            style={styles.navItem}
             onPress={() => setActiveTab('home')}
             activeOpacity={0.8}
           >
@@ -1701,8 +1702,8 @@ export default function AdminDashboard({ navigation }) {
           </TouchableOpacity>
 
           {/* Tab 2: Actions */}
-          <TouchableOpacity 
-            style={styles.navItem} 
+          <TouchableOpacity
+            style={styles.navItem}
             onPress={() => setActiveTab('actions')}
             activeOpacity={0.8}
           >
@@ -1712,8 +1713,8 @@ export default function AdminDashboard({ navigation }) {
           </TouchableOpacity>
 
           {/* Tab 3: Search / Reports */}
-          <TouchableOpacity 
-            style={styles.navItem} 
+          <TouchableOpacity
+            style={styles.navItem}
             onPress={() => setActiveTab('search')}
             activeOpacity={0.8}
           >
@@ -1723,8 +1724,8 @@ export default function AdminDashboard({ navigation }) {
           </TouchableOpacity>
 
           {/* Tab 4: Settings */}
-          <TouchableOpacity 
-            style={styles.navItem} 
+          <TouchableOpacity
+            style={styles.navItem}
             onPress={() => setActiveTab('settings')}
             activeOpacity={0.8}
           >
@@ -1748,20 +1749,20 @@ export default function AdminDashboard({ navigation }) {
             <View style={styles.alertIconWrapper}>
               <View style={[styles.alertIconOutline, alertConfig.type === 'error' ? styles.alertIconOutlineError : styles.alertIconOutlineSuccess]}>
                 <View style={[styles.alertIconInner, alertConfig.type === 'error' ? styles.alertIconInnerError : styles.alertIconInnerSuccess]}>
-                  <MaterialCommunityIcons 
-                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"} 
-                    size={36} 
-                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"} 
+                  <MaterialCommunityIcons
+                    name={alertConfig.type === 'error' ? "alert-circle" : "check-circle"}
+                    size={36}
+                    color={alertConfig.type === 'error' ? "#E11D48" : "#10B981"}
                   />
                 </View>
               </View>
             </View>
-            
+
             <Text style={styles.alertModalTitle}>{alertConfig.title}</Text>
             <Text style={styles.alertModalMessage}>{alertConfig.message}</Text>
-            
-            <TouchableOpacity 
-              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]} 
+
+            <TouchableOpacity
+              style={[styles.alertOkBtn, alertConfig.type === 'error' ? styles.alertOkBtnError : styles.alertOkBtnSuccess]}
               onPress={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
               activeOpacity={0.8}
             >
@@ -1783,30 +1784,30 @@ export default function AdminDashboard({ navigation }) {
             <View style={styles.alertIconWrapper}>
               <View style={[styles.alertIconOutline, styles.alertIconOutlineError]}>
                 <View style={styles.alertIconInner}>
-                  <MaterialCommunityIcons 
-                    name="alert-circle" 
-                    size={36} 
-                    color="#E11D48" 
+                  <MaterialCommunityIcons
+                    name="alert-circle"
+                    size={36}
+                    color="#E11D48"
                   />
                 </View>
               </View>
             </View>
-            
+
             <Text style={styles.alertModalTitle}>{confirmConfig.title}</Text>
             <Text style={styles.alertModalMessage}>{confirmConfig.message}</Text>
-            
+
             <View style={styles.confirmActionRow}>
-              <TouchableOpacity 
-                style={styles.confirmCancelBtn} 
+              <TouchableOpacity
+                style={styles.confirmCancelBtn}
                 onPress={() => setConfirmConfig(prev => ({ ...prev, visible: false }))}
                 activeOpacity={0.7}
               >
                 <Text style={styles.confirmCancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <View style={styles.confirmBtnShadow}>
-                <TouchableOpacity 
-                  style={styles.confirmBtn} 
+                <TouchableOpacity
+                  style={styles.confirmBtn}
                   onPress={() => {
                     setConfirmConfig(prev => ({ ...prev, visible: false }));
                     confirmConfig.onConfirm();
@@ -1885,7 +1886,7 @@ export default function AdminDashboard({ navigation }) {
                 )}
 
                 {/* Students List */}
-                <ScrollView 
+                <ScrollView
                   contentContainerStyle={{ paddingBottom: 20 }}
                   showsVerticalScrollIndicator={false}
                 >
@@ -2014,9 +2015,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
-  notifBtn: { 
+  notifBtn: {
     backgroundColor: '#ECF0F3',
-    padding: 10, 
+    padding: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FFFFFF',
@@ -2070,11 +2071,11 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: 'rgba(124, 139, 161, 0.2)',
   },
-  
+
   scrollContent: {
     padding: 20,
   },
-  
+
   sectionTitle: {
     fontFamily: 'Outfit-Bold',
     fontSize: 18,
@@ -2082,12 +2083,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     marginLeft: 4,
   },
-  
-  lecCard: { 
-    backgroundColor: '#ECF0F3', 
-    padding: 20, 
-    borderRadius: 20, 
-    marginBottom: 12, 
+
+  lecCard: {
+    backgroundColor: '#ECF0F3',
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
     shadowColor: '#A3B1C6',
@@ -2140,9 +2141,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  infoPill: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  infoPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#ECF0F3',
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -2191,12 +2192,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  actionCard: { 
-    flexDirection: 'row', 
-    backgroundColor: '#ECF0F3', 
-    padding: 18, 
-    borderRadius: 24, 
-    alignItems: 'center', 
+  actionCard: {
+    flexDirection: 'row',
+    backgroundColor: '#ECF0F3',
+    padding: 18,
+    borderRadius: 24,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
     shadowColor: '#A3B1C6',
@@ -2226,10 +2227,10 @@ const styles = StyleSheet.create({
     shadowColor: '#E11D48',
     shadowOpacity: 0.25,
   },
-  chevronBg: { 
-    width: 32, 
-    height: 32, 
-    borderRadius: 10, 
+  chevronBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: '#ECF0F3',
     justifyContent: 'center',
     alignItems: 'center',
@@ -2268,12 +2269,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 20,
   },
-  logoutBtn: { 
+  logoutBtn: {
     width: '100%',
     height: '100%',
     borderRadius: 27,
     flexDirection: 'row',
-    alignItems: 'center', 
+    alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ECF0F3',
   },
@@ -2283,7 +2284,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 8,
   },
-  
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.40)',
@@ -2806,12 +2807,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#35A7C4',
   },
-  tableHeader: { 
-    flexDirection: 'row', 
-    backgroundColor: 'rgba(255, 255, 255, 0.4)', 
-    paddingVertical: 12, 
-    paddingHorizontal: 16, 
-    borderRadius: 12, 
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
@@ -2822,19 +2823,19 @@ const styles = StyleSheet.create({
     color: '#7C8BA1',
     textTransform: 'uppercase',
   },
-  tableRow: { 
-    flexDirection: 'row', 
-    backgroundColor: '#ECF0F3', 
-    padding: 16, 
-    borderRadius: 20, 
-    marginBottom: 12, 
+  tableRow: {
+    flexDirection: 'row',
+    backgroundColor: '#ECF0F3',
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
     shadowColor: '#A3B1C6',
     shadowOffset: { width: 4, height: 4 },
     shadowOpacity: 0.7,
     shadowRadius: 8,
-    elevation: 2, 
+    elevation: 2,
     alignItems: 'center',
   },
   studentInfo: {
@@ -2926,13 +2927,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 5,
   },
-  chip: { 
-    paddingHorizontal: 16, 
-    paddingVertical: 8, 
-    borderRadius: 14, 
-    backgroundColor: '#ECF0F3', 
-    marginRight: 10, 
-    borderWidth: 1.5, 
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 14,
+    backgroundColor: '#ECF0F3',
+    marginRight: 10,
+    borderWidth: 1.5,
     borderColor: '#FFFFFF',
     shadowColor: '#A3B1C6',
     shadowOffset: { width: 2, height: 2 },
