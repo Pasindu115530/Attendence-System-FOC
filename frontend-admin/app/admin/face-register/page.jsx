@@ -149,7 +149,7 @@ export default function FaceRegisterPage() {
 
     setSubmitting(true);
     const formData = new FormData();
-    formData.append('user_id', selectedUserId);
+    formData.append('index_number', selectedUserId);
     formData.append('image', fileToSend);
 
     const res = await apiMultipart('register-face', formData);
@@ -184,14 +184,14 @@ export default function FaceRegisterPage() {
         {/* Left Card: Select User & Method */}
         <div className="card">
           <div className="card-title">👤 Select User & Input Method</div>
-          
+
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <label>User</label>
             {loading ? (
               <select disabled><option>Loading users list...</option></select>
             ) : (
-              <select 
-                value={selectedUserId} 
+              <select
+                value={selectedUserId}
                 onChange={e => {
                   setSelectedUserId(e.target.value);
                   setPreviewUrl(null);
@@ -229,7 +229,7 @@ export default function FaceRegisterPage() {
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <label>Capture Method</label>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <button 
+              <button
                 type="button"
                 className={`btn btn-block ${mode === 'camera' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ flex: 1 }}
@@ -238,7 +238,7 @@ export default function FaceRegisterPage() {
               >
                 📷 Live Webcam
               </button>
-              <button 
+              <button
                 type="button"
                 className={`btn btn-block ${mode === 'upload' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ flex: 1 }}
@@ -251,9 +251,9 @@ export default function FaceRegisterPage() {
           </div>
 
           {selectedUserId && (
-            <button 
-              onClick={handleSubmit} 
-              className="btn btn-primary btn-block" 
+            <button
+              onClick={handleSubmit}
+              className="btn btn-primary btn-block"
               style={{ padding: '1rem' }}
               disabled={submitting || (mode === 'camera' && !capturedBlob) || (mode === 'upload' && !imageFile)}
             >
@@ -265,7 +265,7 @@ export default function FaceRegisterPage() {
         {/* Right Card: Camera Preview or Upload Area */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '380px' }}>
           <div className="card-title" style={{ width: '100%' }}>🖼️ Photo Preview & Verification</div>
-          
+
           {error && <div className="alert alert-error" style={{ width: '100%', marginBottom: '1rem' }}>{error}</div>}
           {successMsg && <div className="alert alert-success" style={{ width: '100%', marginBottom: '1rem' }}>{successMsg}</div>}
 
@@ -280,18 +280,18 @@ export default function FaceRegisterPage() {
               {mode === 'camera' && (
                 <div style={{ position: 'relative', width: '100%', maxWidth: '480px', aspectRatio: '4/3', background: '#000', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
                   {/* Camera view */}
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
-                    muted 
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: previewUrl ? 'none' : 'block' }}
                   />
                   {/* Captured Static Preview */}
                   {previewUrl && (
-                    <img 
-                      src={previewUrl} 
-                      alt="Captured Face Preview" 
+                    <img
+                      src={previewUrl}
+                      alt="Captured Face Preview"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   )}
@@ -310,20 +310,20 @@ export default function FaceRegisterPage() {
                 <div style={{ width: '100%', maxWidth: '480px' }}>
                   {previewUrl ? (
                     <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                      <img 
-                        src={previewUrl} 
-                        alt="Uploaded Preview" 
+                      <img
+                        src={previewUrl}
+                        alt="Uploaded Preview"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     </div>
                   ) : (
-                    <div 
-                      style={{ 
-                        border: '2px dashed var(--border)', 
-                        borderRadius: 'var(--radius-md)', 
-                        padding: '3rem 1.5rem', 
-                        textAlign: 'center', 
-                        background: 'rgba(255,255,255,0.01)', 
+                    <div
+                      style={{
+                        border: '2px dashed var(--border)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '3rem 1.5rem',
+                        textAlign: 'center',
+                        background: 'rgba(255,255,255,0.01)',
                         cursor: 'pointer',
                         transition: 'var(--transition)'
                       }}
@@ -341,11 +341,11 @@ export default function FaceRegisterPage() {
                       <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📁</div>
                       <h4>Drag & drop student photo here</h4>
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.5rem' }}>or click to browse from files (JPEG, PNG allowed)</p>
-                      <input 
-                        type="file" 
-                        id="fileInput" 
-                        accept="image/jpeg, image/png" 
-                        style={{ display: 'none' }} 
+                      <input
+                        type="file"
+                        id="fileInput"
+                        accept="image/jpeg, image/png"
+                        style={{ display: 'none' }}
                         onChange={handleFileChange}
                       />
                     </div>
