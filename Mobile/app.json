@@ -31,6 +31,9 @@
         "projectId": "f5a25ccb-58e5-4883-88f9-29f1bc7665e1"
       }
     },
-    "owner": "pasinduudana12s-team"
+    "owner": "pasinduudana12s-team",
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
